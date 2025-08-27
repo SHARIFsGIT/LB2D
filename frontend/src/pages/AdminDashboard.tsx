@@ -1,0 +1,2248 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { NotificationData, useWebSocket } from '../hooks/useWebSocket';
+
+interface User {
+  id: string;
+  email: string;
+  role: string;
+  requestedRole?: string;
+  previousRole?: string;
+  rejectionReason?: string;
+  rejectionDate?: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  profilePhoto?: string;
+  isEmailVerified: boolean;
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface Video {
+  _id: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+  courseId: {
+    _id: string;
+    title: string;
+  };
+  uploadedBy: {
+    firstName: string;
+    lastName: string;
+  };
+  status: 'pending' | 'approved' | 'rejected';
+  sequenceNumber: number;
+  duration: number;
+  createdAt: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  videoFormat?: string;
+}
+
+interface Quiz {
+  _id: string;
+  title: string;
+  description?: string;
+  type: 'quiz' | 'exam' | 'practice';
+  questions: any[];
+  totalPoints: number;
+  timeLimit?: number;
+  courseId: {
+    _id: string;
+    title: string;
+    level: string;
+  };
+  supervisorId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  status: 'draft' | 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+}
+
+interface Resource {
+  _id: string;
+  title: string;
+  description?: string;
+  type: 'document' | 'audio' | 'image' | 'video' | 'link';
+  fileName: string;
+  fileSize?: number;
+  category: 'lesson' | 'homework' | 'reference' | 'exercise' | 'other';
+  courseId: {
+    _id: string;
+    title: string;
+    level: string;
+  };
+  supervisorId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  status: 'draft' | 'pending' | 'approved' | 'rejected';
+  uploadedAt: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+}
+
+interface EditModalProps {
+  user: User;
+  onClose: () => void;
+  onSave: (updatedUser: Partial<User>) => void;
+}
+
+interface VideoPreviewModalProps {
+  video: Video | null;
+  onClose: () => void;
+  onApprove: (videoId: string) => void;
+  onReject: (videoId: string) => void;
+}
+
+const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ video, onClose, onApprove, onReject }) => {
+  if (!video) return null;
+
+  // Function to convert Google Drive sharing URL to direct video URL
+  const convertGoogleDriveUrl = (url: string): string => {
+    // Check if it's a Google Drive sharing link
+    const googleDriveRegex = /https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view/;
+    const match = url.match(googleDriveRegex);
+    
+    if (match) {
+      const fileId = match[1];
+      // Convert to direct download/preview URL
+      return `https://drive.google.com/uc?export=download&id=${fileId}`;
+    }
+    
+    // Check if it's a locally uploaded video (starts with /uploads/)
+    if (url.startsWith('/uploads/')) {
+      // Remove /api from the base URL if present, since static files are served at root level
+      const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5005';
+      return `${baseUrl}${url}`;
+    }
+    
+    return url; // Return original URL if not a Google Drive link or local upload
+  };
+
+  const processedVideoUrl = convertGoogleDriveUrl(video.videoUrl);
+  const isGoogleDriveUrl = video.videoUrl.includes('drive.google.com');
+
+  // Prevent recording shortcuts and inspect tools
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Block F12 (Developer Tools)
+    if (e.key === 'F12') {
+      e.preventDefault();
+      return false;
+    }
+    
+    // Block Ctrl+Shift+I (Developer Tools)
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+      e.preventDefault();
+      return false;
+    }
+    
+    // Block Ctrl+Shift+J (Console)
+    if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+      e.preventDefault();
+      return false;
+    }
+    
+    // Block Ctrl+U (View Source)
+    if (e.ctrlKey && e.key === 'u') {
+      e.preventDefault();
+      return false;
+    }
+    
+    // Block Ctrl+S (Save)
+    if (e.ctrlKey && e.key === 's') {
+      e.preventDefault();
+      return false;
+    }
+    
+    // Block Print Screen
+    if (e.key === 'PrintScreen') {
+      e.preventDefault();
+      return false;
+    }
+  };
+
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+      onKeyDown={handleKeyDown}
+      tabIndex={-1}
+    >
+      <div 
+        className="bg-white rounded-3xl w-full max-w-5xl max-h-[95vh] overflow-y-auto shadow-2xl transform transition-all duration-300 scale-100 animate-fade-in"
+        onKeyDown={handleKeyDown}
+      >
+        {/* Header with enhanced styling */}
+        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 text-white p-8 relative overflow-hidden">
+          
+          <div className="flex justify-between items-start relative z-10">
+            <div className="flex-1">
+              <div className="flex items-center mb-3">
+                <span className="text-sm font-medium bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                  Video Preview
+                </span>
+              </div>
+              <h2 className="text-3xl font-bold mb-2 leading-tight">{video.title}</h2>
+              <p className="text-blue-100 text-lg">
+                Course: {video.courseId?.title || 'Unknown Course'}
+              </p>
+            </div>
+            
+            <div className="flex flex-col items-end space-y-2 ml-6">
+              <button
+                onClick={onClose}
+                className="text-white hover:text-blue-200 text-3xl font-light w-10 h-10 flex items-center justify-center rounded-full hover:bg-white hover:bg-opacity-20 transition-all duration-200 transform hover:scale-110"
+              >
+                ×
+              </button>
+              <div className="text-right space-y-1">
+                <p className="text-blue-100 text-sm">
+                  Uploaded by: {video.uploadedBy?.firstName} {video.uploadedBy?.lastName}
+                </p>
+                <div className="flex items-center space-x-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    video.status === 'approved' ? 'bg-green-500 bg-opacity-90' :
+                    video.status === 'pending' ? 'bg-yellow-500 bg-opacity-90' :
+                    'bg-red-500 bg-opacity-90'
+                  }`}>
+                    {video.status === 'approved' && video.approvedAt 
+                      ? `APPROVED ${new Date(video.approvedAt).toLocaleDateString()}`
+                      : video.status?.toUpperCase()
+                    }
+                  </span>
+                  <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">
+                    Sequence {video.sequenceNumber}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Video Player Section */}
+        <div className="p-6">
+          <div 
+            className="aspect-video bg-black rounded-2xl overflow-hidden mb-4 relative shadow-2xl border border-gray-200 select-none"
+            style={{ 
+              userSelect: 'none', 
+              WebkitUserSelect: 'none', 
+              MozUserSelect: 'none',
+              WebkitTouchCallout: 'none'
+            } as React.CSSProperties}
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+          >
+            
+            
+            {isGoogleDriveUrl ? (
+              /* Google Drive Iframe Player */
+              <iframe
+                src={`https://drive.google.com/file/d/${video.videoUrl.match(/\/d\/([a-zA-Z0-9_-]+)\//)?.[1]}/preview`}
+                className="w-full h-full"
+                allowFullScreen
+                title={video.title}
+                onError={() => {
+                  console.error('❌ Google Drive iframe failed to load');
+                }}
+              />
+            ) : (
+              /* Standard Video Player */
+              <video
+                key={video._id}
+                className="w-full h-full object-contain"
+                controls
+                preload="auto"
+                controlsList="nodownload noremoteplayback nofullscreen"
+                disablePictureInPicture
+                poster={video.thumbnailUrl}
+                onContextMenu={(e) => e.preventDefault()}
+                onLoadStart={() => {
+                  console.log('🎬 Video loading started:', processedVideoUrl);
+                }}
+                onLoadedMetadata={() => {
+                  console.log('📊 Video metadata loaded:', processedVideoUrl);
+                }}
+                onCanPlay={() => {
+                  console.log('▶️ Video can play:', processedVideoUrl);
+                }}
+                onCanPlayThrough={() => {
+                  console.log('✅ Video can play through:', processedVideoUrl);
+                }}
+                onLoadedData={() => {
+                  console.log('📁 Video data loaded:', processedVideoUrl);
+                }}
+                onError={(e) => {
+                  console.error('❌ Video load error:', e);
+                  console.error('🔗 Original URL:', video.videoUrl);
+                  console.error('🔄 Processed URL:', processedVideoUrl);
+                  console.error('📄 Video format:', video.videoFormat);
+                  console.error('🎯 Error event:', e.currentTarget.error);
+                  
+                  const target = e.target as HTMLVideoElement;
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `
+                      <div class="flex items-center justify-center h-full text-white bg-gray-800">
+                        <div class="text-center max-w-md">
+                          <div class="text-6xl mb-4">⚠️</div>
+                          <p class="text-xl mb-2 font-semibold">Video Unavailable</p>
+                          <p class="text-sm text-gray-300 mb-4">Unable to load video content</p>
+                          <div class="mt-4 p-4 bg-gray-700 rounded text-xs text-left">
+                            <p class="mb-2"><strong>Original URL:</strong></p>
+                            <p class="break-all mb-3 bg-gray-600 p-2 rounded">${video.videoUrl}</p>
+                            <p class="mb-2"><strong>Processed URL:</strong></p>
+                            <p class="break-all mb-3 bg-gray-600 p-2 rounded">${processedVideoUrl}</p>
+                            <p><strong>Format:</strong> ${video.videoFormat || 'Unknown'}</p>
+                            <p><strong>Error:</strong> ${e.currentTarget.error?.message || 'Unknown error'}</p>
+                          </div>
+                          <p class="text-xs text-gray-400 mt-4">Consider using a proper video hosting service</p>
+                        </div>
+                      </div>
+                    `;
+                  }
+                }}
+                onStalled={() => {
+                  console.warn('⏸️ Video stalled:', processedVideoUrl);
+                }}
+                onSuspend={() => {
+                  console.log('⏯️ Video suspended:', processedVideoUrl);
+                }}
+                onWaiting={() => {
+                  console.log('⏳ Video waiting:', processedVideoUrl);
+                }}
+              >
+                <source src={processedVideoUrl} type="video/mp4" />
+                <source src={processedVideoUrl} type="video/webm" />
+                <source src={processedVideoUrl} type="video/ogg" />
+                <source src={processedVideoUrl} type="video/mov" />
+                <source src={processedVideoUrl} type="video/avi" />
+                Your browser does not support the video tag.
+              </video>
+            )}
+          </div>
+
+          {/* Video Details Section */}
+          <div className="mb-6">
+            <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">
+                Description
+              </h3>
+              <p className="text-gray-700 leading-relaxed">{video.description || 'No description provided'}</p>
+            </div>
+          </div>
+
+
+          {/* Action Buttons */}
+          {video.status === 'pending' && (
+            <div className="flex justify-center space-x-6 mt-6">
+              <button
+                onClick={() => {
+                  onReject(video._id);
+                  onClose();
+                }}
+                className="px-12 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-semibold text-base"
+              >
+                Reject Video
+              </button>
+              <button
+                onClick={() => {
+                  onApprove(video._id);
+                  onClose();
+                }}
+                className="px-12 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold text-base"
+              >
+                Approve Video
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EditModal: React.FC<EditModalProps> = ({ user, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role,
+    phone: user.phone || '',
+    isActive: user.isActive,
+    isEmailVerified: user.isEmailVerified
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  const handleApproveRejectedUser = () => {
+    if (user.requestedRole && user.rejectionReason) {
+      const updatedData = {
+        ...formData,
+        role: user.requestedRole, // Approve the originally requested role
+      };
+      setFormData(updatedData);
+      // Automatically save the changes
+      onSave(updatedData);
+    }
+  };
+
+  // Check if this user was rejected and has a requested role that can be approved
+  const canApproveRejection = user.requestedRole && user.rejectionReason && user.role !== user.requestedRole;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <h2 className="text-xl font-bold mb-4">Edit User</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+            <input
+              type="text"
+              value={formData.firstName}
+              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              className="w-full px-3 py-2 border rounded-md"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+            <input
+              type="text"
+              value={formData.lastName}
+              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              className="w-full px-3 py-2 border rounded-md"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-3 py-2 border rounded-md"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <select
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              className="w-full px-3 py-2 border rounded-md"
+            >
+              <option value="Student">Student</option>
+              <option value="Supervisor">Supervisor</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              className="w-full px-3 py-2 border rounded-md"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="mr-2"
+              />
+              <span className="text-sm font-medium text-gray-700">Active</span>
+            </label>
+          </div>
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.isEmailVerified}
+                onChange={(e) => setFormData({ ...formData, isEmailVerified: e.target.checked })}
+                className="mr-2"
+              />
+              <span className="text-sm font-medium text-gray-700">Email Verified</span>
+            </label>
+          </div>
+
+          {/* Show rejection information if user was rejected */}
+          {canApproveRejection && (
+            <div className="mb-6 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl p-4 shadow-sm">
+              <div className="space-y-2 text-sm">
+                <h3 className="text-sm font-semibold text-orange-800 mb-2 text-center">
+                  Role Request Rejected
+                </h3>
+                <div className="bg-white rounded-lg p-3 border border-orange-100">
+                  <div className="grid grid-cols-1 gap-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 font-medium">Requested Role:</span>
+                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold">
+                        {user.requestedRole}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-start">
+                      <span className="text-gray-600 font-medium">Reason:</span>
+                      <span className="text-gray-800 text-xs max-w-48 text-right">
+                        {user.rejectionReason}
+                      </span>
+                    </div>
+                    {user.rejectionDate && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600 font-medium">Rejected:</span>
+                        <span className="text-gray-700 text-xs">
+                          {new Date(user.rejectionDate).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short', 
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-center mt-4">
+                  <button
+                    type="button"
+                    onClick={handleApproveRejectedUser}
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md"
+                  >
+                    Approve as {user.requestedRole}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-600 bg-gray-200 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-white bg-blue-600 rounded"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const [users, setUsers] = useState<User[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    total: 0,
+    students: 0,
+    supervisors: 0,
+    admins: 0,
+    verified: 0
+  });
+  const [allVideos, setAllVideos] = useState<Video[]>([]);
+  const [videoCount, setVideoCount] = useState(0);
+  const [allQuizzes, setAllQuizzes] = useState<Quiz[]>([]);
+  const [quizCount, setQuizCount] = useState(0);
+  const [allResources, setAllResources] = useState<Resource[]>([]);
+  const [resourceCount, setResourceCount] = useState(0);
+  const [activeTab, setActiveTab] = useState<'users' | 'videos' | 'approvals'>('users');
+  const [loadingVideos, setLoadingVideos] = useState(false);
+  const [loadingQuizzes, setLoadingQuizzes] = useState(false);
+  const [loadingResources, setLoadingResources] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [realTimeUpdates, setRealTimeUpdates] = useState<NotificationData[]>([]);
+  const [lastDataUpdate, setLastDataUpdate] = useState<string>('');
+  const itemsPerPage = 10;
+
+  // Get access token from session storage
+  const token = sessionStorage.getItem('accessToken');
+
+  // Handle real-time notifications for admin dashboard updates
+  const handleAdminNotification = useCallback((notification: NotificationData) => {
+    console.log('🔔 Admin Dashboard received notification:', notification);
+    
+    // Add to real-time updates list
+    setRealTimeUpdates(prev => [notification, ...prev.slice(0, 9)]); // Keep last 10
+    setLastDataUpdate(new Date().toLocaleTimeString());
+    
+    // Determine what data needs to be refreshed based on notification type
+    const refreshActions = {
+      // User Management notifications
+      user_registration: () => {
+        fetchUsers();
+        fetchStats();
+      },
+      admin: () => {
+        if (notification.title.includes('Role') || notification.title.includes('User')) {
+          fetchUsers();
+          fetchStats();
+        }
+        if (notification.title.includes('Profile')) {
+          fetchUsers(); // Refresh user list for profile updates
+        }
+      },
+      
+      // Video Management notifications  
+      video: () => {
+        fetchVideoCount();
+        if (activeTab === 'videos') {
+          fetchAllVideos();
+        }
+      },
+      
+      // Quiz Management notifications
+      quiz_approval: () => {
+        fetchQuizCount();
+        if (activeTab === 'videos') {
+          fetchAllQuizzes();
+        }
+      },
+      
+      // Resource Management notifications
+      document_approval: () => {
+        fetchResourceCount();
+        if (activeTab === 'videos') {
+          fetchAllResources();
+        }
+      },
+      
+      // Course Management notifications
+      course: () => {
+        fetchVideoCount(); // Courses affect video analytics
+        if (activeTab === 'videos') {
+          fetchAllVideos(); // Videos are tied to courses
+        }
+      },
+      
+      // Enrollment notifications (affects student analytics)
+      enrollment: () => {
+        fetchStats(); // Student enrollment affects user stats
+      },
+      
+      // Payment notifications (affects revenue analytics)
+      payment: () => {
+        fetchStats(); // Payment affects overall analytics
+      },
+      
+      // Supervisor notifications (affects salary & compensation)
+      supervisor_action: () => {
+        fetchStats(); // Supervisor activities affect analytics
+        fetchUsers(); // May affect supervisor user data
+      },
+      
+      // Student notifications (affects student analytics)
+      student_action: () => {
+        fetchStats(); // Student activities affect analytics
+      },
+      
+      // General notifications
+      general: () => {
+        fetchStats();
+        fetchUsers();
+      }
+    };
+
+    // Execute appropriate refresh action
+    const refreshAction = refreshActions[notification.type as keyof typeof refreshActions];
+    if (refreshAction) {
+      setTimeout(refreshAction, 1000); // Small delay to ensure backend processing is complete
+    }
+    
+    // Show console log for debugging specific notification types
+    console.log(`📊 Admin Dashboard refreshing data for: ${notification.type} - ${notification.title}`);
+  }, [activeTab]);
+
+  // WebSocket connection for admin dashboard
+  const { isConnected, subscribe } = useWebSocket({
+    onNotification: handleAdminNotification,
+    onConnect: () => {
+      console.log('🔗 Admin Dashboard connected to WebSocket');
+      // Subscribe to all admin-relevant notification types
+      subscribe([
+        'admin',              // Role approvals, user management
+        'admin_notification', // Direct admin notifications
+        'quiz_approval',      // Quiz approval requests
+        'document_approval',  // Document/resource approval requests
+        'user_registration',  // New user registrations 
+        'enrollment',         // Course enrollments (student analytics)
+        'course',            // Course management updates
+        'video',             // Video management updates
+        'payment',           // Payment & revenue analytics
+        'supervisor_action', // Supervisor activities & compensation
+        'student_action',    // Student results & analytics
+        'general'            // General system notifications
+      ]);
+    },
+    onDisconnect: () => {
+      console.log('❌ Admin Dashboard disconnected from WebSocket');
+    }
+  });
+  
+  // Debug: Log current auth state
+  useEffect(() => {
+    console.log('AdminDashboard - Current token:', token ? 'Present' : 'Missing');
+    console.log('AdminDashboard - Current user:', sessionStorage.getItem('user'));
+  }, [token]);
+
+  // Fetch users from API
+  const fetchUsers = async () => {
+    if (!token) {
+      console.error('No token available for admin API call');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log('Fetching admin users...'); // Debug log
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/users?page=${currentPage}&limit=${itemsPerPage}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Admin users response status:', response.status); // Debug log
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Admin users data:', data); // Debug log
+        setUsers(data.data.users);
+        setTotalPages(data.data.pagination.pages);
+      } else if (response.status === 401) {
+        console.error('Unauthorized access - redirecting to login');
+        navigate('/login');
+      } else if (response.status === 403) {
+        console.error('Forbidden access - insufficient permissions');
+        alert('Access denied. Admin privileges required.');
+        navigate('/dashboard');
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        console.error('Admin API error:', response.status, errorData);
+      }
+    } catch (error) {
+      console.error('Network error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch statistics
+  const fetchStats = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/users/stats`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStats({
+          total: data.data.total,
+          students: data.data.byRole.students,
+          supervisors: data.data.byRole.supervisors,
+          admins: data.data.byRole.admins,
+          verified: data.data.verified
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+    fetchStats();
+    fetchVideoCount(); // Always fetch video count for the badge
+    fetchQuizCount(); // Always fetch quiz count for the badge
+    fetchResourceCount(); // Always fetch resource count for the badge
+    if (activeTab === 'videos') {
+      fetchAllVideos();
+      fetchAllQuizzes();
+      fetchAllResources();
+    }
+  }, [currentPage, activeTab]);
+
+  // Set up periodic update for video, quiz, and resource counts
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchVideoCount();
+      fetchQuizCount();
+      fetchResourceCount();
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch video count only
+  const fetchVideoCount = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setVideoCount(data.count || data.data.length);
+      }
+    } catch (error) {
+      console.error('Error fetching video count:', error);
+    }
+  };
+
+  // Fetch all videos
+  const fetchAllVideos = async () => {
+    try {
+      setLoadingVideos(true);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAllVideos(data.data);
+        setVideoCount(data.count || data.data.length);
+      }
+    } catch (error) {
+      console.error('Error fetching all videos:', error);
+    } finally {
+      setLoadingVideos(false);
+    }
+  };
+
+  // Fetch quiz count only
+  const fetchQuizCount = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/pending`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setQuizCount(data.count || data.data.length);
+      }
+    } catch (error) {
+      console.error('Error fetching quiz count:', error);
+    }
+  };
+
+  // Fetch all pending quizzes
+  const fetchAllQuizzes = async () => {
+    try {
+      setLoadingQuizzes(true);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/pending`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAllQuizzes(data.data);
+        setQuizCount(data.count || data.data.length);
+      }
+    } catch (error) {
+      console.error('Error fetching all quizzes:', error);
+    } finally {
+      setLoadingQuizzes(false);
+    }
+  };
+
+  // Fetch resource count only
+  const fetchResourceCount = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/pending`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setResourceCount(data.count || data.data.length);
+      }
+    } catch (error) {
+      console.error('Error fetching resource count:', error);
+    }
+  };
+
+  // Fetch all pending resources
+  const fetchAllResources = async () => {
+    try {
+      setLoadingResources(true);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/pending`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAllResources(data.data);
+        setResourceCount(data.count || data.data.length);
+      }
+    } catch (error) {
+      console.error('Error fetching all resources:', error);
+    } finally {
+      setLoadingResources(false);
+    }
+  };
+
+  // Approve video
+  const handleApproveVideo = async (videoId: string) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        alert('Video approved successfully');
+        fetchAllVideos();
+        fetchVideoCount(); // Update count immediately
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to approve video');
+      }
+    } catch (error) {
+      console.error('Error approving video:', error);
+      alert('Failed to approve video');
+    }
+  };
+
+  // Reject video
+  const handleRejectVideo = async (videoId: string) => {
+    const rejectionReason = prompt('Please provide a reason for rejection:');
+    if (!rejectionReason) return;
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rejectionReason })
+      });
+
+      if (response.ok) {
+        alert('Video rejected successfully');
+        fetchAllVideos();
+        fetchVideoCount(); // Update count immediately
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to reject video');
+      }
+    } catch (error) {
+      console.error('Error rejecting video:', error);
+      alert('Failed to reject video');
+    }
+  };
+
+  // Delete video
+  const handleDeleteVideo = async (videoId: string) => {
+    if (!window.confirm('Are you sure you want to delete this video? This action cannot be undone.')) return;
+    
+    if (!token) {
+      alert('Authentication token not found. Please log in again.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        alert('Video deleted successfully');
+        fetchAllVideos();
+        fetchVideoCount(); // Update count immediately
+      } else {
+        const error = await response.json();
+        console.error('Delete video error response:', error);
+        alert(error.message || `Failed to delete video (Status: ${response.status})`);
+      }
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      alert('Failed to delete video. Please check your connection and try again.');
+    }
+  };
+
+  // Approve quiz
+  const handleApproveQuiz = async (quizId: string) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        alert('Quiz approved successfully');
+        fetchAllQuizzes();
+        fetchQuizCount(); // Update count immediately
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to approve quiz');
+      }
+    } catch (error) {
+      console.error('Error approving quiz:', error);
+      alert('Failed to approve quiz');
+    }
+  };
+
+  // Reject quiz
+  const handleRejectQuiz = async (quizId: string) => {
+    const rejectionReason = prompt('Please provide a reason for rejection:');
+    if (!rejectionReason) return;
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rejectionReason })
+      });
+
+      if (response.ok) {
+        alert('Quiz rejected successfully');
+        fetchAllQuizzes();
+        fetchQuizCount(); // Update count immediately
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to reject quiz');
+      }
+    } catch (error) {
+      console.error('Error rejecting quiz:', error);
+      alert('Failed to reject quiz');
+    }
+  };
+
+  // Approve resource
+  const handleApproveResource = async (resourceId: string) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/${resourceId}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        alert('Resource approved successfully');
+        fetchAllResources();
+        fetchResourceCount(); // Update count immediately
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to approve resource');
+      }
+    } catch (error) {
+      console.error('Error approving resource:', error);
+      alert('Failed to approve resource');
+    }
+  };
+
+  // Reject resource
+  const handleRejectResource = async (resourceId: string) => {
+    const rejectionReason = prompt('Please provide a reason for rejection:');
+    if (!rejectionReason) return;
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/${resourceId}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rejectionReason })
+      });
+
+      if (response.ok) {
+        alert('Resource rejected successfully');
+        fetchAllResources();
+        fetchResourceCount(); // Update count immediately
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to reject resource');
+      }
+    } catch (error) {
+      console.error('Error rejecting resource:', error);
+      alert('Failed to reject resource');
+    }
+  };
+
+  // Handle user update
+  const handleUpdateUser = async (updatedData: Partial<User>) => {
+    if (!editingUser) return;
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      if (response.ok) {
+        setEditingUser(null);
+        fetchUsers();
+        fetchStats();
+        alert('User updated successfully');
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to update user');
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      alert('Failed to update user');
+    }
+  };
+
+  // Handle user deletion
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        setDeleteConfirm(null);
+        fetchUsers();
+        fetchStats();
+        alert('User deleted successfully');
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to delete user');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Failed to delete user');
+    }
+  };
+
+  // Handle role approval
+  const handleApproveRole = async (userId: string, requestedRole: string) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          role: requestedRole,
+          requestedRole: undefined // Clear the requested role
+        })
+      });
+
+      if (response.ok) {
+        fetchUsers();
+        fetchStats();
+        alert(`Role approved! User is now a ${requestedRole}.`);
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to approve role');
+      }
+    } catch (error) {
+      console.error('Error approving role:', error);
+      alert('Failed to approve role');
+    }
+  };
+
+  // Handle role rejection
+  const handleRejectRole = async (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    // Confirm rejection
+    const confirmReject = window.confirm(
+      `Are you sure you want to reject ${user.firstName} ${user.lastName}'s request for ${user.requestedRole} role?`
+    );
+    
+    if (!confirmReject) return;
+
+    // Ask for rejection reason (optional)
+    const rejectionReason = window.prompt(
+      'Please provide a reason for rejection (optional):'
+    );
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          requestedRole: null, // Clear the requested role
+          rejectionReason: rejectionReason || 'No reason provided'
+        })
+      });
+
+      if (response.ok) {
+        fetchUsers();
+        fetchStats();
+        alert(`Role request for ${user.firstName} ${user.lastName} has been rejected.`);
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to reject role request');
+      }
+    } catch (error) {
+      console.error('Error rejecting role:', error);
+      alert('Failed to reject role request. Please try again.');
+    }
+  };
+
+  const clearUserManagementData = async () => {
+    const isConfirmed = window.confirm(
+      '⚠️ WARNING: This will permanently delete ALL user management data.\n\n' +
+      'This includes user activity logs, session data, and management records.\n\n' +
+      'This action cannot be undone. Are you absolutely sure you want to proceed?'
+    );
+    
+    if (!isConfirmed) return;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-user-management`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        alert('✅ User management data cleared successfully!');
+        fetchUsers();
+        fetchStats();
+      } else {
+        alert('❌ Failed to clear user management data');
+      }
+    } catch (error) {
+      console.error('Error clearing user management data:', error);
+      alert('❌ Error clearing user management data');
+    }
+  };
+
+  const clearVideoManagementData = async () => {
+    const isConfirmed = window.confirm(
+      '⚠️ WARNING: This will permanently delete ALL video management data.\n\n' +
+      'This includes video metadata, upload history, and management records.\n\n' +
+      'This action cannot be undone. Are you absolutely sure you want to proceed?'
+    );
+    
+    if (!isConfirmed) return;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-video-management`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        alert('✅ Video management data cleared successfully!');
+        fetchAllVideos();
+        fetchVideoCount();
+      } else {
+        alert('❌ Failed to clear video management data');
+      }
+    } catch (error) {
+      console.error('Error clearing video management data:', error);
+      alert('❌ Error clearing video management data');
+    }
+  };
+
+  const clearQuizManagementData = async () => {
+    const isConfirmed = window.confirm(
+      '⚠️ WARNING: This will permanently delete ALL quiz management data.\n\n' +
+      'This includes quiz metadata, questions, attempts, and management records.\n\n' +
+      'This action cannot be undone. Are you absolutely sure you want to proceed?'
+    );
+    
+    if (!isConfirmed) return;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-quiz-management`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        alert('✅ Quiz management data cleared successfully!');
+        fetchAllQuizzes();
+        fetchQuizCount();
+      } else {
+        alert('❌ Failed to clear quiz management data');
+      }
+    } catch (error) {
+      console.error('Error clearing quiz management data:', error);
+      alert('❌ Error clearing quiz management data');
+    }
+  };
+
+  const clearResourceManagementData = async () => {
+    const isConfirmed = window.confirm(
+      '⚠️ WARNING: This will permanently delete ALL resource management data.\n\n' +
+      'This includes document metadata, upload history, and management records.\n\n' +
+      'This action cannot be undone. Are you absolutely sure you want to proceed?'
+    );
+    
+    if (!isConfirmed) return;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-resource-management`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        alert('✅ Resource management data cleared successfully!');
+        fetchAllResources();
+        fetchResourceCount();
+      } else {
+        alert('❌ Failed to clear resource management data');
+      }
+    } catch (error) {
+      console.error('Error clearing resource management data:', error);
+      alert('❌ Error clearing resource management data');
+    }
+  };
+
+  return (
+    <div className="min-h-full bg-gradient-to-br from-purple-50 via-white to-indigo-50 pb-16" style={{minHeight: '100vh'}}>
+      {/* Hero Header */}
+      <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="flex items-center justify-center space-x-4">
+            <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+              Admin Dashboard
+            </h1>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-12">
+          <div className="relative">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-30 blur animate-pulse"></div>
+            <div className="relative bg-gray-100 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white border-opacity-30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Total Users</h3>
+                  <p className="text-3xl font-bold text-green-600">{stats.total}</p>
+                </div>
+                <div className="text-4xl">👥</div>
+              </div>
+            </div>
+          </div>
+          <div className="relative">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-30 blur animate-pulse"></div>
+            <div className="relative bg-gray-100 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white border-opacity-30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Students</h3>
+                  <p className="text-3xl font-bold text-yellow-600">{stats.students}</p>
+                </div>
+                <div className="text-4xl">🎓</div>
+              </div>
+            </div>
+          </div>
+          <div className="relative">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-30 blur animate-pulse"></div>
+            <div className="relative bg-gray-100 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white border-opacity-30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Supervisors</h3>
+                  <p className="text-3xl font-bold text-red-600">{stats.supervisors}</p>
+                </div>
+                <div className="text-4xl">👨‍🏫</div>
+              </div>
+            </div>
+          </div>
+          <div className="relative">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-30 blur animate-pulse"></div>
+            <div className="relative bg-gray-100 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white border-opacity-30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Admins</h3>
+                  <p className="text-3xl font-bold text-cyan-600">{stats.admins}</p>
+                </div>
+                <div className="text-4xl">👑</div>
+              </div>
+            </div>
+          </div>
+          <div className="relative">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-30 blur animate-pulse"></div>
+            <div className="relative bg-gray-100 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white border-opacity-30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Verified</h3>
+                  <p className="text-3xl font-bold text-green-600">{stats.verified}</p>
+                </div>
+                <div className="text-4xl">✅</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        {/* Tab Navigation */}
+        <div className="mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'users'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500'
+                }`}
+              >
+                <span>👥</span>
+                <span>User Management</span>
+                <span className="bg-gray-100 text-gray-600 rounded-full px-2 py-1 text-xs">
+                  {stats.total}
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('approvals')}
+                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'approvals'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500'
+                }`}
+              >
+                <span>⏳</span>
+                <span>Role Approvals</span>
+                <span className="bg-red-100 text-red-600 rounded-full px-2 py-1 text-xs">
+                  {users.filter(u => u.requestedRole && u.requestedRole !== u.role && !u.rejectionReason).length}
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('videos')}
+                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'videos'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500'
+                }`}
+              >
+                <span>🎥</span>
+                <span>Content Management</span>
+                <div className="flex space-x-1">
+                  <span className="bg-blue-100 text-blue-600 rounded-full px-2 py-1 text-xs">
+                    {videoCount} videos
+                  </span>
+                  <span className="bg-yellow-100 text-yellow-600 rounded-full px-2 py-1 text-xs">
+                    {quizCount} quizzes
+                  </span>
+                  <span className="bg-purple-100 text-purple-600 rounded-full px-2 py-1 text-xs">
+                    {resourceCount} docs
+                  </span>
+                </div>
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Content based on active tab */}
+        {activeTab === 'users' && (
+        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 p-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-3xl font-bold text-white flex items-center">
+                User Management
+              </h2>
+              <button
+                onClick={clearUserManagementData}
+                className="bg-transparent hover:bg-white hover:bg-opacity-20 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center space-x-1.5 border border-white border-opacity-30 hover:border-opacity-50"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                <span>Clear Data</span>
+              </button>
+            </div>
+          </div>
+          <div className="p-6">
+          
+          {loading ? (
+            <div className="text-center py-10">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <p className="mt-2">Loading users...</p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        User Info
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Role & Status
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Account Details
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {users.map(user => (
+                      <tr key={user.id}>
+                        <td className="px-4 py-4 text-sm">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center overflow-hidden">
+                              {user.profilePhoto ? (
+                                <img 
+                                  src={user.profilePhoto} 
+                                  alt="Profile" 
+                                  className="w-full h-full object-cover rounded-full"
+                                />
+                              ) : (
+                                <span className="text-white font-semibold text-sm">
+                                  {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="ml-3">
+                              <div className="font-medium text-gray-900">
+                                {user.firstName} {user.lastName}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                ID: {user.id.slice(-8)}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-sm">
+                          <div className="space-y-2">
+                            <div className="bg-blue-50 p-2 rounded">
+                              <div className="text-gray-900">{user.email}</div>
+                            </div>
+                            <div className="bg-gray-50 p-2 rounded flex items-center justify-between">
+                              <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                                user.phone ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-200 text-gray-600'
+                              }`}>
+                                {user.phone || 'No phone'}
+                              </span>
+                              <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                                user.isEmailVerified ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                              }`}>
+                                {user.isEmailVerified ? 'Verified' : 'Unverified'}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="bg-gray-50 p-2 rounded space-y-2">
+                            <div className="flex items-center justify-between flex-wrap gap-1">
+                              {/* Role Badge - Show previous role → current role if changed */}
+                              {user.previousRole && user.previousRole !== user.role && user.previousRole !== 'Pending' ? (
+                                <div className="flex items-center gap-1">
+                                  <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                                    user.previousRole === 'Admin' ? 'bg-red-50 text-red-600' :
+                                    user.previousRole === 'Supervisor' ? 'bg-yellow-50 text-yellow-600' :
+                                    user.previousRole === 'Student' ? 'bg-blue-50 text-blue-600' :
+                                    'bg-orange-50 text-orange-600'
+                                  }`}>
+                                    {user.previousRole}
+                                  </span>
+                                  <span className="text-gray-500 text-xs">→</span>
+                                  <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                                    ((user.role === 'Pending' || user.rejectionReason) && user.requestedRole ? user.requestedRole : user.role) === 'Admin' ? 'bg-red-100 text-red-800' :
+                                    ((user.role === 'Pending' || user.rejectionReason) && user.requestedRole ? user.requestedRole : user.role) === 'Supervisor' ? 'bg-yellow-100 text-yellow-800' :
+                                    ((user.role === 'Pending' || user.rejectionReason) && user.requestedRole ? user.requestedRole : user.role) === 'Student' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-orange-100 text-orange-800'
+                                  }`}>
+                                    {(user.role === 'Pending' || user.rejectionReason) && user.requestedRole ? user.requestedRole : user.role}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                                  ((user.role === 'Pending' || user.rejectionReason) && user.requestedRole ? user.requestedRole : user.role) === 'Admin' ? 'bg-red-100 text-red-800' :
+                                  ((user.role === 'Pending' || user.rejectionReason) && user.requestedRole ? user.requestedRole : user.role) === 'Supervisor' ? 'bg-yellow-100 text-yellow-800' :
+                                  ((user.role === 'Pending' || user.rejectionReason) && user.requestedRole ? user.requestedRole : user.role) === 'Student' ? 'bg-blue-100 text-blue-800' :
+                                  'bg-orange-100 text-orange-800'
+                                }`}>
+                                  {(user.role === 'Pending' || user.rejectionReason) && user.requestedRole ? user.requestedRole : user.role}
+                                </span>
+                              )}
+                              
+                              {/* Active/Inactive Badge - Always in middle */}
+                              <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                                user.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'
+                              }`}>
+                                {user.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                              
+                              {/* Status Badges - Always last */}
+                              {/* Show Pending status when user has requested role but was not rejected */}
+                              {user.requestedRole && user.requestedRole !== user.role && !user.rejectionReason && (
+                                <span className="px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">
+                                  Pending
+                                </span>
+                              )}
+                              
+                              {/* Show Rejected status */}
+                              {user.rejectionReason && (
+                                <span className="px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-800">
+                                  Rejected
+                                </span>
+                              )}
+                              
+                              {/* Show Approved status for users who got their requested role */}
+                              {user.requestedRole && user.role === user.requestedRole && !user.rejectionReason && (
+                                <span className="px-2 py-1 text-xs font-semibold rounded bg-purple-100 text-purple-800">
+                                  Approved
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-sm">
+                          <div className="space-y-1">
+                            <div className="text-xs text-gray-600">
+                              <span className="font-medium">Joined:</span>
+                            </div>
+                            <div className="text-xs text-gray-900">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {new Date(user.createdAt).toLocaleTimeString()}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24))} days ago
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-sm">
+                          <div className="flex flex-col space-y-2">
+                            <button 
+                              onClick={() => setEditingUser(user)}
+                              className="text-white font-medium text-xs bg-gradient-to-r from-green-500 to-green-600 px-2 py-1 rounded"
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              onClick={() => setDeleteConfirm(user.id)}
+                              className="text-white font-medium text-xs bg-gradient-to-r from-red-500 to-red-600 px-2 py-1 rounded"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-6 flex justify-center space-x-4">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="flex items-center">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </>
+          )}
+          </div>
+        </div>
+        )}
+
+        {/* Content Management Section (Videos & Quizzes) */}
+        {activeTab === 'videos' && (
+        <div className="space-y-8">
+          {/* Videos Section */}
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold text-white flex items-center">
+                  🎥 Video Management
+                </h2>
+                <button
+                  onClick={clearVideoManagementData}
+                  className="bg-transparent hover:bg-white hover:bg-opacity-20 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center space-x-1.5 border border-white border-opacity-30 hover:border-opacity-50"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  <span>Clear Data</span>
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+            {loadingVideos ? (
+              <div className="text-center py-10">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <p className="mt-2">Loading videos...</p>
+              </div>
+            ) : allVideos.length === 0 ? (
+              <div className="text-center py-10">
+                <div className="text-6xl mb-4">🎬</div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">No Videos</h3>
+                <p className="text-gray-600">No videos have been uploaded yet!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {allVideos.map((video) => (
+                  <div key={video._id} className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                    {/* Video Header */}
+                    <div className={`p-4 text-white ${
+                      video?.status === 'approved' ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                      video?.status === 'pending' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
+                      'bg-gradient-to-r from-red-500 to-pink-500'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">🎬</span>
+                          <span className="text-sm font-medium bg-white bg-opacity-20 px-2 py-1 rounded">
+                            Step {video?.sequenceNumber || 0}
+                          </span>
+                        </div>
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                          video?.status === 'approved' ? 'bg-green-600' :
+                          video?.status === 'pending' ? 'bg-yellow-600' :
+                          'bg-red-600'
+                        }`}>
+                          {video?.status?.toUpperCase() || 'UNKNOWN'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Video Content */}
+                    <div className="p-4">
+                      <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{video?.title || 'Untitled Video'}</h3>
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-3">{video?.description || 'No description'}</p>
+                      
+                      <div className="space-y-2 text-xs text-gray-500">
+                        <div className="flex justify-between">
+                          <span>Course:</span>
+                          <span className="font-medium">{video.courseId?.title || 'Unknown Course'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Uploaded by:</span>
+                          <span className="font-medium">{video.uploadedBy?.firstName || ''} {video.uploadedBy?.lastName || 'Unknown User'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Duration:</span>
+                          <span className="font-medium">
+                            {video?.duration ? 
+                              `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` :
+                              '0:00'
+                            }
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Uploaded:</span>
+                          <span className="font-medium">
+                            {video?.createdAt ? new Date(video.createdAt).toLocaleDateString() : 'Unknown'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Video Actions */}
+                    <div className="border-t border-gray-200 p-3 bg-gray-50">
+                      {video?.status === 'pending' ? (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => setSelectedVideo(video)}
+                            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                          >
+                            Watch Video
+                          </button>
+                          <button
+                            onClick={() => video?._id && handleDeleteVideo(video._id)}
+                            className="flex-1 bg-gray-600 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          {video?.status === 'rejected' && video?.rejectionReason && (
+                            <div className="text-xs text-red-600 bg-red-50 p-2 rounded mb-2">
+                              <strong>Reason:</strong> {video.rejectionReason}
+                            </div>
+                          )}
+                          
+                          {/* Watch Video and Delete buttons in same line for approved/rejected */}
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => setSelectedVideo(video)}
+                              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                            >
+                              Watch Video
+                            </button>
+                            <button
+                              onClick={() => video?._id && handleDeleteVideo(video._id)}
+                              className="flex-1 bg-gray-600 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          </div>
+
+          {/* Quizzes Section */}
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-green-500 to-teal-600 p-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold text-white flex items-center">
+                  📝 Quiz/Exam Approval
+                </h2>
+                <button
+                  onClick={clearQuizManagementData}
+                  className="bg-transparent hover:bg-white hover:bg-opacity-20 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center space-x-1.5 border border-white border-opacity-30 hover:border-opacity-50"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  <span>Clear Data</span>
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              {loadingQuizzes ? (
+                <div className="text-center py-10">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  <p className="mt-2">Loading quizzes...</p>
+                </div>
+              ) : allQuizzes.length === 0 ? (
+                <div className="text-center py-10">
+                  <div className="text-6xl mb-4">📝</div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">No Pending Quizzes</h3>
+                  <p className="text-gray-600">All quizzes have been approved or rejected!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {allQuizzes.map((quiz) => (
+                    <div key={quiz._id} className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                      {/* Quiz Header */}
+                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 text-white">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-2xl">📝</span>
+                            <span className="text-sm font-medium bg-white bg-opacity-20 px-2 py-1 rounded">
+                              {quiz.type.charAt(0).toUpperCase() + quiz.type.slice(1)}
+                            </span>
+                          </div>
+                          <span className="text-xs px-2 py-1 rounded-full font-medium bg-yellow-600">
+                            PENDING
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Quiz Content */}
+                      <div className="p-4">
+                        <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{quiz.title}</h3>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-3">{quiz.description || 'No description'}</p>
+                        
+                        <div className="space-y-2 text-xs text-gray-500">
+                          <div className="flex justify-between">
+                            <span>Course:</span>
+                            <span className="font-medium">{quiz.courseId?.title} ({quiz.courseId?.level})</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Created by:</span>
+                            <span className="font-medium">{quiz.supervisorId?.firstName} {quiz.supervisorId?.lastName}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Questions:</span>
+                            <span className="font-medium">{quiz.questions?.length || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Total Points:</span>
+                            <span className="font-medium">{quiz.totalPoints}</span>
+                          </div>
+                          {quiz.timeLimit && (
+                            <div className="flex justify-between">
+                              <span>Time Limit:</span>
+                              <span className="font-medium">{quiz.timeLimit} min</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span>Created:</span>
+                            <span className="font-medium">{new Date(quiz.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Quiz Actions */}
+                      <div className="border-t border-gray-200 p-4 bg-gray-50">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleApproveQuiz(quiz._id)}
+                            className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                          >
+                            ✅ Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectQuiz(quiz._id)}
+                            className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                          >
+                            ❌ Reject
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Resources Section */}
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold text-white flex items-center">
+                  📁 Document/Resource Approval
+                </h2>
+                <button
+                  onClick={clearResourceManagementData}
+                  className="bg-transparent hover:bg-white hover:bg-opacity-20 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center space-x-1.5 border border-white border-opacity-30 hover:border-opacity-50"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  <span>Clear Data</span>
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              {loadingResources ? (
+                <div className="text-center py-10">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  <p className="mt-2">Loading resources...</p>
+                </div>
+              ) : allResources.length === 0 ? (
+                <div className="text-center py-10">
+                  <div className="text-6xl mb-4">📁</div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">No Pending Resources</h3>
+                  <p className="text-gray-600">All documents and resources have been approved or rejected!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {allResources.map((resource) => (
+                    <div key={resource._id} className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                      {/* Resource Header */}
+                      <div className="bg-gradient-to-r from-purple-400 to-pink-500 p-4 text-white">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-2xl">
+                              {resource.type === 'document' ? '📄' : 
+                               resource.type === 'audio' ? '🎵' :
+                               resource.type === 'image' ? '🖼️' : '📎'}
+                            </span>
+                            <span className="text-sm font-medium bg-white bg-opacity-20 px-2 py-1 rounded">
+                              {resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}
+                            </span>
+                          </div>
+                          <span className="text-xs px-2 py-1 rounded-full font-medium bg-yellow-600">
+                            PENDING
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Resource Content */}
+                      <div className="p-4">
+                        <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{resource.title}</h3>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-3">{resource.description || 'No description'}</p>
+                        
+                        <div className="space-y-2 text-xs text-gray-500">
+                          <div className="flex justify-between">
+                            <span>Course:</span>
+                            <span className="font-medium">{resource.courseId?.title} ({resource.courseId?.level})</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Uploaded by:</span>
+                            <span className="font-medium">{resource.supervisorId?.firstName} {resource.supervisorId?.lastName}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>File:</span>
+                            <span className="font-medium">{resource.fileName}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Size:</span>
+                            <span className="font-medium">{resource.fileSize ? `${Math.round(resource.fileSize / 1024)} KB` : 'N/A'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Category:</span>
+                            <span className="font-medium capitalize">{resource.category}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Uploaded:</span>
+                            <span className="font-medium">{new Date(resource.uploadedAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Resource Actions */}
+                      <div className="border-t border-gray-200 p-4 bg-gray-50">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleApproveResource(resource._id)}
+                            className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                          >
+                            ✅ Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectResource(resource._id)}
+                            className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                          >
+                            ❌ Reject
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Role Approvals Section */}
+        {activeTab === 'approvals' && (
+        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 p-6">
+            <h2 className="text-3xl font-bold text-white flex items-center">
+              Role Approval Requests
+            </h2>
+          </div>
+          <div className="p-6">
+            {loading ? (
+              <div className="text-center py-10">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <p className="mt-2">Loading approval requests...</p>
+              </div>
+            ) : users.filter(u => u.requestedRole && u.requestedRole !== u.role && !u.rejectionReason).length === 0 ? (
+              <div className="text-center py-10">
+                <div className="text-6xl mb-4">✅</div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">No Pending Requests</h3>
+                <p className="text-gray-600">All role requests have been processed!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {users.filter(u => u.requestedRole && u.requestedRole !== u.role && !u.rejectionReason).map((user) => (
+                  <div key={user.id} className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                    {/* Request Header */}
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 text-white">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">👤</span>
+                          <span className="text-sm font-medium bg-white bg-opacity-20 px-2 py-1 rounded">
+                            {user.requestedRole} Request
+                          </span>
+                        </div>
+                        <span className="text-xs bg-yellow-600 px-2 py-1 rounded-full">
+                          PENDING
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* User Info */}
+                    <div className="p-4">
+                      <h3 className="font-bold text-gray-900 mb-2">{user.firstName} {user.lastName}</h3>
+                      <p className="text-sm text-gray-600 mb-3">{user.email}</p>
+                      
+                      <div className="space-y-2 text-xs text-gray-500">
+                        <div className="flex justify-between">
+                          <span>Current Role:</span>
+                          <span className="font-medium text-blue-600">{user.role}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Requested Role:</span>
+                          <span className="font-medium text-purple-600">{user.requestedRole}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Phone:</span>
+                          <span className="font-medium">{user.phone || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Registered:</span>
+                          <span className="font-medium">{new Date(user.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Email Verified:</span>
+                          <span className={`font-medium ${user.isEmailVerified ? 'text-green-600' : 'text-red-600'}`}>
+                            {user.isEmailVerified ? 'Yes' : 'No'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Approval Actions */}
+                    <div className="border-t border-gray-200 p-4 bg-gray-50">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleApproveRole(user.id, user.requestedRole!)}
+                          className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                          disabled={!user.isEmailVerified}
+                        >
+                          <span className="flex items-center justify-center">
+                            Approve
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => handleRejectRole(user.id)}
+                          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                        >
+                          <span className="flex items-center justify-center">
+                            Reject
+                          </span>
+                        </button>
+                      </div>
+                      {!user.isEmailVerified && (
+                        <p className="text-xs text-red-600 mt-2 text-center">Email must be verified before approval</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        )}
+      </div>
+
+      {/* Edit Modal */}
+      {editingUser && (
+        <EditModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onSave={handleUpdateUser}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+            <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
+            <p className="mb-6">Are you sure you want to delete this user? This action cannot be undone.</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 text-gray-600 bg-gray-200 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteUser(deleteConfirm)}
+                className="px-4 py-2 text-white bg-red-600 rounded"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Preview Modal */}
+      <VideoPreviewModal
+        video={selectedVideo}
+        onClose={() => setSelectedVideo(null)}
+        onApprove={handleApproveVideo}
+        onReject={handleRejectVideo}
+      />
+    </div>
+  );
+};
+
+export default AdminDashboard;

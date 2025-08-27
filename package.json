@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.60.0",
+    "mongodb": "^6.18.0",
+    "node-fetch": "^3.3.2"
+  }
+}
