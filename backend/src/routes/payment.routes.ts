@@ -9,7 +9,9 @@ import {
   getPaymentHistory,
   getAllPayments,
   getPaymentStats,
-  clearAllPayments
+  clearAllPayments,
+  initiateMobileBankingPayment,
+  handleMobileBankingCallback
 } from '../controllers/payment.controller';
 import { protect, adminOnly } from '../middleware/auth.middleware';
 
@@ -28,6 +30,16 @@ router.post('/complete', completePayment);
 router.get('/status/:transactionId', getPaymentStatus);
 router.post('/cancel/:transactionId', cancelPayment);
 router.get('/history', getPaymentHistory);
+
+// Mobile Banking routes
+router.post('/mobile-banking/initiate', initiateMobileBankingPayment);
+
+// Public mobile banking callback routes (no auth required)
+router.use('/mobile-banking/callback', (req, res, next) => {
+  // Remove protect middleware for callbacks
+  next();
+});
+router.post('/mobile-banking/callback/:provider', handleMobileBankingCallback);
 
 // Admin routes
 router.get('/admin/all', adminOnly, getAllPayments);

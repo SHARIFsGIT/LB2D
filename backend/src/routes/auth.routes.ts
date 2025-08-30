@@ -1,35 +1,77 @@
 import { Router } from 'express';
 import {
-    forgotPassword,
-    login,
-    logout,
-    refreshToken,
-    register,
-    requestOTP,
-    resendOTP,
-    resetPassword,
-    validateToken,
-    verifyEmail,
-    verifyOTP
+  register,
+  login,
+  logout,
+  verifyEmail,
+  requestOTP,
+  verifyOTP,
+  forgotPassword,
+  resetPassword,
+  refreshToken,
+  validateToken,
+  resendOTP
 } from '../controllers/auth.controller';
-import { protect } from '../middleware/auth.middleware';
+import { authMiddleware } from '../middleware/auth.middleware';
+import {
+  authRateLimit,
+  strictRateLimit,
+  bruteForceProtection,
+  registerRateLimit,
+  clearAllRateLimits,
+  clearRateLimitForIP
+} from '../middleware/security.middleware';
+import {
+  registerValidator,
+  loginValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
+  otpValidator,
+  refreshTokenValidator
+} from '../validators/auth.validator';
 
 const router = Router();
 
-// Public routes
-router.post('/register', register);
-router.post('/login', login);
-router.get('/verify-email', verifyEmail);
-router.post('/request-otp', requestOTP);
-router.post('/verify-otp', verifyOTP);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
-router.post('/refresh-token', refreshToken);
-router.post('/resend-otp', resendOTP);
+// Public routes with rate limiting
+router.post('/register', registerRateLimit, registerValidator, register);
+router.post('/login', authRateLimit, bruteForceProtection({
+  maxAttempts: 50,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  blockDurationMs: 2 * 60 * 1000 // 2 minutes (even shorter for development)
+}), loginValidator, login);
 
+// Email verification
+router.get('/verify-email', verifyEmail);
+
+// Password reset flow
+router.post('/forgot-password', strictRateLimit, forgotPasswordValidator, forgotPassword);
+router.post('/reset-password', strictRateLimit, resetPasswordValidator, resetPassword);
+
+// OTP flow
+router.post('/request-otp', authRateLimit, forgotPasswordValidator, requestOTP);
+router.post('/verify-otp', authRateLimit, otpValidator, verifyOTP);
+router.post('/resend-otp', strictRateLimit, forgotPasswordValidator, resendOTP);
+
+// Token management
+router.post('/refresh-token', authRateLimit, refreshTokenValidator, refreshToken);
+router.get('/validate-token', authMiddleware, validateToken);
 
 // Protected routes
-router.post('/logout', protect, logout);
-router.get('/validate', protect, validateToken);
+router.post('/logout', authMiddleware, logout);
+
+// Development only - Clear rate limits
+if (process.env.NODE_ENV === 'development') {
+  router.post('/dev/clear-rate-limits', (req, res) => {
+    const { ip } = req.body;
+    
+    if (ip) {
+      clearRateLimitForIP(ip);
+      res.json({ success: true, message: `Rate limits cleared for IP: ${ip}` });
+    } else {
+      clearAllRateLimits();
+      res.json({ success: true, message: 'All rate limits cleared' });
+    }
+  });
+}
 
 export default router;

@@ -1721,6 +1721,20 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  // Update courseId when selectedCourse changes
+  useEffect(() => {
+    console.log('🔄 useEffect triggered - selectedCourse changed:', selectedCourse);
+    if (selectedCourse?._id) {
+      console.log('✅ Setting courseId to:', selectedCourse._id);
+      setFormData(prev => ({
+        ...prev,
+        courseId: selectedCourse._id
+      }));
+    } else {
+      console.log('❌ selectedCourse._id is missing');
+    }
+  }, [selectedCourse]);
+
   if (!isOpen) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1755,6 +1769,11 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUploading(true);
+
+    console.log('📝 UploadVideoModal handleSubmit called');
+    console.log('🎯 selectedCourse:', selectedCourse);
+    console.log('📋 formData.courseId:', formData.courseId);
+    console.log('📦 Full formData:', formData);
 
     try {
       if (uploadType === "file" && videoFile) {
@@ -2012,6 +2031,7 @@ const SupervisorDashboard: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [students, setStudents] = useState<Student[]>([]);
+  const [studentProgress, setStudentProgress] = useState<any[]>([]);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [myVideos, setMyVideos] = useState<Video[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -2104,6 +2124,7 @@ const SupervisorDashboard: React.FC = () => {
         fetchMyVideos(),
         fetchCourses(),
         fetchSalaryData(),
+        fetchStudentProgress(),
       ]);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -2153,6 +2174,50 @@ const SupervisorDashboard: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching test results:", error);
+    }
+  };
+
+  // Get progress information for a specific student
+  const getStudentProgressInfo = (studentId: string) => {
+    const studentData = studentProgress.find(sp => sp.student.id === studentId);
+    if (!studentData) return null;
+
+    // Calculate overall progress across all courses
+    const courses = Object.values(studentData.courses);
+    if (courses.length === 0) return null;
+
+    const totalProgress = courses.reduce((sum: number, course: any) => sum + course.overallProgress, 0);
+    const averageProgress = totalProgress / courses.length;
+    const totalVideos = courses.reduce((sum: number, course: any) => sum + course.totalVideos, 0);
+    const completedVideos = courses.reduce((sum: number, course: any) => sum + course.completedVideos, 0);
+
+    return {
+      averageProgress: Math.round(averageProgress),
+      completedVideos,
+      totalVideos,
+      courses: courses
+    };
+  };
+
+  const fetchStudentProgress = async () => {
+    try {
+      const token = sessionStorage.getItem("accessToken");
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/videos/student-progress`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setStudentProgress(data.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching student progress:", error);
     }
   };
 
@@ -2272,6 +2337,9 @@ const SupervisorDashboard: React.FC = () => {
 
   const handleVideoUpload = async (videoData: any) => {
     try {
+      console.log('🎬 handleVideoUpload called with videoData:', videoData);
+      console.log('📋 courseId from videoData:', videoData.courseId);
+      
       let requestOptions: RequestInit;
       
       // Check if this is a file upload or URL upload
@@ -2792,6 +2860,30 @@ const SupervisorDashboard: React.FC = () => {
                             <p className="text-xs text-gray-500 truncate mt-1">
                               {student.email}
                             </p>
+                            {/* Progress Information */}
+                            {(() => {
+                              const progressInfo = getStudentProgressInfo(student._id);
+                              if (!progressInfo) return null;
+                              
+                              return (
+                                <div className="mt-2">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-600">
+                                      {progressInfo.completedVideos}/{progressInfo.totalVideos} videos
+                                    </span>
+                                    <span className="text-blue-600 font-medium">
+                                      {progressInfo.averageProgress}%
+                                    </span>
+                                  </div>
+                                  <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
+                                    <div 
+                                      className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-300"
+                                      style={{ width: `${progressInfo.averageProgress}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>

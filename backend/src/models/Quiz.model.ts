@@ -122,8 +122,9 @@ const quizSchema: Schema = new Schema({
 
 // Calculate total points before saving
 quizSchema.pre('save', function(next) {
-  if (this.questions && this.questions.length > 0) {
-    this.totalPoints = this.questions.reduce((sum, question) => sum + question.points, 0);
+  const questions = this.questions as IQuestion[];
+  if (questions && questions.length > 0) {
+    this.totalPoints = questions.reduce((sum, question) => sum + question.points, 0);
   }
   next();
 });

@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../types/common.types';
 import { calculateScore, getQuestionsForStep, shuffleQuestions, questionPool } from '../data/questionPool';
 import { asyncHandler } from '../middleware/error.middleware';
 import Test from '../models/Test.model';
@@ -8,8 +9,8 @@ import { generateCertificate } from '../utils/certificate.generator';
 import { notifyUser, notifyAdmins, notifySupervisors } from '../services/websocket.service';
 
 // Start a new test or get current test
-export const startTest = asyncHandler(async (req: Request, res: Response): Promise<any> => {
-  const userId = (req as any).userId; // From auth middleware
+export const startTest = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  const userId = req.userId; // From auth middleware
   const { step = 1 } = req.body;
 
   // Check if user has an incomplete test at this step
@@ -50,9 +51,9 @@ export const startTest = asyncHandler(async (req: Request, res: Response): Promi
 });
 
 // Submit test answers
-export const submitTest = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const submitTest = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { testId, answers, totalCompletionTime } = req.body;
-  const userId = (req as any).userId;
+  const userId = req.userId;
 
   // Validate answers is an array
   if (!Array.isArray(answers)) {
@@ -261,8 +262,8 @@ export const submitTest = asyncHandler(async (req: Request, res: Response): Prom
 });
 
 // Get test results
-export const getTestResults = asyncHandler(async (req: Request, res: Response): Promise<any> => {
-  const userId = (req as any).userId;
+export const getTestResults = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  const userId = req.userId;
 
   const tests = await Test.find({ userId, status: 'completed' })
     .sort('-completedAt')
@@ -275,8 +276,8 @@ export const getTestResults = asyncHandler(async (req: Request, res: Response): 
 });
 
 // Get user rankings
-export const getUserRankings = asyncHandler(async (req: Request, res: Response): Promise<any> => {
-  const userId = (req as any).userId;
+export const getUserRankings = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  const userId = req.userId;
 
   try {
     console.log('Getting rankings for userId:', userId);
@@ -353,8 +354,8 @@ export const getUserRankings = asyncHandler(async (req: Request, res: Response):
 });
 
 // Export download certificate
-export const downloadCertificate = asyncHandler(async (req: Request, res: Response): Promise<any> => {
-  const userId = (req as any).userId;
+export const downloadCertificate = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  const userId = req.userId;
   const { testId } = req.params;
 
   const test = await Test.findOne({
@@ -389,8 +390,8 @@ export const downloadCertificate = asyncHandler(async (req: Request, res: Respon
 });
 
 // Get test history for current user
-export const getTestHistory = asyncHandler(async (req: Request, res: Response): Promise<any> => {
-  const userId = (req as any).userId;
+export const getTestHistory = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  const userId = req.userId;
 
   const tests = await Test.find({ userId, status: 'completed' })
     .sort({ completedAt: -1 })
@@ -403,7 +404,7 @@ export const getTestHistory = asyncHandler(async (req: Request, res: Response): 
 });
 
 // Get all test reports for admin analytics
-export const getTestReports = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getTestReports = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   console.log('getTestReports called with query:', req.query);
   console.log('User role:', (req as any).userRole);
   
@@ -538,7 +539,7 @@ export const getTestReports = asyncHandler(async (req: Request, res: Response): 
 });
 
 // Get detailed test report for PDF generation
-export const getTestDetails = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getTestDetails = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { testId } = req.params;
   
   const test = await Test.findById(testId)

@@ -1,6 +1,8 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../types/common.types';
 import Course from '../models/Course.model';
 import Video from '../models/Video.model';
+import VideoProgress from '../models/VideoProgress.model';
 import User from '../models/User.model';
 import emailService from '../services/email.service';
 import { notifyStudents, notifyAdmins, notifySupervisors, notifyUser } from '../services/websocket.service';
@@ -8,10 +10,25 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-interface AuthenticatedRequest extends Request {
-  userId?: string;
-  userRole?: string;
-}
+// Function to convert Google Drive share URL to direct download URL
+const convertGoogleDriveURL = (url: string): string => {
+  console.log('🔍 Processing URL:', url);
+  
+  // Check if it's a Google Drive URL
+  if (url.includes('drive.google.com/file/d/')) {
+    const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (fileIdMatch) {
+      const fileId = fileIdMatch[1];
+      const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+      console.log('✅ Converted Google Drive URL:', directUrl);
+      return directUrl;
+    }
+  }
+  
+  // If not a Google Drive URL or conversion failed, return original
+  console.log('⚠️ URL unchanged:', url);
+  return url;
+};
 
 // Configure multer for video uploads
 const videoStorage = multer.diskStorage({
@@ -97,6 +114,11 @@ export const getCourseVideos = async (req: AuthenticatedRequest, res: Response) 
 
 // Upload video (Admin/Supervisor) - handles both file uploads and URL uploads
 export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
+  console.log('🎬 Video upload request received');
+  console.log('📋 Request body:', req.body);
+  console.log('👤 User info:', { userId: req.userId, userRole: req.userRole });
+  console.log('📁 Has file:', !!(req as any).file);
+
   try {
     const {
       courseId,
@@ -113,27 +135,56 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.userId;
     const userRole = req.userRole;
 
+    console.log('🔍 Extracted data:', {
+      courseId,
+      title,
+      description,
+      videoUrl: videoUrl ? 'provided' : 'not provided',
+      sequenceNumber,
+      userId,
+      userRole
+    });
+
     // Check if user has permission to upload
-    if (!['Admin', 'Supervisor'].includes(userRole!)) {
+    console.log('🔐 Checking user permissions...');
+    if (!userRole || !['Admin', 'Supervisor'].includes(userRole)) {
+      console.log('❌ Permission denied - userRole:', userRole);
       return res.status(403).json({
         success: false,
         message: 'Only Admin and Supervisor can upload videos'
       });
     }
+    console.log('✅ User permission check passed');
 
     // Check if course exists
+    console.log('🔍 Checking if course exists:', courseId);
+    if (!courseId) {
+      console.log('❌ Missing courseId');
+      return res.status(400).json({
+        success: false,
+        message: 'Course ID is required'
+      });
+    }
+
     const course = await Course.findById(courseId);
     if (!course) {
+      console.log('❌ Course not found:', courseId);
       return res.status(404).json({
         success: false,
         message: 'Course not found'
       });
     }
+    console.log('✅ Course found:', course.title);
 
     // Handle file upload vs URL upload
     let finalVideoUrl = videoUrl;
     let finalVideoSize = parseInt(videoSize) || 0;
     let finalVideoFormat = videoFormat || 'mp4';
+    
+    // Convert Google Drive URLs if provided
+    if (videoUrl) {
+      finalVideoUrl = convertGoogleDriveURL(videoUrl);
+    }
 
     // Check if this is a file upload
     const uploadedFile = (req as any).file;
@@ -305,6 +356,15 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
       data: populatedVideo
     });
   } catch (error: any) {
+    console.error('💥 Video upload error occurred:', {
+      message: error.message,
+      stack: error.stack,
+      requestBody: req.body,
+      userId: req.userId,
+      userRole: req.userRole,
+      hasFile: !!(req as any).file
+    });
+
     // Handle specific multer errors
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
@@ -325,7 +385,8 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to upload video',
-      error: error.message
+      error: error.message,
+      details: 'Check server logs for more information'
     });
   }
 };
@@ -700,6 +761,170 @@ export const getAllVideos = async (req: AuthenticatedRequest, res: Response) => 
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch all videos',
+      error: error.message
+    });
+  }
+};
+
+// Get video progress for a course
+export const getCourseVideoProgress = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { courseId } = req.params;
+    const userId = req.userId;
+
+    const progress = await VideoProgress.find({
+      userId,
+      courseId
+    })
+    .populate('videoId', 'title duration sequenceNumber')
+    .sort('videoId.sequenceNumber');
+
+    return res.status(200).json({
+      success: true,
+      data: progress
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch video progress',
+      error: error.message
+    });
+  }
+};
+
+// Update video progress
+export const updateVideoProgress = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { videoId } = req.params;
+    const { progress, watchTime, completed } = req.body;
+    const userId = req.userId;
+
+    // Get video and course information
+    const video = await Video.findById(videoId).populate('courseId');
+    if (!video) {
+      return res.status(404).json({
+        success: false,
+        message: 'Video not found'
+      });
+    }
+
+    const courseId = (video.courseId as any)._id;
+
+    // Update or create progress record
+    const progressData = await VideoProgress.findOneAndUpdate(
+      { userId, videoId },
+      {
+        userId,
+        videoId,
+        courseId,
+        progress: Math.min(Math.max(progress || 0, 0), 100),
+        watchTime: Math.max(watchTime || 0, 0),
+        completed: completed || progress >= 90,
+        lastWatchedAt: new Date(),
+        ...(completed || progress >= 90 ? { completedAt: new Date() } : {})
+      },
+      { 
+        upsert: true, 
+        new: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Video progress updated successfully',
+      data: progressData
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update video progress',
+      error: error.message
+    });
+  }
+};
+
+// Get student progress for supervisor dashboard
+export const getStudentProgressBySupervisor = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const supervisorId = req.userId;
+
+    // Get courses supervised by this supervisor
+    const courses = await Course.find({ supervisor: supervisorId });
+    const courseIds = courses.map(course => course._id);
+
+    // Get all progress for these courses
+    const allProgress = await VideoProgress.find({
+      courseId: { $in: courseIds }
+    })
+    .populate('userId', 'firstName lastName email')
+    .populate('videoId', 'title duration sequenceNumber')
+    .populate('courseId', 'title level')
+    .sort('userId courseId videoId.sequenceNumber');
+
+    // Group progress by student and course
+    const studentProgress: any = {};
+    
+    allProgress.forEach(progress => {
+      const student = progress.userId as any;
+      const course = progress.courseId as any;
+      const studentId = student._id.toString();
+      
+      if (!studentProgress[studentId]) {
+        studentProgress[studentId] = {
+          student: {
+            id: student._id,
+            name: `${student.firstName} ${student.lastName}`,
+            email: student.email
+          },
+          courses: {}
+        };
+      }
+      
+      const courseId = course._id.toString();
+      if (!studentProgress[studentId].courses[courseId]) {
+        studentProgress[studentId].courses[courseId] = {
+          course: {
+            id: course._id,
+            title: course.title,
+            level: course.level
+          },
+          videos: [],
+          overallProgress: 0,
+          completedVideos: 0,
+          totalVideos: 0
+        };
+      }
+      
+      studentProgress[studentId].courses[courseId].videos.push({
+        videoId: (progress.videoId as any)._id,
+        videoTitle: (progress.videoId as any).title,
+        progress: progress.progress,
+        completed: progress.completed,
+        watchTime: progress.watchTime,
+        lastWatchedAt: progress.lastWatchedAt
+      });
+    });
+
+    // Calculate overall progress for each course
+    Object.values(studentProgress).forEach((student: any) => {
+      Object.values(student.courses).forEach((courseData: any) => {
+        const videos = courseData.videos;
+        courseData.totalVideos = videos.length;
+        courseData.completedVideos = videos.filter((v: any) => v.completed).length;
+        courseData.overallProgress = videos.length > 0 ? 
+          videos.reduce((sum: number, v: any) => sum + v.progress, 0) / videos.length : 0;
+      });
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: Object.values(studentProgress)
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch student progress',
       error: error.message
     });
   }

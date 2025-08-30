@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../types/common.types';
 import CourseResource from '../models/CourseResource.model';
 import Course from '../models/Course.model';
 import User from '../models/User.model';
-import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { notifyStudents, notifyAdmins, notifyUser } from '../services/websocket.service';
 import multer from 'multer';
 import path from 'path';

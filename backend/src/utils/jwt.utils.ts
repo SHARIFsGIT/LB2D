@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
 import { IUser } from '../models/User.model';
+import config from '../config/app.config';
 
 interface TokenPayload {
   userId: string;
@@ -18,8 +19,8 @@ export const generateAccessToken = (user: IUser): string => {
 
   return jwt.sign(
     payload, 
-    process.env.JWT_SECRET as string, 
-    { expiresIn: process.env.JWT_EXPIRES_IN || '15m' } as any
+    config.get('JWT_ACCESS_SECRET'), 
+    { expiresIn: config.get('JWT_ACCESS_EXPIRES_IN') } as any
   );
 };
 
@@ -31,19 +32,19 @@ export const generateRefreshToken = (user: IUser): string => {
 
   return jwt.sign(
     payload, 
-    process.env.JWT_SECRET as string,
-    { expiresIn: '7d' } as any
+    config.get('JWT_REFRESH_SECRET'),
+    { expiresIn: config.get('JWT_REFRESH_EXPIRES_IN') } as any
   );
 };
 
 // Verify Access Token
 export const verifyAccessToken = (token: string): TokenPayload => {
-  return jwt.verify(token, process.env.JWT_SECRET as string) as TokenPayload;
+  return jwt.verify(token, config.get('JWT_ACCESS_SECRET')) as TokenPayload;
 };
 
 // Verify Refresh Token
 export const verifyRefreshToken = (token: string): any => {
-  return jwt.verify(token, process.env.JWT_SECRET as string);
+  return jwt.verify(token, config.get('JWT_REFRESH_SECRET'));
 };
 
 // Generate both tokens

@@ -6,6 +6,10 @@ import User from '../models/User.model';
 import PaymentService from '../services/payment.service';
 import stripeService from '../services/stripe.service';
 import emailService from '../services/email.service';
+import mobileBankingService, { MobileBankingPayment } from '../services/mobileBanking.service';
+import logger from '../utils/logger';
+import { ResponseUtil } from '../utils/response.util';
+import { CustomError } from '../middleware/errorHandler.middleware';
 
 interface AuthenticatedRequest extends Request {
   userId?: string;
@@ -15,7 +19,58 @@ interface AuthenticatedRequest extends Request {
 // Get available payment methods
 export const getPaymentMethods = async (req: Request, res: Response) => {
   try {
-    const paymentMethods = PaymentService.getAvailablePaymentMethods();
+    const paymentMethods = [
+      // International payment methods
+      {
+        id: 'stripe_card',
+        name: 'Credit/Debit Card',
+        type: 'international',
+        icon: '/images/card-icon.png',
+        description: 'Pay with Visa, Mastercard, American Express',
+        supported: true
+      },
+      // Bangladeshi mobile banking (temporarily disabled - no API keys)
+      {
+        id: 'bkash',
+        name: 'bKash',
+        type: 'mobile_banking',
+        icon: '/images/bkash-logo.png',
+        description: 'Pay with bKash mobile banking (Coming Soon)',
+        supported: false
+      },
+      {
+        id: 'nagad',
+        name: 'Nagad',
+        type: 'mobile_banking', 
+        icon: '/images/nagad-logo.png',
+        description: 'Pay with Nagad mobile banking (Coming Soon)',
+        supported: false
+      },
+      {
+        id: 'rocket',
+        name: 'Rocket',
+        type: 'mobile_banking',
+        icon: '/images/rocket-logo.png', 
+        description: 'Pay with Dutch-Bangla Rocket (Coming Soon)',
+        supported: false
+      },
+      {
+        id: 'surecash',
+        name: 'SureCash',
+        type: 'mobile_banking',
+        icon: '/images/surecash-logo.png',
+        description: 'Pay with SureCash mobile banking (Coming Soon)',
+        supported: false
+      },
+      {
+        id: 'upay',
+        name: 'Upay',
+        type: 'mobile_banking',
+        icon: '/images/upay-logo.png',
+        description: 'Pay with UCB Upay (Coming Soon)',
+        supported: false
+      }
+    ];
     
     return res.status(200).json({
       success: true,
@@ -585,5 +640,275 @@ export const clearAllPayments = async (req: AuthenticatedRequest, res: Response)
       message: 'Failed to clear payment records',
       error: error.message
     });
+  }
+};
+
+// Initialize Mobile Banking Payment
+export const initiateMobileBankingPayment = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { 
+      courseId,
+      provider, 
+      customerPhone, 
+      customerEmail 
+    } = req.body;
+
+    const userId = req.userId;
+
+    // Validation
+    if (!provider || !courseId || !customerPhone || !userId) {
+      throw new CustomError('Missing required payment fields', 400);
+    }
+
+    if (!['bkash', 'nagad', 'rocket', 'surecash', 'upay'].includes(provider)) {
+      throw new CustomError('Invalid payment provider', 400);
+    }
+
+    // Get user and course info
+    const user = await User.findById(userId);
+    const course = await Course.findById(courseId);
+
+    if (!user || !course) {
+      throw new CustomError('User or course not found', 404);
+    }
+
+    // Check if course is available
+    if (course.status !== 'upcoming') {
+      throw new CustomError('Course is not available for enrollment', 400);
+    }
+
+    // Check if already enrolled
+    const existingEnrollment = await Enrollment.findOne({ userId, courseId });
+    if (existingEnrollment) {
+      throw new CustomError('Already enrolled in this course', 400);
+    }
+
+    // Generate transaction ID
+    const timestamp = Date.now().toString().slice(-6);
+    const userIdShort = userId.toString().slice(-4);
+    const orderId = `MB${timestamp}${userIdShort}`;
+
+    // Create payment record
+    const payment = await Payment.create({
+      userId,
+      courseId,
+      amount: course.price,
+      currency: course.currency || 'BDT',
+      paymentMethod: provider,
+      transactionId: orderId,
+      status: 'pending'
+    });
+
+    // Prepare mobile banking payment
+    const mobileBankingPayment: MobileBankingPayment = {
+      provider: provider as any,
+      amount: course.price,
+      currency: course.currency || 'BDT',
+      orderId,
+      customerPhone,
+      customerEmail: customerEmail || user.email,
+      description: `Payment for ${course.title}`
+    };
+
+    logger.info('Initiating mobile banking payment:', mobileBankingPayment);
+
+    const result = await mobileBankingService.processPayment(mobileBankingPayment);
+
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: 'Mobile banking payment initiated successfully',
+        data: {
+          transactionId: orderId,
+          paymentUrl: result.paymentUrl,
+          provider,
+          course: {
+            id: course._id,
+            title: course.title,
+            price: course.price,
+            currency: course.currency
+          }
+        }
+      });
+    } else {
+      // Update payment status to failed
+      payment.status = 'failed';
+      payment.notes = result.error;
+      await payment.save();
+      
+      throw new CustomError(result.error || 'Payment initialization failed', 400);
+    }
+
+  } catch (error: any) {
+    logger.error('Mobile banking payment error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to initiate mobile banking payment',
+      error: error.message
+    });
+  }
+};
+
+// Handle Mobile Banking Callback
+export const handleMobileBankingCallback = async (req: Request, res: Response) => {
+  try {
+    const { provider } = req.params;
+    const callbackData = req.body;
+
+    logger.info('Mobile banking callback received:', { provider, data: callbackData });
+
+    // Process callback based on provider
+    switch (provider) {
+      case 'bkash':
+        return await handleBkashCallback(req, res);
+      case 'nagad':
+        return await handleNagadCallback(req, res);
+      case 'sslcommerz':
+        return await handleSSLCommerzCallback(req, res);
+      default:
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid callback provider'
+        });
+    }
+
+  } catch (error: any) {
+    logger.error('Mobile banking callback error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Callback processing failed',
+      error: error.message
+    });
+  }
+};
+
+const handleBkashCallback = async (req: Request, res: Response) => {
+  const { paymentID, status, trxID } = req.body;
+
+  if (status === 'success') {
+    const payment = await Payment.findOne({ transactionId: trxID });
+    if (payment) {
+      payment.status = 'completed';
+      payment.paymentGatewayId = paymentID;
+      payment.paymentDate = new Date();
+      await payment.save();
+
+      await createEnrollmentFromPayment(payment);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment verified successfully',
+      data: { paymentID }
+    });
+  } else {
+    return res.status(400).json({
+      success: false,
+      message: 'Payment failed or cancelled'
+    });
+  }
+};
+
+const handleNagadCallback = async (req: Request, res: Response) => {
+  const { payment_ref_id, status, order_id } = req.body;
+
+  if (status === 'Success') {
+    const payment = await Payment.findOne({ transactionId: order_id });
+    if (payment) {
+      payment.status = 'completed';
+      payment.paymentGatewayId = payment_ref_id;
+      payment.paymentDate = new Date();
+      await payment.save();
+
+      await createEnrollmentFromPayment(payment);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment verified successfully',
+      data: { payment_ref_id }
+    });
+  } else {
+    return res.status(400).json({
+      success: false,
+      message: 'Payment failed'
+    });
+  }
+};
+
+const handleSSLCommerzCallback = async (req: Request, res: Response) => {
+  const { status, tran_id, val_id } = req.body;
+
+  if (status === 'VALID') {
+    const payment = await Payment.findOne({ transactionId: tran_id });
+    if (payment) {
+      payment.status = 'completed';
+      payment.paymentGatewayId = val_id;
+      payment.paymentDate = new Date();
+      await payment.save();
+
+      await createEnrollmentFromPayment(payment);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment verified successfully',
+      data: { tran_id, val_id }
+    });
+  } else {
+    return res.status(400).json({
+      success: false,
+      message: 'Payment failed'
+    });
+  }
+};
+
+// Helper function to create enrollment from payment
+const createEnrollmentFromPayment = async (payment: any) => {
+  try {
+    const existingEnrollment = await Enrollment.findOne({
+      userId: payment.userId,
+      courseId: payment.courseId
+    });
+
+    if (!existingEnrollment) {
+      await Enrollment.create({
+        userId: payment.userId,
+        courseId: payment.courseId,
+        paymentId: payment._id,
+        status: 'confirmed',
+        enrollmentDate: new Date()
+      });
+
+      await Course.findByIdAndUpdate(
+        payment.courseId,
+        { $inc: { currentStudents: 1 } }
+      );
+
+      const user = await User.findById(payment.userId);
+      const course = await Course.findById(payment.courseId);
+
+      if (user && course) {
+        await emailService.sendEnrollmentConfirmation(
+          user.email,
+          `${user.firstName} ${user.lastName}`,
+          {
+            title: course.title,
+            level: course.level,
+            startDate: course.startDate,
+            instructor: course.instructor,
+            schedule: course.schedule
+          },
+          {
+            transactionId: payment.transactionId,
+            amount: payment.amount,
+            currency: payment.currency,
+            paymentMethod: payment.paymentMethod
+          }
+        );
+      }
+    }
+  } catch (error) {
+    logger.error('Error creating enrollment:', error);
   }
 };

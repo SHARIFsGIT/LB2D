@@ -44,7 +44,7 @@ const Certificates: React.FC = () => {
     const fetchData = async () => {
       try {
         const token = sessionStorage.getItem('accessToken');
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5005/api';
         
         const response = await fetch(`${apiUrl}/tests/history`, {
           headers: {
@@ -79,7 +79,7 @@ const Certificates: React.FC = () => {
     setDownloadingCert(test._id);
     try {
       const token = sessionStorage.getItem('accessToken');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5005/api';
       const response = await fetch(
         `${apiUrl}/tests/certificate/${test._id}`,
         {

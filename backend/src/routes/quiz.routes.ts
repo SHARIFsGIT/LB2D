@@ -12,7 +12,7 @@ import {
   rejectQuiz,
   getPendingQuizzes
 } from '../controllers/quiz.controller';
-import { protect, restrictTo } from '../middleware/auth.middleware';
+import { protect, authorize } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -20,22 +20,22 @@ const router = Router();
 router.use(protect);
 
 // Supervisor routes
-router.post('/', restrictTo('Supervisor', 'Admin'), createQuiz);
-router.get('/course/:courseId', restrictTo('Supervisor', 'Admin', 'Student'), getCourseQuizzes);
-router.put('/:quizId', restrictTo('Supervisor', 'Admin'), updateQuiz);
-router.patch('/:quizId/submit-approval', restrictTo('Supervisor', 'Admin'), submitQuizForApproval);
-router.delete('/:quizId', restrictTo('Supervisor', 'Admin'), deleteQuiz);
+router.post('/', authorize('Supervisor', 'Admin'), createQuiz);
+router.get('/course/:courseId', authorize('Supervisor', 'Admin', 'Student'), getCourseQuizzes);
+router.put('/:quizId', authorize('Supervisor', 'Admin'), updateQuiz);
+router.patch('/:quizId/submit-approval', authorize('Supervisor', 'Admin'), submitQuizForApproval);
+router.delete('/:quizId', authorize('Supervisor', 'Admin'), deleteQuiz);
 
 // Grading routes
-router.get('/:quizId/attempts', restrictTo('Supervisor', 'Admin'), getQuizAttempts);
-router.put('/attempts/:attemptId/grade', restrictTo('Supervisor', 'Admin'), gradeQuizAttempt);
+router.get('/:quizId/attempts', authorize('Supervisor', 'Admin'), getQuizAttempts);
+router.put('/attempts/:attemptId/grade', authorize('Supervisor', 'Admin'), gradeQuizAttempt);
 
 // Statistics
-router.get('/statistics', restrictTo('Supervisor', 'Admin'), getQuizStatistics);
+router.get('/statistics', authorize('Supervisor', 'Admin'), getQuizStatistics);
 
 // Admin only routes for quiz approval
-router.get('/pending', restrictTo('Admin'), getPendingQuizzes);
-router.put('/:quizId/approve', restrictTo('Admin'), approveQuiz);
-router.put('/:quizId/reject', restrictTo('Admin'), rejectQuiz);
+router.get('/pending', authorize('Admin'), getPendingQuizzes);
+router.put('/:quizId/approve', authorize('Admin'), approveQuiz);
+router.put('/:quizId/reject', authorize('Admin'), rejectQuiz);
 
 export default router;

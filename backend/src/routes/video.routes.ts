@@ -9,7 +9,10 @@ import {
   getMyVideos,
   updateVideo,
   getAllVideos,
-  videoUpload
+  videoUpload,
+  getCourseVideoProgress,
+  updateVideoProgress,
+  getStudentProgressBySupervisor
 } from '../controllers/video.controller';
 import { protect, adminOnly, authorize } from '../middleware/auth.middleware';
 import { Request, Response, NextFunction } from 'express';
@@ -44,6 +47,8 @@ router.use(protect);
 
 // Student routes
 router.get('/course/:courseId', getCourseVideos); // Get approved videos for a course
+router.get('/course/:courseId/progress', getCourseVideoProgress); // Get video progress for a course
+router.put('/:videoId/progress', updateVideoProgress); // Update video watch progress
 
 // Admin/Supervisor routes
 router.get('/my-videos', authorize('Admin', 'Supervisor'), getMyVideos); // Get videos uploaded by current user
@@ -58,5 +63,8 @@ router.put('/:videoId/reject', adminOnly, rejectVideo); // Reject video
 
 // Admin can delete any video, Supervisor can delete own rejected videos
 router.delete('/:videoId', authorize('Admin', 'Supervisor'), deleteVideo);
+
+// Supervisor routes for student progress
+router.get('/student-progress', authorize('Supervisor', 'Admin'), getStudentProgressBySupervisor); // Get student progress for supervisor
 
 export default router;

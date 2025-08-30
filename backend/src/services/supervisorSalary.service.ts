@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import SupervisorSalary from '../models/SupervisorSalary.model';
 import User from '../models/User.model';
 import Course from '../models/Course.model';
@@ -24,7 +25,8 @@ export const createSupervisorSalaryRecord = async (supervisorId: string, courseI
         const newCourseIds = courseIds.filter(id => !existingCourseIds.includes(id));
         
         if (newCourseIds.length > 0) {
-          salaryRecord.assignedCourses.push(...newCourseIds);
+          const objectIdCourses = newCourseIds.map(id => new mongoose.Types.ObjectId(id));
+          salaryRecord.assignedCourses.push(...objectIdCourses);
           await salaryRecord.save();
         }
       }
@@ -35,7 +37,7 @@ export const createSupervisorSalaryRecord = async (supervisorId: string, courseI
     salaryRecord = await SupervisorSalary.create({
       supervisorId,
       monthlySalary: 3000, // Default salary
-      assignedCourses: courseIds,
+      assignedCourses: courseIds.map(id => new mongoose.Types.ObjectId(id)),
       isActive: true
     });
 
@@ -59,7 +61,7 @@ export const updateSupervisorCourseAssignments = async (supervisorId: string, co
     }
 
     // Update assigned courses
-    salaryRecord.assignedCourses = courseIds;
+    salaryRecord.assignedCourses = courseIds.map(id => new mongoose.Types.ObjectId(id));
     await salaryRecord.save();
 
     return salaryRecord;

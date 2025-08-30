@@ -35,7 +35,7 @@ const axiosBaseQuery = ({ baseUrl }: { baseUrl: string }) => async ({
 
 export const api = createApi({
   reducerPath: 'api',
-  baseQuery: axiosBaseQuery({ baseUrl: process.env.REACT_APP_API_URL || 'http://localhost:5000/api' }),
+  baseQuery: axiosBaseQuery({ baseUrl: process.env.REACT_APP_API_URL || 'http://localhost:5005/api' }),
   tagTypes: ['User', 'Test', 'Question', 'Stats', 'Admin'],
   endpoints: (builder) => ({
     // ============= AUTH ENDPOINTS =============

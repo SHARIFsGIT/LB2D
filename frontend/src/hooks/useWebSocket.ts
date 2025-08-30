@@ -54,7 +54,7 @@ export const useWebSocket = (options: WebSocketHookOptions = {}) => {
     }
 
     try {
-      const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:5000';
+      const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:5005';
       
       wsRef.current = new WebSocket(wsUrl);
 

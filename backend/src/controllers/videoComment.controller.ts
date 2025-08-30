@@ -1,15 +1,11 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../types/common.types';
 import mongoose from 'mongoose';
 import VideoComment from '../models/VideoComment.model';
 import Video from '../models/Video.model';
 import User from '../models/User.model';
 import Course from '../models/Course.model';
 import { notifyAdmins, notifySupervisors, notifyUser } from '../services/websocket.service';
-
-interface AuthenticatedRequest extends Request {
-  userId?: string;
-  userRole?: string;
-}
 
 // Get comments for a video
 export const getVideoComments = async (req: AuthenticatedRequest, res: Response) => {

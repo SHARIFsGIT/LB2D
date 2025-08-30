@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Button from '../components/common/Button';
-import Card from '../components/common/Card';
-import Input from '../components/common/Input';
 import Modal from '../components/common/Modal';
 import { useCurrency } from '../hooks/useCurrency';
 import StripeWrapper from '../components/payment/StripeWrapper';

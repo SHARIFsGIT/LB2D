@@ -26,7 +26,7 @@ import {
   initializeSupervisorSalaries,
   getMySalaryData
 } from '../controllers/analytics.controller';
-import { protect, restrictTo } from '../middleware/auth.middleware';
+import { protect, authorize } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -34,36 +34,36 @@ const router = Router();
 router.use(protect);
 
 // Admin only routes
-router.get('/tests', restrictTo('Admin'), getTestAnalytics);
-router.get('/users/:userId', restrictTo('Admin'), getUserProgressAnalytics);
-router.get('/competencies', restrictTo('Admin'), getCompetencyAnalytics);
-router.get('/student-payments', restrictTo('Admin'), getStudentPaymentAnalytics);
-router.get('/student-results', restrictTo('Admin'), getStudentResultsAnalytics);
-router.get('/student-certificates', restrictTo('Admin'), getStudentCertificatesAnalytics);
-router.get('/student-progress', restrictTo('Admin'), getStudentProgressAnalytics);
-router.get('/recent-students', restrictTo('Admin'), getRecentStudentsAnalytics);
-router.get('/student/:studentId', restrictTo('Admin'), getIndividualStudentAnalytics);
-router.get('/supervisor-salary', restrictTo('Admin'), getSupervisorSalaryAnalytics);
-router.get('/supervisor-videos', restrictTo('Admin'), getSupervisorVideoAnalytics);
+router.get('/tests', authorize('Admin'), getTestAnalytics);
+router.get('/users/:userId', authorize('Admin'), getUserProgressAnalytics);
+router.get('/competencies', authorize('Admin'), getCompetencyAnalytics);
+router.get('/student-payments', authorize('Admin'), getStudentPaymentAnalytics);
+router.get('/student-results', authorize('Admin'), getStudentResultsAnalytics);
+router.get('/student-certificates', authorize('Admin'), getStudentCertificatesAnalytics);
+router.get('/student-progress', authorize('Admin'), getStudentProgressAnalytics);
+router.get('/recent-students', authorize('Admin'), getRecentStudentsAnalytics);
+router.get('/student/:studentId', authorize('Admin'), getIndividualStudentAnalytics);
+router.get('/supervisor-salary', authorize('Admin'), getSupervisorSalaryAnalytics);
+router.get('/supervisor-videos', authorize('Admin'), getSupervisorVideoAnalytics);
 
 // Supervisor accessible routes
-router.get('/supervisor-students/:supervisorId', restrictTo('Admin', 'Supervisor'), getSupervisorStudentAnalytics);
-router.get('/my-salary', restrictTo('Supervisor'), getMySalaryData);
+router.get('/supervisor-students/:supervisorId', authorize('Admin', 'Supervisor'), getSupervisorStudentAnalytics);
+router.get('/my-salary', authorize('Supervisor'), getMySalaryData);
 
 // Supervisor salary management routes (Admin only)
-router.put('/supervisor-salary', restrictTo('Admin'), updateSupervisorSalary);
-router.post('/supervisor-payment', restrictTo('Admin'), markSupervisorPayment);
-router.patch('/supervisor-salary-payment', restrictTo('Admin'), toggleSupervisorSalaryPayment);
-router.post('/initialize-supervisor-salaries', restrictTo('Admin'), initializeSupervisorSalaries);
+router.put('/supervisor-salary', authorize('Admin'), updateSupervisorSalary);
+router.post('/supervisor-payment', authorize('Admin'), markSupervisorPayment);
+router.patch('/supervisor-salary-payment', authorize('Admin'), toggleSupervisorSalaryPayment);
+router.post('/initialize-supervisor-salaries', authorize('Admin'), initializeSupervisorSalaries);
 
 // Data clearing routes (Admin only)
-router.delete('/clear-payment-data', restrictTo('Admin'), clearPaymentAnalyticsData);
-router.delete('/clear-test-data', restrictTo('Admin'), clearTestAnalyticsData);
-router.delete('/clear-supervisor-salary', restrictTo('Admin'), clearSupervisorSalaryData);
-router.delete('/clear-video-analytics', restrictTo('Admin'), clearVideoAnalyticsData);
-router.delete('/clear-user-management', restrictTo('Admin'), clearUserManagementData);
-router.delete('/clear-video-management', restrictTo('Admin'), clearVideoManagementData);
-router.delete('/clear-quiz-management', restrictTo('Admin'), clearQuizManagementData);
-router.delete('/clear-resource-management', restrictTo('Admin'), clearResourceManagementData);
+router.delete('/clear-payment-data', authorize('Admin'), clearPaymentAnalyticsData);
+router.delete('/clear-test-data', authorize('Admin'), clearTestAnalyticsData);
+router.delete('/clear-supervisor-salary', authorize('Admin'), clearSupervisorSalaryData);
+router.delete('/clear-video-analytics', authorize('Admin'), clearVideoAnalyticsData);
+router.delete('/clear-user-management', authorize('Admin'), clearUserManagementData);
+router.delete('/clear-video-management', authorize('Admin'), clearVideoManagementData);
+router.delete('/clear-quiz-management', authorize('Admin'), clearQuizManagementData);
+router.delete('/clear-resource-management', authorize('Admin'), clearResourceManagementData);
 
 export default router;

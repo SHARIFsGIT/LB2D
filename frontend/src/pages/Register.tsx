@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRegisterMutation } from '../store/api/apiSlice';
-import { setCredentials } from '../store/slices/authSlice';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -19,7 +17,6 @@ const Register: React.FC = () => {
   const [error, setError] = useState('');
   
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const [register, { isLoading }] = useRegisterMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,7 +43,27 @@ const Register: React.FC = () => {
         navigate('/registration-success');
       }
     } catch (err: any) {
-      setError(err.data?.message || 'Registration failed');
+      console.log('Registration error:', err);
+      
+      // Check for detailed validation errors
+      if (err.data?.errors) {
+        // Check if there's a password error to show requirements
+        const hasPasswordError = err.data.errors.password;
+        
+        if (hasPasswordError) {
+          setError('PASSWORD_REQUIREMENTS');
+        } else {
+          // Format other validation errors nicely
+          const errorMessages = Object.entries(err.data.errors).map(([field, message]) => 
+            `${field}: ${message}`
+          ).join('\n');
+          setError(errorMessages);
+        }
+      } else if (err.data?.message) {
+        setError(err.data.message);
+      } else {
+        setError('Registration failed');
+      }
     }
   };
 
@@ -73,11 +90,41 @@ const Register: React.FC = () => {
         </div>
         
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 backdrop-blur-sm">
-            <div className="flex items-center">
-              <span className="mr-2">⚠️</span>
-              {error}
-            </div>
+          <div className="bg-red-50 border border-red-200 rounded-xl mb-6 backdrop-blur-sm">
+            {error === 'PASSWORD_REQUIREMENTS' ? (
+              <div className="px-4 py-3">
+                <h3 className="text-sm font-semibold text-red-900 mb-2">Password Requirements Not Met</h3>
+                <p className="text-xs text-red-800 mb-3">Your password must include all of the following:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center px-2 py-1.5 bg-red-100 rounded text-xs font-medium text-red-800">
+                    At least 8 characters
+                  </div>
+                  <div className="flex items-center px-2 py-1.5 bg-red-100 rounded text-xs font-medium text-red-800">
+                    One uppercase letter (A-Z)
+                  </div>
+                  <div className="flex items-center px-2 py-1.5 bg-red-100 rounded text-xs font-medium text-red-800">
+                    One lowercase letter (a-z)
+                  </div>
+                  <div className="flex items-center px-2 py-1.5 bg-red-100 rounded text-xs font-medium text-red-800">
+                    One number (0-9)
+                  </div>
+                  <div className="col-span-2 flex items-center justify-center px-2 py-1.5 bg-red-100 rounded text-xs font-medium text-red-800">
+                    One special character (@$!%*?&)
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start px-5 py-4">
+                <span className="mr-2 mt-1">⚠️</span>
+                <div className="flex-1">
+                  {error.split('\n').map((line, index) => (
+                    <div key={index} className={index > 0 ? 'mt-2' : ''}>
+                      <span className="text-red-800">{line}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
         

@@ -40,6 +40,11 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials: (state, action: PayloadAction<{ user: User; token: string }>) => {
+      console.log('🔧 AuthSlice - Setting credentials:', {
+        user: action.payload.user,
+        token: action.payload.token ? 'TOKEN_PROVIDED' : 'NO_TOKEN'
+      });
+      
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
@@ -48,6 +53,8 @@ const authSlice = createSlice({
       // Store in sessionStorage with standard keys
       sessionStorage.setItem('accessToken', action.payload.token);
       sessionStorage.setItem('user', JSON.stringify(action.payload.user));
+      
+      console.log('💾 AuthSlice - Credentials saved to sessionStorage');
     },
     
     logout: (state) => {

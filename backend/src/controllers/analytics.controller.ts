@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../types/common.types';
 import { asyncHandler } from '../middleware/error.middleware';
 import mongoose from 'mongoose';
 import Test from '../models/Test.model';
@@ -18,7 +19,7 @@ import { initializeExistingSupervisors } from '../services/supervisorSalary.serv
  * Get comprehensive test analytics for admin dashboard
  * Provides insights into test performance, user progress, and certification levels
  */
-export const getTestAnalytics = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getTestAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { startDate, endDate, userId, step } = req.query;
   
   // Build filter object for date range and specific filters
@@ -236,7 +237,7 @@ export const getTestAnalytics = asyncHandler(async (req: Request, res: Response)
 /**
  * Get detailed user progress analytics
  */
-export const getUserProgressAnalytics = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getUserProgressAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { userId } = req.params;
   
   // Get user details
@@ -293,7 +294,7 @@ export const getUserProgressAnalytics = asyncHandler(async (req: Request, res: R
 /**
  * Get competency-wise performance analytics
  */
-export const getCompetencyAnalytics = asyncHandler(async (_req: Request, res: Response): Promise<any> => {
+export const getCompetencyAnalytics = asyncHandler(async (_req: AuthenticatedRequest, res: Response): Promise<any> => {
   // This would require tracking responses at question level
   // For now, returning mock data structure
   const competencyPerformance = [
@@ -326,7 +327,7 @@ export const getCompetencyAnalytics = asyncHandler(async (_req: Request, res: Re
 /**
  * Get student payment analytics
  */
-export const getStudentPaymentAnalytics = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getStudentPaymentAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { timeRange } = req.query;
   
   // Calculate date filter based on time range
@@ -436,7 +437,7 @@ export const getStudentPaymentAnalytics = asyncHandler(async (req: Request, res:
 /**
  * Get comprehensive student analytics with advanced metrics
  */
-export const getStudentResultsAnalytics = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getStudentResultsAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { timeRange } = req.query;
   
   const getDateFilter = (range: string) => {
@@ -743,7 +744,7 @@ export const getStudentResultsAnalytics = asyncHandler(async (req: Request, res:
 /**
  * Get student certificates analytics
  */
-export const getStudentCertificatesAnalytics = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getStudentCertificatesAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { timeRange } = req.query;
   
   const getDateFilter = (range: string) => {
@@ -819,7 +820,7 @@ export const getStudentCertificatesAnalytics = asyncHandler(async (req: Request,
 /**
  * Get supervisor salary analytics
  */
-export const getSupervisorSalaryAnalytics = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getSupervisorSalaryAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   // Get all supervisors
   const supervisors = await User.find({ role: 'Supervisor' })
     .select('firstName lastName email isActive createdAt');
@@ -844,6 +845,7 @@ export const getSupervisorSalaryAnalytics = asyncHandler(async (req: Request, re
   
   // Group courses by supervisor
   coursesForSupervisors.forEach(course => {
+    if (!course.supervisor) return;
     const supervisorId = course.supervisor.toString();
     if (!assignedCoursesMap.has(supervisorId)) {
       assignedCoursesMap.set(supervisorId, []);
@@ -922,7 +924,7 @@ export const getSupervisorSalaryAnalytics = asyncHandler(async (req: Request, re
 /**
  * Get detailed student learning progress analytics
  */
-export const getStudentProgressAnalytics = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getStudentProgressAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { timeRange, level, status } = req.query;
   
   const getDateFilter = (range: string) => {
@@ -1129,119 +1131,100 @@ export const getStudentProgressAnalytics = asyncHandler(async (req: Request, res
 /**
  * Get recent students analytics for admin dashboard
  */
-export const getRecentStudentsAnalytics = asyncHandler(async (req: Request, res: Response): Promise<any> => {
-  const { timeRange, limit } = req.query;
-  
-  const getDateFilter = (range: string) => {
-    const now = new Date();
-    switch (range) {
-      case 'day':
-        return new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      case 'week':
-        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      case 'month':
-        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      case 'year':
-        return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-      default:
-        return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000); // Default to 1 year for better visibility
-    }
-  };
+export const getRecentStudentsAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  try {
+    const { timeRange, limit } = req.query;
+    const limitValue = parseInt(limit as string) || 20;
 
-  const dateFilter = timeRange ? getDateFilter(timeRange as string) : getDateFilter('year');
-  const limitValue = parseInt(limit as string) || 20;
-
-  console.log(`Recent students analytics - Time range: ${timeRange || 'year'}, Date filter: ${dateFilter}, Limit: ${limitValue}`);
-
-  // Get recent students based on enrollment date (including all confirmed and active enrollments)
-  const recentEnrollments = await Enrollment.find({
-    enrollmentDate: { $gte: dateFilter },
-    status: { $in: ['confirmed', 'active', 'completed'] }
-  })
-  .populate('userId', 'firstName lastName email profilePhoto isActive isEmailVerified createdAt')
-  .populate('courseId', 'title level')
-  .sort('-enrollmentDate')
-  .limit(limitValue);
-
-  console.log(`Found ${recentEnrollments.length} recent enrollments within date range`);
-
-  // Also get a broader view for debugging - get last 10 enrollments regardless of date
-  const allRecentEnrollments = await Enrollment.find({
-    status: { $in: ['confirmed', 'active', 'completed'] }
-  })
-  .populate('userId', 'firstName lastName email profilePhoto isActive isEmailVerified createdAt')
-  .populate('courseId', 'title level')
-  .sort('-enrollmentDate')
-  .limit(10);
-
-  console.log(`Total recent confirmed enrollments (last 10): ${allRecentEnrollments.length}`);
-  if (allRecentEnrollments.length > 0) {
-    console.log(`Latest enrollment date: ${allRecentEnrollments[0].enrollmentDate}, Status: ${allRecentEnrollments[0].status}`);
-  }
-
-  // Get total student counts
-  const totalStudents = await User.countDocuments({ role: 'Student' });
-  const activeStudents = await User.countDocuments({ role: 'Student', isActive: true });
-  
-  // Get new students this month
-  const thisMonth = new Date();
-  thisMonth.setDate(1);
-  thisMonth.setHours(0, 0, 0, 0);
-  const newStudentsThisMonth = await User.countDocuments({
-    role: 'Student',
-    createdAt: { $gte: thisMonth }
-  });
-
-  // If no students found within the time range, use the broader query as fallback
-  const finalEnrollments = recentEnrollments.length > 0 ? recentEnrollments : allRecentEnrollments;
-  
-  // Format the students data
-  const students = finalEnrollments.map(enrollment => {
-    const student = enrollment.userId as any;
-    const course = enrollment.courseId as any;
+    // Get total student counts
+    const totalStudents = await User.countDocuments({ role: 'Student' });
+    const activeStudents = await User.countDocuments({ role: 'Student', isActive: true });
     
-    return {
-      id: student._id,
-      firstName: student.firstName,
-      lastName: student.lastName,
-      name: `${student.firstName} ${student.lastName}`,
-      email: student.email,
-      profilePhoto: student.profilePhoto,
-      isActive: student.isActive,
-      emailVerified: student.isEmailVerified || false,
-      createdAt: student.createdAt,
-      registrationDate: student.createdAt,
-      enrollmentDate: enrollment.enrollmentDate,
-      enrollmentStatus: enrollment.status,
-      course: {
-        id: course._id,
-        title: course.title,
-        level: course.level
-      },
-      status: student.isActive ? 'Active' : 'Inactive'
-    };
-  });
+    // Get new students this month
+    const thisMonth = new Date();
+    thisMonth.setDate(1);
+    thisMonth.setHours(0, 0, 0, 0);
+    const newStudentsThisMonth = await User.countDocuments({
+      role: 'Student',
+      createdAt: { $gte: thisMonth }
+    });
 
-  console.log(`Recent students query - Found ${recentEnrollments.length} enrollments in date range, using ${finalEnrollments.length} enrollments, returning ${students.length} students`);
-  
-  return res.status(200).json({
-    success: true,
-    data: {
-      students,
-      totalStudents,
-      activeStudents,
-      newStudentsThisMonth,
-      timeRange: timeRange || 'year',
-      recordsReturned: students.length,
-      usedFallback: recentEnrollments.length === 0
-    }
-  });
+    // Get all students and their enrollment data
+    const allStudents = await User.find({ role: 'Student' })
+      .sort('-createdAt')
+      .limit(limitValue);
+
+    // For each student, get their enrollment and course info
+    const studentsWithEnrollments = await Promise.all(
+      allStudents.map(async (student) => {
+        // Find the most recent enrollment for this student
+        const enrollment = await Enrollment.findOne({ userId: student._id })
+          .populate('courseId', 'title level supervisor')
+          .populate({
+            path: 'courseId',
+            populate: {
+              path: 'supervisor',
+              select: 'firstName lastName email'
+            }
+          })
+          .sort('-enrollmentDate');
+
+        return {
+          id: student._id,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          name: `${student.firstName} ${student.lastName}`,
+          email: student.email,
+          phone: student.phone || 'No phone',
+          profilePhoto: student.profilePhoto,
+          isActive: student.isActive,
+          emailVerified: student.isEmailVerified || false,
+          createdAt: student.createdAt,
+          registrationDate: student.createdAt,
+          enrollmentDate: enrollment?.enrollmentDate || student.createdAt,
+          enrollmentStatus: enrollment?.status || 'registered',
+          course: enrollment?.courseId ? {
+            id: (enrollment.courseId as any)._id,
+            title: (enrollment.courseId as any).title,
+            level: (enrollment.courseId as any).level
+          } : null,
+          supervisor: enrollment?.courseId?.supervisor ? {
+            id: (enrollment.courseId.supervisor as any)._id,
+            firstName: (enrollment.courseId.supervisor as any).firstName,
+            lastName: (enrollment.courseId.supervisor as any).lastName,
+            name: `${(enrollment.courseId.supervisor as any).firstName} ${(enrollment.courseId.supervisor as any).lastName}`,
+            email: (enrollment.courseId.supervisor as any).email
+          } : null,
+          status: student.isActive ? 'Active' : 'Inactive'
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        students: studentsWithEnrollments,
+        totalStudents,
+        activeStudents,
+        newStudentsThisMonth,
+        timeRange: timeRange || 'year',
+        recordsReturned: studentsWithEnrollments.length
+      }
+    });
+  } catch (error: any) {
+    console.error('Analytics error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch student analytics',
+      error: error.message
+    });
+  }
 });
 
 /**
  * Get individual student detailed analytics
  */
-export const getIndividualStudentAnalytics = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getIndividualStudentAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { studentId } = req.params;
   
   // Get user details
@@ -1317,16 +1300,18 @@ export const getIndividualStudentAnalytics = asyncHandler(async (req: Request, r
   const competencyAnalysis: { [key: string]: any } = {};
   completedTests.forEach(test => {
     test.questions?.forEach(q => {
-      if (!competencyAnalysis[q.competency || 'Unknown']) {
-        competencyAnalysis[q.competency || 'Unknown'] = {
+      const question = q as any; // Type assertion for aggregated question data
+      const competency = question.competency || 'Unknown';
+      if (!competencyAnalysis[competency]) {
+        competencyAnalysis[competency] = {
           total: 0,
           correct: 0,
           totalTime: 0
         };
       }
-      competencyAnalysis[q.competency || 'Unknown'].total++;
-      if (q.isCorrect) competencyAnalysis[q.competency || 'Unknown'].correct++;
-      competencyAnalysis[q.competency || 'Unknown'].totalTime += q.timeSpent || 0;
+      competencyAnalysis[competency].total++;
+      if (question.isCorrect) competencyAnalysis[competency].correct++;
+      competencyAnalysis[competency].totalTime += question.timeSpent || 0;
     });
   });
 
@@ -1376,10 +1361,17 @@ export const getIndividualStudentAnalytics = asyncHandler(async (req: Request, r
 /**
  * Get supervisor student analytics with enrollment, progress, results and attendance
  */
-export const getSupervisorStudentAnalytics = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getSupervisorStudentAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { supervisorId } = req.params;
   
   // Get enrollments for courses where this supervisor is assigned
+  if (!mongoose.connection.db) {
+    return res.status(500).json({
+      success: false,
+      message: 'Database connection not available'
+    });
+  }
+  
   const enrollments = await mongoose.connection.db.collection('enrollments').aggregate([
     {
       $lookup: {
@@ -1526,7 +1518,7 @@ export const getSupervisorStudentAnalytics = asyncHandler(async (req: Request, r
 /**
  * Clear payment and revenue analytics data
  */
-export const clearPaymentAnalyticsData = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const clearPaymentAnalyticsData = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { confirmClear } = req.body;
   
   if (!confirmClear) {
@@ -1551,7 +1543,7 @@ export const clearPaymentAnalyticsData = asyncHandler(async (req: Request, res: 
 /**
  * Clear test analytics data
  */
-export const clearTestAnalyticsData = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const clearTestAnalyticsData = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { confirmClear } = req.body;
   
   if (!confirmClear) {
@@ -1573,7 +1565,7 @@ export const clearTestAnalyticsData = asyncHandler(async (req: Request, res: Res
   });
 });
 
-export const getSupervisorVideoAnalytics = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getSupervisorVideoAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { timeRange } = req.query;
   
   const getDateFilter = (range: string) => {
@@ -1660,9 +1652,35 @@ export const getSupervisorVideoAnalytics = asyncHandler(async (req: Request, res
     },
     { $unwind: '$user' },
     {
+      $lookup: {
+        from: 'courses',
+        localField: '_id',
+        foreignField: 'supervisor',
+        as: 'assignedCourses'
+      }
+    },
+    {
       $project: {
+        firstName: '$user.firstName',
+        lastName: '$user.lastName',
         name: { $concat: ['$user.firstName', ' ', '$user.lastName'] },
         email: '$user.email',
+        phone: '$user.phone',
+        phoneNumber: '$user.phoneNumber',
+        createdAt: '$user.createdAt',
+        joinedAt: '$user.createdAt',
+        assignedCourses: {
+          $map: {
+            input: '$assignedCourses',
+            as: 'course',
+            in: {
+              id: '$$course._id',
+              title: '$$course.title',
+              level: '$$course.level'
+            }
+          }
+        },
+        totalCourses: { $size: '$assignedCourses' },
         totalVideos: 1,
         approvedVideos: 1,
         totalDuration: { $divide: ['$totalDuration', 3600] }, // Convert to hours
@@ -1723,7 +1741,7 @@ export const getSupervisorVideoAnalytics = asyncHandler(async (req: Request, res
 /**
  * Clear supervisor salary analytics data
  */
-export const clearSupervisorSalaryData = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const clearSupervisorSalaryData = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   // Clear all supervisor salary records
   const deletedRecords = await SupervisorSalary.deleteMany({});
   
@@ -1739,7 +1757,7 @@ export const clearSupervisorSalaryData = asyncHandler(async (req: Request, res: 
 /**
  * Clear video analytics data
  */
-export const clearVideoAnalyticsData = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const clearVideoAnalyticsData = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   // Clear video-related analytics data
   // Note: This clears the actual video records, which contain the analytics data
   const deletedVideos = await Video.deleteMany({});
@@ -1756,7 +1774,7 @@ export const clearVideoAnalyticsData = asyncHandler(async (req: Request, res: Re
 /**
  * Clear user management data
  */
-export const clearUserManagementData = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const clearUserManagementData = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   // Clear user activity logs and management-related data
   // Keep admin users but clear regular users and their related data
   const deletedUsers = await User.deleteMany({ role: { $ne: 'Admin' } });
@@ -1780,7 +1798,7 @@ export const clearUserManagementData = asyncHandler(async (req: Request, res: Re
 /**
  * Clear video management data
  */
-export const clearVideoManagementData = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const clearVideoManagementData = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   // Clear video management data including videos, comments, and related metadata
   const deletedVideos = await Video.deleteMany({});
   const deletedComments = await VideoComment.deleteMany({});
@@ -1798,7 +1816,7 @@ export const clearVideoManagementData = asyncHandler(async (req: Request, res: R
 /**
  * Clear quiz management data
  */
-export const clearQuizManagementData = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const clearQuizManagementData = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   // Clear quiz management data including quizzes, attempts, and related metadata
   const deletedQuizzes = await Quiz.deleteMany({});
   const deletedAttempts = await QuizAttempt.deleteMany({});
@@ -1816,7 +1834,7 @@ export const clearQuizManagementData = asyncHandler(async (req: Request, res: Re
 /**
  * Clear resource management data
  */
-export const clearResourceManagementData = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const clearResourceManagementData = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   // Clear resource management data including documents, audio files, and related metadata
   const deletedResources = await CourseResource.deleteMany({});
   
@@ -1832,7 +1850,7 @@ export const clearResourceManagementData = asyncHandler(async (req: Request, res
 /**
  * Create or update supervisor salary record
  */
-export const updateSupervisorSalary = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const updateSupervisorSalary = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { supervisorId, monthlySalary, assignedCourses } = req.body;
 
   if (!supervisorId || !monthlySalary) {
@@ -1877,7 +1895,7 @@ export const updateSupervisorSalary = asyncHandler(async (req: Request, res: Res
 /**
  * Toggle supervisor monthly payment status
  */
-export const toggleSupervisorSalaryPayment = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const toggleSupervisorSalaryPayment = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { supervisorId, monthIndex, paid } = req.body;
   const currentYear = new Date().getFullYear();
   const month = monthIndex + 1; // Convert 0-based index to 1-based month
@@ -1933,7 +1951,7 @@ export const toggleSupervisorSalaryPayment = asyncHandler(async (req: Request, r
 /**
  * Mark supervisor payment as paid
  */
-export const markSupervisorPayment = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const markSupervisorPayment = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const { supervisorId, month, year, paymentMethod } = req.body;
 
   if (!supervisorId || !month || !year) {
@@ -1985,7 +2003,7 @@ export const markSupervisorPayment = asyncHandler(async (req: Request, res: Resp
 /**
  * Initialize salary records for existing supervisors
  */
-export const initializeSupervisorSalaries = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const initializeSupervisorSalaries = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   try {
     const results = await initializeExistingSupervisors();
     
@@ -2014,7 +2032,7 @@ export const initializeSupervisorSalaries = asyncHandler(async (req: Request, re
 /**
  * Get current supervisor's salary data
  */
-export const getMySalaryData = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+export const getMySalaryData = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   const supervisorId = req.user?.id;
   
   if (!supervisorId) {

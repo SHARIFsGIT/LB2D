@@ -48,7 +48,8 @@ const videoSchema: Schema = new Schema({
   duration: {
     type: Number,
     required: [true, 'Video duration is required'],
-    min: [1, 'Duration must be at least 1 second']
+    min: [0, 'Duration cannot be negative'],
+    default: 0
   },
   sequenceNumber: {
     type: Number,

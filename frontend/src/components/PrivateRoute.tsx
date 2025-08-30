@@ -16,13 +16,14 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, adminOnly = false
   const { isAuthenticated, user, isLoading } = authState;
   
   // Debug logging
-  console.log('PrivateRoute - Auth state:', {
+  console.log('🛡️ PrivateRoute - Auth state:', {
     isAuthenticated,
     userRole: user?.role,
     isLoading,
     adminOnly,
     supervisorOnly,
-    path: location.pathname
+    path: location.pathname,
+    user: user ? { id: user.id, email: user.email, role: user.role } : null
   });
 
   // Show loading spinner

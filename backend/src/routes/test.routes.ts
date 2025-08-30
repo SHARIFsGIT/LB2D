@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { AuthenticatedRequest } from '../types/common.types';
 import {
     downloadCertificate,
     getTestResults,
@@ -24,9 +25,16 @@ router.get('/history', getTestHistory);
 router.get('/rankings', getUserRankings);
 
 // Test notification endpoint
-router.post('/test-notification', async (req, res) => {
+router.post('/test-notification', async (req: AuthenticatedRequest, res) => {
   try {
-    const { userId } = req.user as any;
+    const userId = req.userId;
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID not found'
+      });
+    }
     
     await notifyUser(userId, {
       type: 'general',

@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { NotificationData, useWebSocket } from '../hooks/useWebSocket';
+import { updateUser, logout } from '../store/slices/authSlice';
+import { RootState } from '../store/store';
 
 interface User {
   id: string;
@@ -550,6 +553,8 @@ const EditModal: React.FC<EditModalProps> = ({ user, onClose, onSave }) => {
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const currentUser = useSelector((state: RootState) => state.auth.user);
   const [users, setUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -584,6 +589,44 @@ const AdminDashboard: React.FC = () => {
   // Handle real-time notifications for admin dashboard updates
   const handleAdminNotification = useCallback((notification: NotificationData) => {
     console.log('🔔 Admin Dashboard received notification:', notification);
+    
+    // Check if this notification is about the current user's role change
+    if (notification.type === 'admin' && notification.data?.userId && currentUser?.id === notification.data.userId) {
+      if (notification.title?.includes('Role Approved') || notification.title?.includes('Role Changed')) {
+        console.log('🔄 Current user role change detected via WebSocket');
+        
+        // Refresh current user data from server
+        const refreshUserData = async () => {
+          try {
+            const validateResponse = await fetch(`${process.env.REACT_APP_API_URL}/auth/validate-token`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (validateResponse.ok) {
+              const validateData = await validateResponse.json();
+              if (validateData.success && validateData.data && validateData.data.user) {
+                console.log('✅ Refreshing user data after role change:', validateData.data.user);
+                dispatch(updateUser(validateData.data.user));
+                
+                // Show notification about role change
+                if (notification.data?.newRole) {
+                  alert(`Your role has been updated to ${notification.data.newRole}. Please refresh the page to see the new interface.`);
+                } else if (notification.title?.includes('Role Approved')) {
+                  alert(`Your role request has been approved! Please refresh the page to see the new interface.`);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error refreshing user data after role change:', error);
+          }
+        };
+        
+        refreshUserData();
+      }
+    }
     
     // Add to real-time updates list
     setRealTimeUpdates(prev => [notification, ...prev.slice(0, 9)]); // Keep last 10
@@ -674,7 +717,7 @@ const AdminDashboard: React.FC = () => {
     
     // Show console log for debugging specific notification types
     console.log(`📊 Admin Dashboard refreshing data for: ${notification.type} - ${notification.title}`);
-  }, [activeTab]);
+  }, [activeTab, token, currentUser, dispatch]);
 
   // WebSocket connection for admin dashboard
   const { isConnected, subscribe } = useWebSocket({
@@ -789,16 +832,17 @@ const AdminDashboard: React.FC = () => {
     }
   }, [currentPage, activeTab]);
 
+  // Periodic updates disabled to prevent automatic page refresh
   // Set up periodic update for video, quiz, and resource counts
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchVideoCount();
-      fetchQuizCount();
-      fetchResourceCount();
-    }, 30000); // Update every 30 seconds
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     fetchVideoCount();
+  //     fetchQuizCount();
+  //     fetchResourceCount();
+  //   }, 30000); // Update every 30 seconds
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   // Fetch video count only
   const fetchVideoCount = async () => {
@@ -1136,10 +1180,44 @@ const AdminDashboard: React.FC = () => {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        
         setEditingUser(null);
         fetchUsers();
         fetchStats();
-        alert('User updated successfully');
+        
+        // If the updated user is the currently logged-in user and their role changed, 
+        // update the current user's data in the auth state
+        if (currentUser && editingUser.id === currentUser.id && updatedData.role && updatedData.role !== currentUser.role) {
+          console.log('Role changed for current user, updating auth state');
+          
+          // Update the current user's role in Redux state
+          dispatch(updateUser({ role: updatedData.role }));
+          
+          // Also refresh the user data from the server to ensure consistency
+          try {
+            const validateResponse = await fetch(`${process.env.REACT_APP_API_URL}/auth/validate-token`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (validateResponse.ok) {
+              const validateData = await validateResponse.json();
+              if (validateData.success && validateData.data && validateData.data.user) {
+                dispatch(updateUser(validateData.data.user));
+              }
+            }
+          } catch (refreshError) {
+            console.error('Error refreshing user data:', refreshError);
+          }
+          
+          // Show message about role change
+          alert(`Role updated successfully! Your role has been changed to ${updatedData.role}. Please refresh the page to see the new interface.`);
+        } else {
+          alert('User updated successfully');
+        }
       } else {
         const error = await response.json();
         alert(error.message || 'Failed to update user');
@@ -1513,7 +1591,7 @@ const AdminDashboard: React.FC = () => {
         {/* Content based on active tab */}
         {activeTab === 'users' && (
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 p-6">
+          <div className="bg-gradient-to-r from-cyan-800 via-sky-700 to-green-500 p-6">
             <div className="flex justify-between items-center">
               <h2 className="text-3xl font-bold text-white flex items-center">
                 User Management
@@ -1743,7 +1821,7 @@ const AdminDashboard: React.FC = () => {
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold text-white flex items-center">
-                  🎥 Video Management
+                  Video Management
                 </h2>
                 <button
                   onClick={clearVideoManagementData}
@@ -1882,7 +1960,7 @@ const AdminDashboard: React.FC = () => {
             <div className="bg-gradient-to-r from-green-500 to-teal-600 p-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold text-white flex items-center">
-                  📝 Quiz/Exam Approval
+                  Quiz/Exam Approval
                 </h2>
                 <button
                   onClick={clearQuizManagementData}
@@ -1990,7 +2068,7 @@ const AdminDashboard: React.FC = () => {
             <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold text-white flex items-center">
-                  📁 Document/Resource Approval
+                  Document/Resource Approval
                 </h2>
                 <button
                   onClick={clearResourceManagementData}
@@ -2100,7 +2178,7 @@ const AdminDashboard: React.FC = () => {
         {/* Role Approvals Section */}
         {activeTab === 'approvals' && (
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 p-6">
+          <div className="bg-gradient-to-r from-cyan-800 via-sky-700 to-green-500 p-6">
             <h2 className="text-3xl font-bold text-white flex items-center">
               Role Approval Requests
             </h2>
@@ -2122,7 +2200,7 @@ const AdminDashboard: React.FC = () => {
                 {users.filter(u => u.requestedRole && u.requestedRole !== u.role && !u.rejectionReason).map((user) => (
                   <div key={user.id} className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                     {/* Request Header */}
-                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 text-white">
+                    <div className="bg-gradient-to-r from-blue-600 to-sky-400 p-4 text-white">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <span className="text-2xl">👤</span>
@@ -2130,7 +2208,7 @@ const AdminDashboard: React.FC = () => {
                             {user.requestedRole} Request
                           </span>
                         </div>
-                        <span className="text-xs bg-yellow-600 px-2 py-1 rounded-full">
+                        <span className="text-xs bg-yellow-600 px-2 py-1 rounded">
                           PENDING
                         </span>
                       </div>

@@ -1,17 +1,6 @@
 import { WebSocket } from 'ws';
-
-interface NotificationData {
-  type: 'payment' | 'enrollment' | 'course' | 'test' | 'video' | 'video_comment' | 'admin' | 'general' | 'user_registration' | 'role_change' | 'supervisor_action' | 'student_action' | 'document' | 'assessment' | 'certificate' | 'ranking';
-  title: string;
-  message: string;
-  userId?: string;
-  targetRole?: 'Admin' | 'Student' | 'Supervisor' | 'all';
-  data?: any;
-  timestamp?: Date;
-  urgent?: boolean;
-  fromRole?: 'Admin' | 'Student' | 'Supervisor';
-  toRole?: 'Admin' | 'Student' | 'Supervisor' | 'all';
-}
+import { NotificationData } from '../types/common.types';
+import logger from '../utils/logger';
 
 interface ConnectedClient {
   ws: WebSocket;
@@ -24,12 +13,12 @@ class WebSocketService {
 
   addClient(userId: string, ws: WebSocket, role: string) {
     this.clients.set(userId, { ws, userId, role });
-    console.log(`WebSocket client connected: ${userId} (${role})`);
+    logger.info(`WebSocket client connected: ${userId} (${role})`);
   }
 
   removeClient(userId: string) {
     this.clients.delete(userId);
-    console.log(`WebSocket client disconnected: ${userId}`);
+    logger.info(`WebSocket client disconnected: ${userId}`);
   }
 
   async notifyAdmins(notification: NotificationData) {
@@ -52,12 +41,12 @@ class WebSocketService {
             payload: notificationPayload
           }));
         } catch (error) {
-          console.error(`Error sending notification to admin ${client.userId}:`, error);
+          logger.error(`Error sending notification to admin ${client.userId}:`, error);
         }
       }
     });
 
-    console.log(`Sent notification to ${adminClients.length} admin(s):`, notification.title);
+    logger.info(`Sent notification to ${adminClients.length} admin(s):`, notification.title);
   }
 
   async notifyUser(userId: string, notification: NotificationData) {
@@ -75,12 +64,12 @@ class WebSocketService {
           type: 'notification',
           payload: notificationPayload
         }));
-        console.log(`Sent notification to user ${userId} (${client.role}):`, notification.title);
+        logger.info(`Sent notification to user ${userId} (${client.role}):`, notification.title);
       } catch (error) {
-        console.error(`Error sending notification to user ${userId}:`, error);
+        logger.error(`Error sending notification to user ${userId}:`, error);
       }
     } else {
-      console.log(`User ${userId} not connected or WebSocket not open`);
+      logger.info(`User ${userId} not connected or WebSocket not open`);
     }
   }
 
@@ -104,12 +93,12 @@ class WebSocketService {
             payload: notificationPayload
           }));
         } catch (error) {
-          console.error(`Error broadcasting to ${client.userId}:`, error);
+          logger.error(`Error broadcasting to ${client.userId}:`, error);
         }
       }
     });
 
-    console.log(`Broadcast notification to ${targetClients.length} client(s) (${targetRole || 'all'}):`, notification.title);
+    logger.info(`Broadcast notification to ${targetClients.length} client(s) (${targetRole || 'all'}):`, notification.title);
   }
 
   async notifySupervisors(notification: NotificationData) {
@@ -132,12 +121,12 @@ class WebSocketService {
             payload: notificationPayload
           }));
         } catch (error) {
-          console.error(`Error sending notification to supervisor ${client.userId}:`, error);
+          logger.error(`Error sending notification to supervisor ${client.userId}:`, error);
         }
       }
     });
 
-    console.log(`Sent notification to ${supervisorClients.length} supervisor(s):`, notification.title);
+    logger.info(`Sent notification to ${supervisorClients.length} supervisor(s):`, notification.title);
   }
 
   async notifyStudents(notification: NotificationData) {
@@ -160,17 +149,17 @@ class WebSocketService {
             payload: notificationPayload
           }));
         } catch (error) {
-          console.error(`Error sending notification to student ${client.userId}:`, error);
+          logger.error(`Error sending notification to student ${client.userId}:`, error);
         }
       }
     });
 
-    console.log(`Sent notification to ${studentClients.length} student(s):`, notification.title);
+    logger.info(`Sent notification to ${studentClients.length} student(s):`, notification.title);
   }
 
   async notifyRoleHierarchy(fromRole: string, toRole: string, notification: NotificationData) {
     // Define role hierarchy notification flows
-    const notificationTargets = [];
+    const notificationTargets: string[] = [];
     
     if (fromRole === 'Admin') {
       if (toRole === 'Supervisor' || toRole === 'all') {

@@ -15,7 +15,7 @@ const Navbar: React.FC = () => {
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const { unreadCount, notifications, markAsRead, markAllAsRead, clearAll, isConnected } =
+  const { unreadCount, notifications, markAsRead, markAllAsRead, clearAll } =
     useNotifications();
 
 

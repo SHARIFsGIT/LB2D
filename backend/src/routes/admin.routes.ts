@@ -12,11 +12,11 @@ import {
   approveResource,
   rejectResource
 } from '../controllers/admin.controller';
-import { authenticate, authorize } from '../middleware/auth.middleware';
+import { authMiddleware, authorize } from '../middleware/auth.middleware';
 
 const router = Router();
 
-router.use(authenticate);
+router.use(authMiddleware);
 router.use(authorize('Admin'));
 
 // User management routes

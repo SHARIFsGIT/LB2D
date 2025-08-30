@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { NotificationData, useWebSocket } from '../hooks/useWebSocket';
 
 const AnalyticsDashboard: React.FC = () => {
-  const [timeRange, setTimeRange] = useState('week');
+  const [timeRange, setTimeRange] = useState('year');
   const [activeTab, setActiveTab] = useState<'students' | 'supervisors'>('students');
   const [studentAnalytics, setStudentAnalytics] = useState<any>(null);
   const [supervisorAnalytics, setSupervisorAnalytics] = useState<any>(null);
@@ -16,16 +16,18 @@ const AnalyticsDashboard: React.FC = () => {
   const handleNotification = useCallback((notification: NotificationData) => {
     console.log('📡 Real-time notification received:', notification);
     
-    // Check if it's a user registration or video comment notification
-    if (notification.type === 'admin' && notification.title.includes('Registration') || 
+    // Check if it's a user registration, enrollment, or video comment notification
+    if ((notification.type === 'admin' && notification.title.includes('Registration')) || 
         notification.type === 'user_registration' ||
+        notification.type === 'enrollment' ||
+        notification.type === 'student_action' ||
         notification.type === 'video_comment') {
       
       // Add to real-time updates
       setRealTimeUpdates(prev => [notification, ...prev.slice(0, 9)]); // Keep last 10
       setLastUpdate(new Date().toLocaleTimeString());
       
-      // Refresh analytics data for registration notifications
+      // Refresh analytics data for registration and enrollment notifications
       if (notification.type !== 'video_comment') {
         if (activeTab === 'students') {
           fetchStudentAnalytics();
@@ -73,7 +75,7 @@ const AnalyticsDashboard: React.FC = () => {
         fetch(`${process.env.REACT_APP_API_URL}/analytics/student-progress?timeRange=${timeRange}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch(`${process.env.REACT_APP_API_URL}/analytics/recent-students?timeRange=${timeRange}&limit=20`, {
+        fetch(`${process.env.REACT_APP_API_URL}/analytics/recent-students?timeRange=${timeRange}&limit=20&showAllEnrolled=true`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -85,6 +87,7 @@ const AnalyticsDashboard: React.FC = () => {
         progressRes.ok ? progressRes.json() : { data: null },
         studentsRes.ok ? studentsRes.json() : { data: null }
       ]);
+
 
       // Merge the results data with student analytics
       const mergedResults = {
@@ -814,12 +817,11 @@ Generated on: ${new Date().toLocaleString()}
                       <thead>
                         <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                           <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Student</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Email</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Registration Date</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Contact</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Registered</th>
                           <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Status</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Assigned Supervisor</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Course Enrolled</th>
-                          <th className="text-center py-3 px-4 font-semibold text-gray-700 text-sm">Actions</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Supervisor</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Course</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -828,20 +830,38 @@ Generated on: ${new Date().toLocaleString()}
                             <tr key={student.id || index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                               <td className="py-3 px-4">
                                 <div className="flex items-center">
-                                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                                    <span className="text-sm font-semibold text-blue-600">
-                                      {student.firstName ? student.firstName.charAt(0) : student.name?.charAt(0) || 'S'}
-                                    </span>
+                                  <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
+                                    {student.profilePhoto ? (
+                                      <img 
+                                        src={student.profilePhoto} 
+                                        alt={student.name} 
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                          target.nextElementSibling?.setAttribute('style', 'display: flex');
+                                        }}
+                                      />
+                                    ) : null}
+                                    <div className="w-full h-full bg-blue-100 flex items-center justify-center" style={student.profilePhoto ? {display: 'none'} : {}}>
+                                      <span className="text-sm font-semibold text-blue-600">
+                                        {student.firstName ? student.firstName.charAt(0) : student.name?.charAt(0) || 'S'}
+                                      </span>
+                                    </div>
                                   </div>
                                   <div>
                                     <div className="font-medium text-gray-900">
                                       {student.firstName ? `${student.firstName} ${student.lastName}` : student.name || 'Unknown'}
                                     </div>
-                                    <div className="text-sm text-gray-500">ID: {student.id || 'N/A'}</div>
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-3 px-4 text-gray-600">{student.email || 'No email'}</td>
+                              <td className="py-3 px-4">
+                                <div className="text-sm">
+                                  <div className="font-medium text-gray-900">{student.email || 'No email'}</div>
+                                  <div className="text-gray-500">{student.phone || 'No phone'}</div>
+                                </div>
+                              </td>
                               <td className="py-3 px-4">
                                 <div className="text-sm">
                                   <div className="font-medium text-gray-900">
@@ -865,15 +885,8 @@ Generated on: ${new Date().toLocaleString()}
                               </td>
                               <td className="py-3 px-4">
                                 <div className="text-sm">
-                                  {student.supervisorName ? (
-                                    <div className="flex items-center">
-                                      <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center mr-2">
-                                        <span className="text-xs font-semibold text-purple-600">
-                                          {student.supervisorName.charAt(0).toUpperCase()}
-                                        </span>
-                                      </div>
-                                      <span className="font-medium text-gray-700">{student.supervisorName}</span>
-                                    </div>
+                                  {student.supervisor ? (
+                                    <span className="font-medium text-gray-700">{student.supervisor.name}</span>
                                   ) : (
                                     <span className="text-gray-400 italic">Not assigned</span>
                                   )}
@@ -881,36 +894,21 @@ Generated on: ${new Date().toLocaleString()}
                               </td>
                               <td className="py-3 px-4">
                                 <div className="text-sm">
-                                  {student.enrolledCourses && student.enrolledCourses.length > 0 ? (
+                                  {student.course ? (
                                     <div>
-                                      <div className="font-medium text-gray-900">{student.enrolledCourses[0].title}</div>
-                                      {student.enrolledCourses.length > 1 && (
-                                        <div className="text-gray-500">+{student.enrolledCourses.length - 1} more</div>
-                                      )}
+                                      <div className="font-medium text-gray-900">{student.course.title}</div>
+                                      <div className="text-gray-500">{student.course.level}</div>
                                     </div>
                                   ) : (
-                                    <span className="text-gray-400 italic">No courses</span>
+                                    <span className="text-gray-400 italic">No course</span>
                                   )}
-                                </div>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <div className="flex space-x-1 justify-center">
-                                  <button 
-                                    onClick={() => handleStudentClick(student)}
-                                    className="text-blue-600 hover:text-blue-800 bg-blue-50 p-1 rounded text-xs"
-                                  >
-                                    View
-                                  </button>
-                                  <button className="text-green-600 hover:text-green-800 bg-green-50 p-1 rounded text-xs">
-                                    Assign
-                                  </button>
                                 </div>
                               </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={7} className="py-12 text-center">
+                            <td colSpan={6} className="py-12 text-center">
                               <div className="flex flex-col items-center">
                                 <svg className="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
@@ -1362,7 +1360,7 @@ Generated on: ${new Date().toLocaleString()}
                                   {supervisor.assignedCourses && supervisor.assignedCourses.length > 0 ? (
                                     <div className="flex flex-wrap gap-1">
                                       {supervisor.assignedCourses.map((course: any, courseIndex: number) => (
-                                        <span key={courseIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <span key={courseIndex} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
                                           {course.title}
                                         </span>
                                       ))}
@@ -1464,31 +1462,40 @@ Generated on: ${new Date().toLocaleString()}
                 </div>
               </div>
               <div className="p-6">
+                {/* Loading state */}
+                {!supervisorAnalytics?.videos ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                      <p className="text-gray-500 font-medium">Loading video analytics...</p>
+                      <p className="text-gray-400 text-sm mt-1">Please wait while we gather the data</p>
+                    </div>
+                  </div>
+                ) : (
+                <React.Fragment>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                   <div className="bg-orange-50 p-4 rounded-xl">
                     <h3 className="text-lg font-semibold text-orange-800 mb-2">Total Videos</h3>
                     <p className="text-3xl font-bold text-orange-600">
-                      {Array.isArray(supervisorAnalytics?.videos) ? supervisorAnalytics.videos.length : 0}
+                      {supervisorAnalytics?.videos?.totalVideos || 0}
                     </p>
                   </div>
                   <div className="bg-green-50 p-4 rounded-xl">
                     <h3 className="text-lg font-semibold text-green-800 mb-2">Approved Videos</h3>
                     <p className="text-3xl font-bold text-green-600">
-                      {Array.isArray(supervisorAnalytics?.videos) ? supervisorAnalytics.videos.filter((v: any) => v.status === 'approved').length : 0}
+                      {supervisorAnalytics?.videos?.approvedVideos || 0}
                     </p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-xl">
                     <h3 className="text-lg font-semibold text-yellow-800 mb-2">Pending Review</h3>
                     <p className="text-3xl font-bold text-yellow-600">
-                      {Array.isArray(supervisorAnalytics?.videos) ? supervisorAnalytics.videos.filter((v: any) => v.status === 'pending').length : 0}
+                      {supervisorAnalytics?.videos?.pendingVideos || 0}
                     </p>
                   </div>
                   <div className="bg-blue-50 p-4 rounded-xl">
                     <h3 className="text-lg font-semibold text-blue-800 mb-2">Total Duration</h3>
                     <p className="text-3xl font-bold text-blue-600">
-                      {Array.isArray(supervisorAnalytics?.videos) && supervisorAnalytics.videos.length > 0 ? 
-                        Math.round(supervisorAnalytics.videos.reduce((total: number, v: any) => total + (v.duration || 0), 0) / 3600) + 'h' : 
-                        '0h'}
+                      {supervisorAnalytics?.videos?.totalDuration || 0}h
                     </p>
                   </div>
                 </div>
@@ -1501,19 +1508,19 @@ Generated on: ${new Date().toLocaleString()}
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Approved</span>
                         <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                          {Array.isArray(supervisorAnalytics?.videos) ? supervisorAnalytics.videos.filter((v: any) => v.status === 'approved').length : 0}
+                          {supervisorAnalytics?.videos?.statusDistribution?.approved || 0}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Pending</span>
                         <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-                          {Array.isArray(supervisorAnalytics?.videos) ? supervisorAnalytics.videos.filter((v: any) => v.status === 'pending').length : 0}
+                          {supervisorAnalytics?.videos?.statusDistribution?.pending || 0}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Rejected</span>
                         <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-sm">
-                          {Array.isArray(supervisorAnalytics?.videos) ? supervisorAnalytics.videos.filter((v: any) => v.status === 'rejected').length : 0}
+                          {supervisorAnalytics?.videos?.statusDistribution?.rejected || 0}
                         </span>
                       </div>
                     </div>
@@ -1525,31 +1532,19 @@ Generated on: ${new Date().toLocaleString()}
                       <div className="flex justify-between items-center">
                         <span className="font-medium">This Week</span>
                         <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                          {Array.isArray(supervisorAnalytics?.videos) ? supervisorAnalytics.videos.filter((v: any) => {
-                            const weekAgo = new Date();
-                            weekAgo.setDate(weekAgo.getDate() - 7);
-                            return new Date(v.createdAt) >= weekAgo;
-                          }).length : 0}
+                          {supervisorAnalytics?.videos?.uploadTrends?.thisWeek || 0}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="font-medium">This Month</span>
                         <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-                          {Array.isArray(supervisorAnalytics?.videos) ? supervisorAnalytics.videos.filter((v: any) => {
-                            const monthAgo = new Date();
-                            monthAgo.setMonth(monthAgo.getMonth() - 1);
-                            return new Date(v.createdAt) >= monthAgo;
-                          }).length : 0}
+                          {supervisorAnalytics?.videos?.uploadTrends?.thisMonth || 0}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="font-medium">This Year</span>
                         <span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">
-                          {Array.isArray(supervisorAnalytics?.videos) ? supervisorAnalytics.videos.filter((v: any) => {
-                            const yearAgo = new Date();
-                            yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-                            return new Date(v.createdAt) >= yearAgo;
-                          }).length : 0}
+                          {supervisorAnalytics?.videos?.uploadTrends?.thisYear || 0}
                         </span>
                       </div>
                     </div>
@@ -1557,101 +1552,119 @@ Generated on: ${new Date().toLocaleString()}
                 </div>
 
                 {/* Top Contributing Supervisors */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-xl font-bold mb-4">Top Contributing Supervisors</h3>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-sm">
-                      <thead>
-                        <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Rank</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Supervisor Name</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Email</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Videos Uploaded</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Approved Videos</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Total Duration</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Approval Rate</th>
-                        </tr>
-                      </thead>
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                  <div className="bg-gradient-to-l from-red-500 via-yellow-500 to-green-500 p-6">
+                    <h3 className="text-2xl font-bold text-white flex items-center">
+                      Top Contributing Supervisors
+                    </h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-sm">
+                        <thead>
+                          <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Rank</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Supervisor</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Contact</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Joined</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Courses</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Videos</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Approved</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Duration</th>
+                            <th className="text-center py-3 px-4 font-semibold text-gray-700 text-sm">Approval Rate</th>
+                          </tr>
+                        </thead>
                       <tbody>
-                        {Array.isArray(supervisorAnalytics?.videos) && supervisorAnalytics.videos.length > 0 ? (
-                          // Group videos by supervisor and calculate statistics
-                          Object.entries(
-                            supervisorAnalytics.videos.reduce((acc: any, video: any) => {
-                              const supervisorKey = video.supervisorId || 'unknown';
-                              if (!acc[supervisorKey]) {
-                                acc[supervisorKey] = {
-                                  supervisorId: video.supervisorId,
-                                  supervisorName: video.supervisorName || 'Unknown Supervisor',
-                                  supervisorEmail: video.supervisorEmail || 'No email',
-                                  totalVideos: 0,
-                                  approvedVideos: 0,
-                                  totalDuration: 0
-                                };
-                              }
-                              acc[supervisorKey].totalVideos++;
-                              if (video.status === 'approved') {
-                                acc[supervisorKey].approvedVideos++;
-                              }
-                              acc[supervisorKey].totalDuration += video.duration || 0;
-                              return acc;
-                            }, {})
-                          )
-                          .sort(([,a]: any, [,b]: any) => b.totalVideos - a.totalVideos)
-                          .slice(0, 10)
-                          .map(([key, supervisor]: any, index: number) => (
-                            <tr key={key} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        {supervisorAnalytics?.videos?.topSupervisors && supervisorAnalytics.videos.topSupervisors.length > 0 ? (
+                          supervisorAnalytics.videos.topSupervisors.map((supervisor: any, index: number) => (
+                            <tr key={supervisor._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                               <td className="py-3 px-4">
-                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-sm">
+                                <div className="flex items-center justify-center text-2xl">
                                   {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}`}
                                 </div>
                               </td>
                               <td className="py-3 px-4">
-                                <div className="flex items-center">
-                                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center mr-3">
-                                    <span className="text-sm font-semibold text-purple-600">
-                                      {supervisor.supervisorName.charAt(0).toUpperCase()}
-                                    </span>
+                                <div className="font-medium text-gray-900">
+                                  {supervisor.firstName && supervisor.lastName ? 
+                                    `${supervisor.firstName} ${supervisor.lastName}` : 
+                                    supervisor.name || 'Unknown Supervisor'
+                                  }
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="text-sm">
+                                  <div className="font-medium text-gray-900">{supervisor.email}</div>
+                                  <div className="text-gray-500">{supervisor.phone || supervisor.phoneNumber || 'No phone'}</div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="text-sm">
+                                  <div className="font-medium text-gray-900">
+                                    {supervisor.joinedAt || supervisor.createdAt ? 
+                                      new Date(supervisor.joinedAt || supervisor.createdAt).toLocaleDateString() : 
+                                      'Not available'
+                                    }
                                   </div>
-                                  <div>
-                                    <div className="font-medium text-gray-900">{supervisor.supervisorName}</div>
-                                    <div className="text-sm text-gray-500">ID: {supervisor.supervisorId || 'N/A'}</div>
+                                  <div className="text-gray-500">
+                                    {supervisor.joinedAt || supervisor.createdAt ? 
+                                      new Date(supervisor.joinedAt || supervisor.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 
+                                      ''
+                                    }
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-3 px-4 text-gray-600">{supervisor.supervisorEmail}</td>
                               <td className="py-3 px-4">
-                                <span className="font-semibold text-blue-600">{supervisor.totalVideos}</span>
+                                <div className="text-sm">
+                                  {supervisor.assignedCourses && supervisor.assignedCourses.length > 0 ? (
+                                    <div>
+                                      <div className="font-medium text-gray-900">{supervisor.assignedCourses[0].title || supervisor.assignedCourses[0].name}</div>
+                                      {supervisor.assignedCourses.length > 1 && (
+                                        <div className="text-gray-500">+{supervisor.assignedCourses.length - 1} more</div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className="font-medium text-gray-900">{supervisor.totalCourses || 0} courses</div>
+                                  )}
+                                </div>
                               </td>
                               <td className="py-3 px-4">
-                                <span className="font-semibold text-green-600">{supervisor.approvedVideos}</span>
+                                <div className="font-medium text-gray-900">
+                                  {supervisor.totalVideos || 0}
+                                </div>
                               </td>
                               <td className="py-3 px-4">
-                                <span className="font-semibold text-purple-600">
-                                  {Math.round(supervisor.totalDuration / 60)}min
-                                </span>
+                                <div className="font-medium text-gray-900">
+                                  {supervisor.approvedVideos || 0}
+                                </div>
                               </td>
                               <td className="py-3 px-4">
-                                <div className="flex items-center">
-                                  <span className={`font-semibold ${
-                                    (supervisor.approvedVideos / supervisor.totalVideos) * 100 >= 80 ? 'text-green-600' :
-                                    (supervisor.approvedVideos / supervisor.totalVideos) * 100 >= 60 ? 'text-yellow-600' :
-                                    'text-red-600'
+                                <div className="font-medium text-gray-900">
+                                  {Math.round((supervisor.totalDuration || 0) / 60)}m
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <div className="flex items-center justify-center">
+                                  <div className={`px-4 py-2 rounded text-sm font-bold shadow-md ${
+                                    (supervisor.approvalRate || 0) >= 80 ? 'bg-green-100 text-green-800' :
+                                    (supervisor.approvalRate || 0) >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
                                   }`}>
-                                    {Math.round((supervisor.approvedVideos / supervisor.totalVideos) * 100)}%
-                                  </span>
+                                    {(supervisor.approvalRate || 0).toFixed(1)}%
+                                    {(supervisor.approvalRate || 0) >= 80 ? '🏆' : (supervisor.approvalRate || 0) >= 60 ? '👍' : '⚠️'}
+                                  </div>
                                 </div>
                               </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={7} className="py-12 text-center">
+                            <td colSpan={7} className="py-8 text-center">
                               <div className="flex flex-col items-center">
-                                <svg className="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <p className="text-gray-500 font-medium">No video data available</p>
-                                <p className="text-gray-400 text-sm mt-1">Supervisor video analytics will appear here once videos are uploaded</p>
+                                <p className="text-gray-500">No supervisor data available</p>
+                                <p className="text-gray-400 text-sm mt-1">Data will appear here once supervisors upload videos</p>
                               </div>
                             </td>
                           </tr>
@@ -1660,51 +1673,85 @@ Generated on: ${new Date().toLocaleString()}
                     </table>
                   </div>
                 </div>
+              </div>
 
                 {/* Recent Video Uploads */}
-                <div className="mt-6 bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-xl font-bold mb-4">Recent Video Uploads</h3>
-                  {Array.isArray(supervisorAnalytics?.videos) && supervisorAnalytics.videos.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {supervisorAnalytics.videos
-                        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                        .slice(0, 6)
-                        .map((video: any) => (
-                        <div key={video.id} className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-shadow">
-                          <div className={`w-full h-32 rounded-lg mb-3 bg-gradient-to-br ${
-                            video.status === 'approved' ? 'from-green-100 to-green-200' :
-                            video.status === 'pending' ? 'from-yellow-100 to-yellow-200' :
-                            'from-red-100 to-red-200'
-                          } flex items-center justify-center`}>
-                            <div className="text-center">
-                              <div className="text-3xl mb-2">🎥</div>
-                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                                video.status === 'approved' ? 'bg-green-500 text-white' :
-                                video.status === 'pending' ? 'bg-yellow-500 text-white' :
-                                'bg-red-500 text-white'
-                              }`}>
-                                {video.status.toUpperCase()}
-                              </span>
-                            </div>
-                          </div>
-                          <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2">{video.title}</h4>
-                          <div className="text-sm text-gray-600 space-y-1">
-                            <div>By: {video.supervisorName || 'Unknown'}</div>
-                            <div>Course: {video.courseName || video.courseId?.title || 'Unknown'}</div>
-                            <div>Uploaded: {new Date(video.createdAt).toLocaleDateString()}</div>
-                            <div>Duration: {Math.round((video.duration || 0) / 60)}min</div>
-                          </div>
+                <div className="mt-8 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                  <div className="bg-gradient-to-l from-red-500 via-yellow-500 to-green-500 p-6">
+                    <h3 className="text-2xl font-bold text-white flex items-center">
+                      Recent Video Uploads
+                    </h3>
+                  </div>
+                  <div className="p-4">
+                    {supervisorAnalytics?.videos?.recentUploads && supervisorAnalytics.videos.recentUploads.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-sm">
+                          <thead>
+                            <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                              <th className="text-left py-2 px-3 font-semibold text-gray-700 text-sm">Video Title</th>
+                              <th className="text-left py-2 px-3 font-semibold text-gray-700 text-sm">Supervisor</th>
+                              <th className="text-left py-2 px-3 font-semibold text-gray-700 text-sm">Course</th>
+                              <th className="text-left py-2 px-3 font-semibold text-gray-700 text-sm">Duration</th>
+                              <th className="text-left py-2 px-3 font-semibold text-gray-700 text-sm">Status</th>
+                              <th className="text-left py-2 px-3 font-semibold text-gray-700 text-sm">Upload Date</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {supervisorAnalytics.videos.recentUploads.slice(0, 8).map((video: any) => (
+                              <tr key={video._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                <td className="py-2 px-3">
+                                  <div className="font-medium text-gray-900 text-sm" title={video.title}>
+                                    {video.title.length > 40 ? `${video.title.substring(0, 40)}...` : video.title}
+                                  </div>
+                                </td>
+                                <td className="py-2 px-3 text-sm text-gray-600">
+                                  {video.uploaderName || 'Unknown'}
+                                </td>
+                                <td className="py-2 px-3 text-sm text-gray-600">
+                                  {video.courseName || 'Unknown Course'}
+                                </td>
+                                <td className="py-2 px-3 text-sm text-gray-600">
+                                  {Math.round((video.duration || 0) / 60)}min
+                                </td>
+                                <td className="py-2 px-3">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                    video.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                    video.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                  }`}>
+                                    {video.status === 'approved' ? '✅' : video.status === 'pending' ? '⏳' : '❌'}
+                                    {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 text-sm text-gray-600">
+                                  {new Date(video.createdAt).toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    year: '2-digit'
+                                  })}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <div className="mb-6">
+                          <svg className="w-20 h-20 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                          </svg>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <div className="text-4xl mb-4">🎬</div>
-                      <p className="text-gray-500 font-medium">No recent video uploads</p>
-                      <p className="text-gray-400 text-sm mt-1">Recent supervisor video uploads will appear here</p>
-                    </div>
-                  )}
+                        <h4 className="text-xl font-bold text-gray-500 mb-2">No Recent Uploads</h4>
+                        <p className="text-gray-400 max-w-sm mx-auto">
+                          Recent supervisor video uploads will appear here once content is submitted for review
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
+                </React.Fragment>
+                )}
               </div>
             </div>
           </div>

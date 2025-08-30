@@ -1,39 +1,116 @@
+# Dependencies
 node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Production builds
+backend/dist/
+frontend/build/
+
+# Environment variables
 .env
 .env.local
-dist/
-build/
-.DS_Store
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env*
+frontend/.env*
+!.env.example
+
+# Logs
+logs/
 *.log
-.vscode/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+backend/logs/
+frontend/logs/
 
-# IDE files
-.idea/
-*.sublime-*
-*.swp
-*.swo
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
 
-# Test coverage
+# Coverage directory
 coverage/
 *.lcov
 .nyc_output/
 
-# TypeScript
+# TypeScript cache
 *.tsbuildinfo
 
-# NPM debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Optional caches
+.npm
+.eslintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
 
-# Environment files
-.env.*
-!.env.example
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-*
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Uploads directory (keep structure but not files)
+backend/uploads/*
+!backend/uploads/.gitkeep
+uploads/
 
 # Temporary files
+tmp/
+temp/
+.tmp/
 *.tmp
 *.temp
 nul
 
-# OS files
-Thumbs.db
+# Database files
+*.sqlite
+*.db
+
+# SSL certificates
+*.pem
+*.key
+*.cert
+*.crt
+
+# Backup files
+*.backup
+*.bak
+
+# PM2 files (keep ecosystem.config.js for deployment)
+.pm2/
+
+# Docker volumes
+docker-volumes/
+
+# Test files
+test-results/
+
+# Local development files
+.local/
+local/
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Application specific
+backend/src/server.old.ts

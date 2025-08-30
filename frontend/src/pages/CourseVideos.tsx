@@ -506,32 +506,14 @@ const CourseVideos: React.FC = () => {
     });
 
     // Update progress on backend
-    try {
-      const token = sessionStorage.getItem('accessToken');
-      const currentProgress = videoProgress[videoId] || 100;
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}/complete`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          progress: Math.round(currentProgress),
-          completed: true
-        })
-      });
-
-      if (response.ok) {
-        console.log('✅ Video completion saved to backend');
-        // Reset completion state
-        setCanMarkComplete(false);
-        stopGoogleDriveProgressTracking();
-      } else {
-        console.warn('⚠️ Failed to save video completion to backend');
-      }
-    } catch (error) {
-      console.error('❌ Error saving video completion:', error);
-    }
+    const currentProgress = videoProgress[videoId] || 100;
+    const currentWatchTime = actualWatchTime[videoId] || 0;
+    
+    await saveProgressToBackend(videoId, currentProgress, currentWatchTime, true);
+    
+    // Reset completion state
+    setCanMarkComplete(false);
+    stopGoogleDriveProgressTracking();
   };
 
   const handleVideoLoadedMetadata = (event: React.SyntheticEvent<HTMLVideoElement>) => {
@@ -612,6 +594,13 @@ const CourseVideos: React.FC = () => {
               console.log('🔓 Next video unlocked after watching 90% of duration!');
             }
             
+            // Save progress to backend every 10% increment
+            const prevPercentage = Math.floor((prevProgress[currentVideo._id] || 0) / 10) * 10;
+            const currentPercentage = Math.floor(watchProgress / 10) * 10;
+            if (currentPercentage > prevPercentage && currentPercentage >= 10 && user?.role === 'Student') {
+              saveProgressToBackend(currentVideo._id, watchProgress, newWatchTime, false);
+            }
+            
             return newProgress;
           });
           
@@ -629,6 +618,31 @@ const CourseVideos: React.FC = () => {
       }
       
       setLastUpdateTime(now);
+    }
+  };
+
+  // Save progress to backend
+  const saveProgressToBackend = async (videoId: string, progress: number, watchTime: number, completed: boolean) => {
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}/progress`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          progress: Math.round(progress),
+          watchTime: Math.round(watchTime),
+          completed
+        })
+      });
+
+      if (response.ok) {
+        console.log(`✅ Progress saved: ${Math.round(progress)}% (${Math.round(watchTime)}s)`);
+      }
+    } catch (error) {
+      console.error('❌ Error saving progress:', error);
     }
   };
 

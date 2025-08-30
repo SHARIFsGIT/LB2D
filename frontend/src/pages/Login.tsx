@@ -22,12 +22,18 @@ const Login: React.FC = () => {
     
     try {
       const result = await login({ email, password }).unwrap();
+      console.log('🔍 Login result:', result);
+      
       if (result.success) {
+        console.log('✅ Login successful, user role:', result.data.user.role);
+        
         dispatch(setCredentials({
           user: result.data.user,
           token: result.data.accessToken
         }));
         sessionStorage.setItem('refreshToken', result.data.refreshToken);
+        
+        console.log('💾 Credentials stored in Redux and sessionStorage');
         
         showSuccess(
           `Welcome back, ${result.data.user.firstName}!`,
@@ -37,12 +43,20 @@ const Login: React.FC = () => {
         
         // Role-based navigation
         if (result.data.user.role === 'Admin') {
+          console.log('🚀 Navigating to /admin');
           navigate('/admin');
         } else if (result.data.user.role === 'Supervisor') {
+          console.log('🚀 Navigating to /supervisor');
           navigate('/supervisor');
         } else {
+          console.log('🚀 Navigating to /dashboard');
           navigate('/dashboard');
         }
+        
+        // Double check navigation after a delay
+        setTimeout(() => {
+          console.log('🔍 Current URL after navigation:', window.location.pathname);
+        }, 1000);
       }
     } catch (err: any) {
       const errorMessage = err.data?.message || 'Login failed';

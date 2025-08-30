@@ -1,300 +1,41 @@
 import { NextFunction, Request, Response } from 'express';
-import { asyncHandler } from '../middleware/error.middleware';
+import { asyncHandler } from '../middleware/errorHandler.middleware';
+import authService from '../services/auth.service';
+import { ResponseUtil } from '../utils/response.util';
 import User from '../models/User.model';
-import emailService from '../services/email.service';
-import { generateTokens, verifyRefreshToken } from '../utils/jwt.utils';
-import { notifyAdmins, broadcast } from '../services/websocket.service';
 
 // Register new user
 export const register = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<any> => {
-  const { email, password, role = 'Student', firstName, lastName, phone } = req.body;
-
-  // Check if user already exists
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    return res.status(400).json({
-      success: false,
-      message: 'User with this email already exists'
-    });
-  }
-
-  // Handle role assignment based on request
-  let actualRole = role;
-  let requestedRole = role;
+  const result = await authService.register(req.body);
   
-  // All roles require admin approval, assign Pending temporarily 
-  actualRole = 'Pending'; // Temporarily assign Pending role
-  requestedRole = role;   // Store the requested role for admin review
-
-  // Create new user
-  const user = await User.create({
-    email,
-    password,
-    role: actualRole,
-    requestedRole: requestedRole,
-    firstName,
-    lastName,
-    phone
-  });
-
-  // Generate email verification token
-  const verificationToken = user.createEmailVerificationToken();
-  await user.save();
-
-  // Send verification email
-  try {
-    const emailResult = await emailService.sendVerificationEmail(user.email, verificationToken, user.firstName);
-  } catch (error: any) {
-    console.error('Error sending verification email:', error);
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      response: error.response,
-      stack: error.stack
-    });
-  }
-
-  // Send admin notification for all role requests
-  if (requestedRole) {
-    try {
-      await emailService.sendAdminNotificationEmail(
-        user.email, 
-        `${user.firstName} ${user.lastName}`, 
-        requestedRole
-      );
-      console.log(`Admin notification sent for ${requestedRole} registration: ${user.email}`);
-    } catch (error: any) {
-      console.error('Error sending admin notification:', error);
-    }
-  }
-
-  // Send real-time WebSocket notification to admins
-  try {
-    await notifyAdmins({
-      type: 'user_registration',
-      title: 'New User Registration',
-      message: `${user.firstName} ${user.lastName} registered as ${requestedRole}`,
-      targetRole: 'Admin',
-      urgent: requestedRole === 'Admin',
-      data: {
-        userId: user._id?.toString(),
-        email: user.email,
-        role: requestedRole,
-        timestamp: new Date()
-      }
-    });
-    
-    // Send general notification to all users about platform growth
-    await broadcast({
-      type: 'general',
-      title: 'Platform Update',
-      message: `Welcome new ${requestedRole.toLowerCase()} to our learning community!`,
-      targetRole: 'all',
-      data: {
-        type: 'new_member',
-        timestamp: new Date()
-      }
-    });
-  } catch (error: any) {
-    console.error('Error sending WebSocket notification:', error);
-  }
-
-  // Generate tokens
-  const { accessToken, refreshToken } = generateTokens(user);
-  
-  // Save refresh token to user
-  user.refreshToken = refreshToken;
-  await user.save();
-
-  // Customize message based on role request
-  let message = `Registration successful! You requested ${requestedRole} privileges. An admin has been notified and will review your request. You currently have Pending access. Please check your email to verify your account.`;
-
-  return res.status(201).json({
-    success: true,
-    message,
-    data: {
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        requestedRole: user.requestedRole,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone,
-        profilePhoto: user.profilePhoto,
-        isEmailVerified: user.isEmailVerified,
-        isActive: user.isActive,
-        createdAt: user.createdAt
-      },
-      accessToken,
-      refreshToken
-    }
+  return ResponseUtil.created(res, result.message, {
+    user: result.user,
+    accessToken: result.tokens.accessToken,
+    refreshToken: result.tokens.refreshToken
   });
 });
 
 // Login user
 export const login = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<any> => {
-  const { email, password } = req.body;
-
-  // Validate input
-  if (!email || !password) {
-    return res.status(400).json({
-      success: false,
-      message: 'Please provide email and password'
-    });
-  }
-
-  // Find user and include password
-  const user = await User.findOne({ email }).select('+password');
+  const result = await authService.login(req.body);
   
-  if (!user) {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid credentials'
-    });
-  }
-
-  // Check password
-  const isPasswordValid = await user.comparePassword(password);
-  
-  if (!isPasswordValid) {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid credentials'
-    });
-  }
-
-  // Check if email is verified
-  if (!user.isEmailVerified) {
-    return res.status(403).json({
-      success: false,
-      message: 'Please verify your email before logging in'
-    });
-  }
-
-  // Check if user is active
-  if (!user.isActive) {
-    return res.status(403).json({
-      success: false,
-      message: 'Your account has been deactivated'
-    });
-  }
-
-  // Generate tokens
-  const { accessToken, refreshToken } = generateTokens(user);
-  
-  // Update user's refresh token and last login
-  user.refreshToken = refreshToken;
-  user.lastLogin = new Date();
-  await user.save();
-
-  return res.status(200).json({
-    success: true,
-    message: 'Login successful',
-    data: {
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        requestedRole: user.requestedRole,
-        rejectionReason: user.rejectionReason,
-        rejectionDate: user.rejectionDate,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone,
-        profilePhoto: user.profilePhoto,
-        isEmailVerified: user.isEmailVerified,
-        isActive: user.isActive,
-        createdAt: user.createdAt
-      },
-      accessToken,
-      refreshToken
-    }
-  });
+  return ResponseUtil.success(res, 'Login successful', result);
 });
 
 // Verify email
 export const verifyEmail = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<any> => {
   const { token } = req.query;
-
-  console.log('Email verification attempt:', {
-    token: token,
-    tokenType: typeof token,
-    tokenLength: token ? String(token).length : 0
-  });
-
-  if (!token) {
-    console.log('No token provided in request');
-    return res.status(400).json({
-      success: false,
-      message: 'Verification token is required'
-    });
-  }
-
-  console.log('Searching for user with token:', token);
-  const user = await User.findOne({
-    emailVerificationToken: token,
-    emailVerificationExpires: { $gt: Date.now() }
-  });
-
-  console.log('User found:', user ? `${user.email} (${user._id})` : 'No user found');
-
-  if (!user) {
-    // Let's also check if there's a user with this token but expired
-    const expiredUser = await User.findOne({ emailVerificationToken: token });
-    console.log('Expired token check:', expiredUser ? `Found user ${expiredUser.email} but token expired` : 'No user with this token at all');
-    
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid or expired verification token'
-    });
-  }
-
-  user.isEmailVerified = true;
-  user.emailVerificationToken = undefined;
-  user.emailVerificationExpires = undefined;
-  await user.save();
-
-  console.log('Email verified successfully for user:', user.email);
-
-  return res.status(200).json({
-    success: true,
-    message: 'Email verified successfully'
-  });
+  const result = await authService.verifyEmail(token as string);
+  
+  return ResponseUtil.success(res, result.message);
 });
 
 // Request OTP
 export const requestOTP = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<any> => {
   const { email } = req.body;
-
-  const user = await User.findOne({ email });
+  const result = await authService.requestOTP(email);
   
-  if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found'
-    });
-  }
-
-  // Generate OTP
-  const otp = user.createOTP();
-  await user.save();
-
-  // Send OTP via email
-  try {
-    await emailService.sendOTPEmail(user.email, otp, user.firstName);
-  } catch (error) {
-    console.error('Error sending OTP:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to send OTP'
-    });
-  }
-
-  return res.status(200).json({
-    success: true,
-    message: 'OTP sent to your email'
-  });
+  return ResponseUtil.success(res, result.message);
 });
 
 // Verify OTP

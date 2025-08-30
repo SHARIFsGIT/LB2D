@@ -99,7 +99,7 @@ const quizAttemptSchema: Schema = new Schema({
 });
 
 // Calculate percentage before saving
-quizAttemptSchema.pre('save', function(next) {
+quizAttemptSchema.pre<IQuizAttempt>('save', function(next) {
   if (this.maxScore > 0) {
     this.percentage = Math.round((this.score / this.maxScore) * 100);
   }

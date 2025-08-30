@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../types/common.types';
 import Quiz from '../models/Quiz.model';
 import QuizAttempt from '../models/QuizAttempt.model';
 import Course from '../models/Course.model';
-import { AuthenticatedRequest } from '../middleware/auth.middleware';
 
 // Create a new quiz/exam
 export const createQuiz = async (req: AuthenticatedRequest, res: Response) => {
@@ -259,7 +259,7 @@ export const gradeQuizAttempt = async (req: AuthenticatedRequest, res: Response)
         answer.isCorrect = gradedAnswer.isCorrect;
         answer.pointsEarned = gradedAnswer.pointsEarned || 0;
         answer.feedback = gradedAnswer.feedback;
-        totalScore += answer.pointsEarned;
+        totalScore += answer.pointsEarned || 0;
       }
       return answer;
     });
