@@ -217,7 +217,7 @@ const Navbar: React.FC = () => {
 
                 {/* Dropdown Menu */}
                 {isMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-[100]">
                     <div className="py-2">
                       {/* Notifications Menu Item */}
                       <button
@@ -251,11 +251,15 @@ const Navbar: React.FC = () => {
 
                       {/* Notifications Dropdown Content with Smooth Transition */}
                       <div 
-                        className={`border-t border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50 transition-all duration-500 ease-in-out overflow-hidden transform origin-top ${
+                        className={`border-t border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50 transition-all duration-300 ease-in-out transform origin-top relative z-[110] ${
                           showNotifications 
-                            ? 'max-h-96 opacity-100 scale-y-100' 
-                            : 'max-h-0 opacity-0 scale-y-95'
+                            ? 'max-h-96 opacity-100 scale-y-100 visible' 
+                            : 'max-h-0 opacity-0 scale-y-95 invisible'
                         }`}
+                        style={{
+                          minHeight: showNotifications ? (notifications.length === 0 ? '120px' : 'auto') : '0',
+                          backgroundColor: showNotifications ? 'rgba(248, 250, 252, 0.95)' : 'transparent'
+                        }}
                       >
                         <div className="px-4 py-3 max-h-72 overflow-y-auto">
                           {/* Notifications Header */}
@@ -282,9 +286,9 @@ const Navbar: React.FC = () => {
 
                           {/* Notifications List */}
                           {notifications.length === 0 ? (
-                            <div className="py-8 text-center">
-                              <div className="text-4xl mb-3">🔔</div>
-                              <p className="text-gray-500 text-sm font-semibold">No notifications yet</p>
+                            <div className="py-4 text-center min-h-[100px] flex flex-col items-center justify-center">
+                              <div className="text-4xl mb-3 filter drop-shadow-sm">🔔</div>
+                              <p className="text-gray-600 text-sm font-semibold">No notifications yet</p>
                             </div>
                           ) : (
                             <div className="space-y-3">
@@ -300,40 +304,40 @@ const Navbar: React.FC = () => {
 
 
                                 const getNotificationBorderColor = (type: string, urgent?: boolean) => {
-                                  if (urgent) return "border-l-red-500 shadow-red-200";
+                                  if (urgent) return "border-l-red-300 shadow-red-100";
                                   switch (type) {
                                     case "admin":
                                     case "role_change":
-                                      return "border-l-purple-500 shadow-purple-200";
+                                      return "border-l-purple-300 shadow-purple-100";
                                     case "enrollment":
-                                      return "border-l-emerald-500 shadow-emerald-200";
+                                      return "border-l-emerald-300 shadow-emerald-100";
                                     case "course":
-                                      return "border-l-blue-500 shadow-blue-200";
+                                      return "border-l-blue-300 shadow-blue-100";
                                     case "video":
-                                      return "border-l-indigo-500 shadow-indigo-200";
+                                      return "border-l-indigo-300 shadow-indigo-100";
                                     case "video_comment":
-                                      return "border-l-amber-500 shadow-amber-200";
+                                      return "border-l-amber-300 shadow-amber-100";
                                     case "assessment":
                                     case "test":
-                                      return "border-l-pink-500 shadow-pink-200";
+                                      return "border-l-pink-300 shadow-pink-100";
                                     case "certificate":
-                                      return "border-l-yellow-500 shadow-yellow-200";
+                                      return "border-l-yellow-300 shadow-yellow-100";
                                     case "supervisor_action":
-                                      return "border-l-orange-500 shadow-orange-200";
+                                      return "border-l-orange-300 shadow-orange-100";
                                     case "student_action":
-                                      return "border-l-cyan-500 shadow-cyan-200";
+                                      return "border-l-cyan-300 shadow-cyan-100";
                                     case "payment":
-                                      return "border-l-green-500 shadow-green-200";
+                                      return "border-l-green-300 shadow-green-100";
                                     case "user_registration":
-                                      return "border-l-violet-500 shadow-violet-200";
+                                      return "border-l-violet-300 shadow-violet-100";
                                     case "document":
-                                      return "border-l-teal-500 shadow-teal-200";
+                                      return "border-l-teal-300 shadow-teal-100";
                                     case "ranking":
-                                      return "border-l-rose-500 shadow-rose-200";
+                                      return "border-l-rose-300 shadow-rose-100";
                                     case "general":
-                                      return "border-l-gray-500 shadow-gray-200";
+                                      return "border-l-gray-300 shadow-gray-100";
                                     default:
-                                      return "border-l-slate-500 shadow-slate-200";
+                                      return "border-l-slate-300 shadow-slate-100";
                                   }
                                 };
 
@@ -372,12 +376,6 @@ const Navbar: React.FC = () => {
                                           ) : (
                                             // Default display format for other notifications
                                             <div>
-                                              <div className="flex items-center space-x-2 mb-1">
-                                                <div className={`w-2 h-2 rounded-full ${!notification.read ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}></div>
-                                                <p className={`text-sm font-semibold leading-tight ${!notification.read ? "text-gray-900" : "text-gray-600"}`}>
-                                                  {notification.title}
-                                                </p>
-                                              </div>
                                               <p className={`text-sm mt-1 leading-relaxed ${!notification.read ? "text-gray-700" : "text-gray-500"}`}>
                                                 {notification.message}
                                               </p>

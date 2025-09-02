@@ -44,6 +44,18 @@ const CourseCatalog: React.FC = () => {
     setIsLoggedIn(!!token);
   }, [selectedLevel]);
 
+  // Refetch enrollments when user navigates back to course catalog
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUserEnrollments();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const fetchCourses = async () => {
     try {
       const queryParams = new URLSearchParams();
@@ -66,9 +78,13 @@ const CourseCatalog: React.FC = () => {
 
   const fetchUserEnrollments = async () => {
     const token = sessionStorage.getItem("accessToken");
-    if (!token) return;
+    if (!token) {
+      console.log('👤 No auth token found, skipping enrollment fetch');
+      return;
+    }
 
     try {
+      console.log('🔍 Fetching user enrollments...');
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/courses/user/enrollments`,
         {
@@ -79,15 +95,25 @@ const CourseCatalog: React.FC = () => {
       );
       const data = await response.json();
 
+      console.log('📚 Enrollment API response:', data);
+
       if (data.success) {
         const enrollmentMap: { [key: string]: any } = {};
         data.data.forEach((enrollment: any) => {
-          enrollmentMap[enrollment.courseId._id] = enrollment;
+          // Handle both possible data structures
+          const courseId = enrollment.courseId?._id || enrollment.courseId;
+          if (courseId) {
+            enrollmentMap[courseId] = enrollment;
+            console.log(`✅ Mapped enrollment for course ${courseId}:`, enrollment.status);
+          }
         });
+        console.log('📊 Final enrollment map:', enrollmentMap);
         setEnrollments(enrollmentMap);
+      } else {
+        console.warn('⚠️ Enrollment fetch failed:', data.message);
       }
     } catch (error) {
-      console.error("Failed to fetch enrollments:", error);
+      console.error("❌ Failed to fetch enrollments:", error);
     }
   };
 
@@ -242,6 +268,14 @@ const CourseCatalog: React.FC = () => {
           {courses.map((course) => {
             const isEnrolled = enrollments[course._id];
             const isFull = course.currentStudents >= course.maxStudents;
+            
+            // Debug logging for enrollment status
+            console.log(`🔍 Course ${course._id} (${course.title}):`, {
+              isEnrolled: !!isEnrolled,
+              enrollmentStatus: isEnrolled?.status,
+              isFull,
+              enrollmentExists: Object.prototype.hasOwnProperty.call(enrollments, course._id)
+            });
 
             return (
               <div
@@ -406,7 +440,7 @@ const CourseCatalog: React.FC = () => {
                   <div className="mt-auto">
                     {isEnrolled ? (
                       <div className="w-full py-4 bg-blue-100 text-blue-800 rounded-2xl font-bold border-2 border-blue-200 text-center">
-                        Already Enrolled
+                        Enrolled
                       </div>
                     ) : isFull ? (
                       <button

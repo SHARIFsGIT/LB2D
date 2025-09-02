@@ -27,6 +27,12 @@ export interface IQuiz extends Document {
   approvedBy?: mongoose.Types.ObjectId;
   approvedAt?: Date;
   rejectionReason?: string;
+  deletionStatus?: 'none' | 'pending' | 'approved' | 'rejected';
+  deletionRequestedBy?: mongoose.Types.ObjectId;
+  deletionRequestedAt?: Date;
+  deletionApprovedBy?: mongoose.Types.ObjectId;
+  deletionApprovedAt?: Date;
+  deletionRejectionReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -115,6 +121,30 @@ const quizSchema: Schema = new Schema({
     type: String,
     trim: true,
     maxLength: [200, 'Rejection reason cannot exceed 200 characters']
+  },
+  deletionStatus: {
+    type: String,
+    enum: ['none', 'pending', 'approved', 'rejected'],
+    default: 'none'
+  },
+  deletionRequestedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  deletionRequestedAt: {
+    type: Date
+  },
+  deletionApprovedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  deletionApprovedAt: {
+    type: Date
+  },
+  deletionRejectionReason: {
+    type: String,
+    trim: true,
+    maxLength: [200, 'Deletion rejection reason cannot exceed 200 characters']
   }
 }, {
   timestamps: true

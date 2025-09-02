@@ -66,6 +66,16 @@ interface Resource {
   };
 }
 
+interface Enrollment {
+  _id: string;
+  status: 'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled';
+  progress: {
+    lessonsCompleted: number;
+    totalLessons: number;
+    percentage: number;
+  };
+}
+
 const CourseVideos: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
@@ -75,6 +85,7 @@ const CourseVideos: React.FC = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
   const [course, setCourse] = useState<Course | null>(null);
+  const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [loading, setLoading] = useState(true);
   // Remove tabs - unified timeline approach
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
@@ -94,6 +105,7 @@ const CourseVideos: React.FC = () => {
       fetchCourseAndVideos();
       fetchQuizzes();
       fetchResources();
+      fetchEnrollmentStatus();
     }
     
     // Add debug function to window for testing
@@ -113,6 +125,47 @@ const CourseVideos: React.FC = () => {
       }
     };
   }, [googleDriveInterval]);
+
+  const fetchEnrollmentStatus = async () => {
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      console.log('🎓 Fetching enrollment status for courseId:', courseId);
+      
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/courses/user/enrollments`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Find the enrollment for this specific course
+          const currentEnrollment = data.data.find((enrollment: any) => 
+            enrollment.courseId && enrollment.courseId._id === courseId
+          );
+          
+          if (currentEnrollment) {
+            setEnrollment({
+              _id: currentEnrollment._id,
+              status: currentEnrollment.status,
+              progress: currentEnrollment.progress || { lessonsCompleted: 0, totalLessons: 0, percentage: 0 }
+            });
+            console.log('📊 Found enrollment:', {
+              status: currentEnrollment.status,
+              progress: currentEnrollment.progress
+            });
+          } else {
+            console.log('⚠️ No enrollment found for this course');
+          }
+        }
+      } else {
+        console.error('❌ Failed to fetch enrollment status:', response.status);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching enrollment status:', error);
+    }
+  };
 
   const fetchCourseAndVideos = async () => {
     try {
@@ -343,10 +396,25 @@ const CourseVideos: React.FC = () => {
 
   const timelineItems = createUnifiedTimeline();
 
-  // Calculate overall course progress based on all content types
+  // Calculate overall course progress based on all content types and enrollment status
   const totalContentItems = timelineItems.length;
-  const completedContentItems = watchedVideos.size; // For now, only videos are tracked as completed
-  const progressPercentage = totalContentItems > 0 ? (completedContentItems / totalContentItems) * 100 : 0;
+  
+  // If course is completed according to enrollment status, show 100%
+  const isCompletedCourse = enrollment?.status === 'completed';
+  
+  let completedContentItems;
+  let progressPercentage;
+  
+  if (isCompletedCourse) {
+    // For completed courses, show all content as completed
+    completedContentItems = totalContentItems;
+    progressPercentage = 100;
+    console.log('🎉 Course is completed - showing 100% progress and all content as complete');
+  } else {
+    // For active courses, calculate based on actual completed videos
+    completedContentItems = watchedVideos.size;
+    progressPercentage = totalContentItems > 0 ? (completedContentItems / totalContentItems) * 100 : 0;
+  }
 
   // Check if a video is unlocked for student access
   const isVideoUnlocked = (video: Video, index: number) => {
@@ -1068,6 +1136,9 @@ const CourseVideos: React.FC = () => {
                             <div className="flex items-center space-x-2">
                               {isLocked ? (
                                 <div className="text-gray-400 text-xs">🔒</div>
+                              ) : isCompletedCourse ? (
+                                // Show tick mark for all content when course is completed
+                                <div className="text-green-500 text-xs">✅</div>
                               ) : item.type === 'video' && watchedVideos.has(item.id) ? (
                                 <div className="text-green-500 text-xs">✅</div>
                               ) : item.type === 'video' && videoProgress[item.id] ? (

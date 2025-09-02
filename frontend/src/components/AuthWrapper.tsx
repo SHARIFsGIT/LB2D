@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { initializeAuth, logout, updateUser } from '../store/slices/authSlice';
 import { RootState } from '../store/store';
@@ -11,6 +11,8 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const dispatch = useDispatch();
   const [isInitialized, setIsInitialized] = useState(false);
   const token = useSelector((state: RootState) => state.auth.token);
+  const hasValidatedToken = useRef(false);
+  const validationInProgress = useRef(false);
 
   useEffect(() => {
     // Clean up any existing localStorage tokens to force session-based auth
@@ -25,6 +27,14 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   }, [dispatch]);
 
   const validateToken = useCallback(async (token: string) => {
+    // Prevent multiple simultaneous validations
+    if (validationInProgress.current || hasValidatedToken.current) {
+      console.log('🛑 AuthWrapper - Skipping validation (already in progress or completed)');
+      return;
+    }
+    
+    validationInProgress.current = true;
+    
     try {
       console.log('🔍 AuthWrapper - Validating token...');
       // API call to validate the token
@@ -60,25 +70,39 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
         } else {
           console.log('⚠️ AuthWrapper - Profile fetch failed:', profileResponse.status);
         }
+        
+        // Mark validation as completed
+        hasValidatedToken.current = true;
       } else {
         const errorData = await validateResponse.json().catch(() => ({}));
         console.log('❌ AuthWrapper - Token validation failed:', validateResponse.status, errorData);
         // Token is invalid, clear auth state
         dispatch(logout());
+        hasValidatedToken.current = true; // Mark as completed even if failed
       }
     } catch (error) {
       console.error('💥 AuthWrapper - Token validation error:', error);
       // On network error, don't logout - could be temporary
+      hasValidatedToken.current = true; // Mark as completed even if error
+    } finally {
+      validationInProgress.current = false;
     }
   }, [dispatch]);
   
   // Separate effect for token validation to prevent infinite loops
   useEffect(() => {
     // Only validate token once when component mounts and token exists
-    if (token && isInitialized) {
+    if (token && isInitialized && !hasValidatedToken.current) {
+      console.log('🔄 AuthWrapper - Triggering one-time token validation');
       validateToken(token);
     }
   }, [token, isInitialized, validateToken]);
+  
+  // Reset validation flag when token changes (new login)
+  useEffect(() => {
+    hasValidatedToken.current = false;
+    validationInProgress.current = false;
+  }, [token]);
 
   // Periodic validation disabled to prevent automatic page refresh
   // Add periodic validation every 30 seconds to catch role changes

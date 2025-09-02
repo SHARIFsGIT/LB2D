@@ -86,6 +86,11 @@ function AppRoutes() {
           <Assessment />
         </PrivateRoute>
       } />
+      <Route path="/quiz/:quizId" element={
+        <PrivateRoute>
+          <Assessment />
+        </PrivateRoute>
+      } />
       <Route path="/admin" element={
         <PrivateRoute adminOnly>
           <AdminDashboard />

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { NotificationData, useWebSocket } from '../hooks/useWebSocket';
-import { updateUser, logout } from '../store/slices/authSlice';
+import { updateUser } from '../store/slices/authSlice';
 import { RootState } from '../store/store';
 
 interface User {
@@ -67,6 +67,21 @@ interface Quiz {
   createdAt: string;
   approvedAt?: string;
   rejectionReason?: string;
+  deletionStatus?: 'none' | 'pending' | 'approved' | 'rejected';
+  deletionRequestedBy?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  deletionRequestedAt?: string;
+  deletionApprovedBy?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  deletionApprovedAt?: string;
+  deletionRejectionReason?: string;
 }
 
 interface Resource {
@@ -373,6 +388,177 @@ const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ video, onClose, o
   );
 };
 
+interface QuizPreviewModalProps {
+  quiz: Quiz | null;
+  onClose: () => void;
+  onApprove: (quizId: string) => void;
+  onReject: (quizId: string) => void;
+  onApproveDeletion?: (quizId: string, quizTitle: string) => void;
+  onRejectDeletion?: (quizId: string, quizTitle: string) => void;
+}
+
+const QuizPreviewModal: React.FC<QuizPreviewModalProps> = ({ quiz, onClose, onApprove, onReject, onApproveDeletion, onRejectDeletion }) => {
+  if (!quiz) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-6 text-white">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold mb-2">{quiz.title}</h2>
+              {quiz.description && (
+                <p className="text-white text-opacity-90 text-sm">{quiz.description}</p>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:text-gray-200 text-2xl font-bold ml-4"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Quiz Information */}
+        <div className="p-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-50 p-3 rounded-lg text-center">
+              <div className="text-lg font-bold text-gray-800">{quiz.questions?.length || 0}</div>
+              <div className="text-xs text-gray-600">Questions</div>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-lg text-center">
+              <div className="text-lg font-bold text-gray-800">{quiz.totalPoints}</div>
+              <div className="text-xs text-gray-600">Total Points</div>
+            </div>
+            {quiz.timeLimit && (
+              <div className="bg-gray-50 p-3 rounded-lg text-center">
+                <div className="text-lg font-bold text-gray-800">{quiz.timeLimit}</div>
+                <div className="text-xs text-gray-600">Minutes</div>
+              </div>
+            )}
+            <div className="bg-gray-50 p-3 rounded-lg text-center">
+              <div className="text-lg font-bold text-gray-800">{quiz.courseId?.level}</div>
+              <div className="text-xs text-gray-600">Level</div>
+            </div>
+          </div>
+
+          {/* Questions Preview */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Questions Preview</h3>
+            {quiz.questions && quiz.questions.length > 0 ? (
+              quiz.questions.slice(0, 5).map((question, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className="font-medium text-gray-800">Question {index + 1}</h4>
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                      {question.points || 10} pts
+                    </span>
+                  </div>
+                  <p className="text-gray-700 mb-3">{question.questionText}</p>
+                  
+                  {question.questionType === 'multiple-choice' && question.options && (
+                    <div className="space-y-2">
+                      {question.options.map((option: string, optIndex: number) => (
+                        <div 
+                          key={optIndex} 
+                          className={`p-2 rounded text-sm ${
+                            option === question.correctAnswer 
+                              ? 'bg-green-100 border border-green-300' 
+                              : 'bg-gray-50 border border-gray-200'
+                          }`}
+                        >
+                          <span className="font-medium">{String.fromCharCode(65 + optIndex)}.</span> {option}
+                          {option === question.correctAnswer && (
+                            <span className="ml-2 text-green-600 font-medium">✓ Correct</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {question.questionType === 'true-false' && (
+                    <div className="text-sm">
+                      <span className="font-medium">Correct Answer:</span> 
+                      <span className={`ml-2 px-2 py-1 rounded ${
+                        question.correctAnswer === 'true' || question.correctAnswer === true
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {question.correctAnswer === 'true' || question.correctAnswer === true ? 'True' : 'False'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-6 text-gray-500">
+                <p>No questions available to preview</p>
+              </div>
+            )}
+            
+            {quiz.questions && quiz.questions.length > 5 && (
+              <div className="text-center py-4">
+                <p className="text-gray-600 text-sm">
+                  ... and {quiz.questions.length - 5} more questions
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="border-t border-gray-200 p-6 bg-gray-50">
+          {quiz.deletionStatus === 'pending' ? (
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => {
+                  onRejectDeletion?.(quiz._id, quiz.title);
+                  onClose();
+                }}
+                className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg transition-all duration-300"
+              >
+                Reject Deletion
+              </button>
+              <button
+                onClick={() => {
+                  onApproveDeletion?.(quiz._id, quiz.title);
+                  onClose();
+                }}
+                className="px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all duration-300"
+              >
+                Approve Deletion
+              </button>
+            </div>
+          ) : (
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => {
+                  onReject(quiz._id);
+                  onClose();
+                }}
+                className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg transition-all duration-300"
+              >
+                Reject Quiz
+              </button>
+              <button
+                onClick={() => {
+                  onApprove(quiz._id);
+                  onClose();
+                }}
+                className="px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all duration-300"
+              >
+                Approve Quiz
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const EditModal: React.FC<EditModalProps> = ({ user, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     firstName: user.firstName,
@@ -572,6 +758,8 @@ const AdminDashboard: React.FC = () => {
   const [videoCount, setVideoCount] = useState(0);
   const [allQuizzes, setAllQuizzes] = useState<Quiz[]>([]);
   const [quizCount, setQuizCount] = useState(0);
+  const [quizzesPendingDeletion, setQuizzesPendingDeletion] = useState<Quiz[]>([]);
+  const [deletionRequestsCount, setDeletionRequestsCount] = useState(0);
   const [allResources, setAllResources] = useState<Resource[]>([]);
   const [resourceCount, setResourceCount] = useState(0);
   const [activeTab, setActiveTab] = useState<'users' | 'videos' | 'approvals'>('users');
@@ -579,6 +767,7 @@ const AdminDashboard: React.FC = () => {
   const [loadingQuizzes, setLoadingQuizzes] = useState(false);
   const [loadingResources, setLoadingResources] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [realTimeUpdates, setRealTimeUpdates] = useState<NotificationData[]>([]);
   const [lastDataUpdate, setLastDataUpdate] = useState<string>('');
   const itemsPerPage = 10;
@@ -825,6 +1014,7 @@ const AdminDashboard: React.FC = () => {
     fetchVideoCount(); // Always fetch video count for the badge
     fetchQuizCount(); // Always fetch quiz count for the badge
     fetchResourceCount(); // Always fetch resource count for the badge
+    fetchQuizzesPendingDeletion(); // Always fetch deletion requests for the badge
     if (activeTab === 'videos') {
       fetchAllVideos();
       fetchAllQuizzes();
@@ -886,17 +1076,61 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // Fetch quiz count only
+  // Fetch quiz count only (pending and rejected quizzes)
   const fetchQuizCount = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/pending`, {
+      // Try admin-review endpoint first
+      let response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/admin-review`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (response.ok) {
+      // If admin-review endpoint doesn't exist, fallback to pending
+      if (!response.ok && response.status === 404) {
+        console.log('admin-review endpoint not found, falling back to pending + rejected + approved');
+        
+        // Get pending quizzes
+        const pendingResponse = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/pending`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        // Get rejected quizzes  
+        const rejectedResponse = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/rejected`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        // Get approved quizzes
+        const approvedResponse = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/approved`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        let totalCount = 0;
+        if (pendingResponse.ok) {
+          const pendingData = await pendingResponse.json();
+          totalCount += pendingData.count || pendingData.data?.length || 0;
+        }
+        if (rejectedResponse.ok) {
+          const rejectedData = await rejectedResponse.json();
+          totalCount += rejectedData.count || rejectedData.data?.length || 0;
+        }
+        if (approvedResponse.ok) {
+          const approvedData = await approvedResponse.json();
+          totalCount += approvedData.count || approvedData.data?.length || 0;
+        }
+        
+        setQuizCount(totalCount);
+      } else if (response.ok) {
         const data = await response.json();
         setQuizCount(data.count || data.data.length);
       }
@@ -905,18 +1139,82 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // Fetch all pending quizzes
+  // Fetch all quizzes needing admin review (pending, rejected, and approved)
   const fetchAllQuizzes = async () => {
     try {
       setLoadingQuizzes(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/pending`, {
+      
+      // Try admin-review endpoint first
+      let response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/admin-review`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (response.ok) {
+      // If admin-review endpoint doesn't exist, fallback to combining pending + rejected
+      if (!response.ok && response.status === 404) {
+        console.log('admin-review endpoint not found, combining pending + rejected + approved quizzes');
+        
+        const allQuizzes = [];
+        
+        // Get pending quizzes
+        try {
+          const pendingResponse = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/pending`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (pendingResponse.ok) {
+            const pendingData = await pendingResponse.json();
+            if (pendingData.data && Array.isArray(pendingData.data)) {
+              allQuizzes.push(...pendingData.data);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching pending quizzes:', error);
+        }
+
+        // Get rejected quizzes
+        try {
+          const rejectedResponse = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/rejected`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (rejectedResponse.ok) {
+            const rejectedData = await rejectedResponse.json();
+            if (rejectedData.data && Array.isArray(rejectedData.data)) {
+              allQuizzes.push(...rejectedData.data);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching rejected quizzes:', error);
+        }
+
+        // Get approved quizzes
+        try {
+          const approvedResponse = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/approved`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (approvedResponse.ok) {
+            const approvedData = await approvedResponse.json();
+            if (approvedData.data && Array.isArray(approvedData.data)) {
+              allQuizzes.push(...approvedData.data);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching approved quizzes:', error);
+        }
+
+        setAllQuizzes(allQuizzes);
+        setQuizCount(allQuizzes.length);
+      } else if (response.ok) {
         const data = await response.json();
         setAllQuizzes(data.data);
         setQuizCount(data.count || data.data.length);
@@ -1111,6 +1409,83 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // Fetch quizzes pending deletion approval
+  const fetchQuizzesPendingDeletion = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/pending-deletion`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setQuizzesPendingDeletion(data.data || []);
+        setDeletionRequestsCount(data.data?.length || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching quizzes pending deletion:', error);
+    }
+  };
+
+  // Approve quiz deletion
+  const handleApproveDeletion = async (quizId: string, quizTitle: string) => {
+    if (!window.confirm(`Are you sure you want to approve the deletion of "${quizTitle}"? This will permanently delete the quiz and all student attempts.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}/approve-deletion`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        alert('Quiz deletion approved and quiz deleted successfully');
+        fetchQuizzesPendingDeletion();
+        fetchAllQuizzes(); // Refresh main quiz list
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to approve deletion');
+      }
+    } catch (error) {
+      console.error('Error approving deletion:', error);
+      alert('Failed to approve deletion');
+    }
+  };
+
+  // Reject quiz deletion
+  const handleRejectDeletion = async (quizId: string, quizTitle: string) => {
+    const rejectionReason = prompt(`Please provide a reason for rejecting the deletion of "${quizTitle}":`);
+    if (!rejectionReason) return;
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}/reject-deletion`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason: rejectionReason })
+      });
+
+      if (response.ok) {
+        alert('Deletion request rejected successfully');
+        fetchQuizzesPendingDeletion();
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to reject deletion');
+      }
+    } catch (error) {
+      console.error('Error rejecting deletion:', error);
+      alert('Failed to reject deletion');
+    }
+  };
+
   // Approve resource
   const handleApproveResource = async (resourceId: string) => {
     try {
@@ -1163,6 +1538,60 @@ const AdminDashboard: React.FC = () => {
       console.error('Error rejecting resource:', error);
       alert('Failed to reject resource');
     }
+  };
+
+  // View/Open resource (document)
+  const handleViewResource = async (resource: Resource) => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/resources/${resource._id}/download`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        // For documents, PDFs, and images - open in new tab
+        if (resource.type === 'document' || resource.fileName.toLowerCase().includes('.pdf') || 
+            resource.fileName.toLowerCase().includes('.doc') || resource.fileName.toLowerCase().includes('.docx') ||
+            resource.type === 'image') {
+          const newWindow = window.open(url, '_blank');
+          if (newWindow) {
+            // Clean up the blob URL after a delay to allow the new window to load
+            setTimeout(() => {
+              window.URL.revokeObjectURL(url);
+            }, 1000);
+          } else {
+            // Fallback: trigger download if popup blocked
+            triggerDownload(url, resource.fileName);
+          }
+        } else {
+          // For other file types, trigger download
+          triggerDownload(url, resource.fileName);
+        }
+      } else {
+        alert("Failed to open resource");
+      }
+    } catch (error) {
+      console.error("Error opening resource:", error);
+      alert("Failed to open resource");
+    }
+  };
+
+  // Helper function to trigger download
+  const triggerDownload = (url: string, fileName: string) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName || "download";
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   };
 
   // Handle user update
@@ -1579,6 +2008,11 @@ const AdminDashboard: React.FC = () => {
                   <span className="bg-yellow-100 text-yellow-600 rounded-full px-2 py-1 text-xs">
                     {quizCount} quizzes
                   </span>
+                  {deletionRequestsCount > 0 && (
+                    <span className="bg-orange-100 text-orange-600 rounded-full px-2 py-1 text-xs">
+                      {deletionRequestsCount} deletions
+                    </span>
+                  )}
                   <span className="bg-purple-100 text-purple-600 rounded-full px-2 py-1 text-xs">
                     {resourceCount} docs
                   </span>
@@ -1591,7 +2025,7 @@ const AdminDashboard: React.FC = () => {
         {/* Content based on active tab */}
         {activeTab === 'users' && (
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-cyan-800 via-sky-700 to-green-500 p-6">
+          <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
             <div className="flex justify-between items-center">
               <h2 className="text-3xl font-bold text-white flex items-center">
                 User Management
@@ -1810,6 +2244,7 @@ const AdminDashboard: React.FC = () => {
             </>
           )}
           </div>
+
         </div>
         )}
 
@@ -1818,7 +2253,7 @@ const AdminDashboard: React.FC = () => {
         <div className="space-y-8">
           {/* Videos Section */}
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
+            <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold text-white flex items-center">
                   Video Management
@@ -1957,7 +2392,7 @@ const AdminDashboard: React.FC = () => {
 
           {/* Quizzes Section */}
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-green-500 to-teal-600 p-6">
+            <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold text-white flex items-center">
                   Quiz/Exam Approval
@@ -1979,15 +2414,15 @@ const AdminDashboard: React.FC = () => {
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                   <p className="mt-2">Loading quizzes...</p>
                 </div>
-              ) : allQuizzes.length === 0 ? (
+              ) : [...allQuizzes, ...quizzesPendingDeletion].length === 0 ? (
                 <div className="text-center py-10">
                   <div className="text-6xl mb-4">📝</div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">No Pending Quizzes</h3>
-                  <p className="text-gray-600">All quizzes have been approved or rejected!</p>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">No Quizzes for Review</h3>
+                  <p className="text-gray-600">No pending, rejected, or approved quizzes to display!</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {allQuizzes.map((quiz) => (
+                  {[...allQuizzes, ...quizzesPendingDeletion].map((quiz) => (
                     <div key={quiz._id} className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                       {/* Quiz Header */}
                       <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 text-white">
@@ -1998,8 +2433,14 @@ const AdminDashboard: React.FC = () => {
                               {quiz.type.charAt(0).toUpperCase() + quiz.type.slice(1)}
                             </span>
                           </div>
-                          <span className="text-xs px-2 py-1 rounded-full font-medium bg-yellow-600">
-                            PENDING
+                          <span className={`text-xs px-2 py-1 rounded font-medium ${
+                            quiz.deletionStatus === 'pending' ? 'bg-orange-600' :
+                            quiz.status === 'rejected' ? 'bg-red-600' : 
+                            quiz.status === 'approved' ? 'bg-green-600' : 'bg-yellow-600'
+                          }`}>
+                            {quiz.deletionStatus === 'pending' ? 'DELETION PENDING' :
+                             quiz.status === 'rejected' ? 'REJECTED' : 
+                             quiz.status === 'approved' ? 'APPROVED' : 'PENDING'}
                           </span>
                         </div>
                       </div>
@@ -2036,25 +2477,31 @@ const AdminDashboard: React.FC = () => {
                             <span>Created:</span>
                             <span className="font-medium">{new Date(quiz.createdAt).toLocaleDateString()}</span>
                           </div>
+                          {quiz.status === 'rejected' && quiz.rejectionReason && (
+                            <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-xs">
+                              <span className="font-medium text-red-800">Rejection Reason:</span>
+                              <p className="text-red-700 mt-1">{quiz.rejectionReason}</p>
+                            </div>
+                          )}
+                          {quiz.deletionStatus === 'pending' && (
+                            <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded text-xs">
+                              <span className="font-medium text-orange-800">Deletion Request:</span>
+                              <div className="text-orange-700 mt-1 space-y-1">
+                                <div>Requested on: {quiz.deletionRequestedAt ? new Date(quiz.deletionRequestedAt).toLocaleDateString() : 'N/A'}</div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 
                       {/* Quiz Actions */}
                       <div className="border-t border-gray-200 p-4 bg-gray-50">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleApproveQuiz(quiz._id)}
-                            className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
-                          >
-                            ✅ Approve
-                          </button>
-                          <button
-                            onClick={() => handleRejectQuiz(quiz._id)}
-                            className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
-                          >
-                            ❌ Reject
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setSelectedQuiz(quiz)}
+                          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                        >
+                          View Quiz
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -2065,7 +2512,7 @@ const AdminDashboard: React.FC = () => {
 
           {/* Resources Section */}
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-6">
+            <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold text-white flex items-center">
                   Document/Resource Approval
@@ -2151,19 +2598,31 @@ const AdminDashboard: React.FC = () => {
 
                       {/* Resource Actions */}
                       <div className="border-t border-gray-200 p-4 bg-gray-50">
-                        <div className="flex space-x-2">
+                        <div className="flex flex-col space-y-2">
+                          {/* View button */}
                           <button
-                            onClick={() => handleApproveResource(resource._id)}
-                            className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                            onClick={() => handleViewResource(resource)}
+                            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
                           >
-                            ✅ Approve
+                            <span>👁️</span>
+                            <span>View Document</span>
                           </button>
-                          <button
-                            onClick={() => handleRejectResource(resource._id)}
-                            className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
-                          >
-                            ❌ Reject
-                          </button>
+                          
+                          {/* Approve/Reject buttons */}
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleApproveResource(resource._id)}
+                              className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                            >
+                              ✅ Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectResource(resource._id)}
+                              className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                            >
+                              ❌ Reject
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2178,7 +2637,7 @@ const AdminDashboard: React.FC = () => {
         {/* Role Approvals Section */}
         {activeTab === 'approvals' && (
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-cyan-800 via-sky-700 to-green-500 p-6">
+          <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
             <h2 className="text-3xl font-bold text-white flex items-center">
               Role Approval Requests
             </h2>
@@ -2318,6 +2777,16 @@ const AdminDashboard: React.FC = () => {
         onClose={() => setSelectedVideo(null)}
         onApprove={handleApproveVideo}
         onReject={handleRejectVideo}
+      />
+
+      {/* Quiz Preview Modal */}
+      <QuizPreviewModal
+        quiz={selectedQuiz}
+        onClose={() => setSelectedQuiz(null)}
+        onApprove={handleApproveQuiz}
+        onReject={handleRejectQuiz}
+        onApproveDeletion={handleApproveDeletion}
+        onRejectDeletion={handleRejectDeletion}
       />
     </div>
   );

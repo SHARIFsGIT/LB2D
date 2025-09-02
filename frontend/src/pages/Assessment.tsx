@@ -1,18 +1,36 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useExamSecurity } from '../hooks/useExamSecurity';
 import ExamSecurityWarning from '../components/ExamSecurityWarning';
 import { useNotification } from '../hooks/useNotification';
 
 interface Question {
-  id: string;
-  text: string;
+  _id?: string;
+  id?: string;
+  questionText: string;
+  text?: string; // for backward compatibility
   options: string[];
-  competency: string;
-  level: string;
+  correctAnswer: number;
+  points: number;
+  questionType: string;
+  competency?: string;
+  level?: string;
+}
+
+interface Quiz {
+  _id: string;
+  title: string;
+  description?: string;
+  type: 'quiz' | 'exam' | 'practice';
+  questions: Question[];
+  timeLimit?: number;
+  attemptLimit: number;
+  totalPoints: number;
+  courseId: string;
 }
 
 const Assessment: React.FC = () => {
+  const { quizId } = useParams<{ quizId?: string }>();
   const { showSuccess, showError, showWarning } = useNotification();
   const [currentStep, setCurrentStep] = useState(1);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -29,6 +47,12 @@ const Assessment: React.FC = () => {
   const [testId, setTestId] = useState<string>('');
   const [violations, setViolations] = useState<string[]>([]);
   const [showSecurityWarning, setShowSecurityWarning] = useState(false);
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [attemptId, setAttemptId] = useState<string>('');
+  const [quizResults, setQuizResults] = useState<any>(null);
+  const [alreadyCompleted, setAlreadyCompleted] = useState(false);
+  const [reviewMode, setReviewMode] = useState(false);
+  const [completedAttemptData, setCompletedAttemptData] = useState<any>(null);
   
   const navigate = useNavigate();
   
@@ -75,9 +99,10 @@ const Assessment: React.FC = () => {
     if (currentQuestionIndex > 0) {
       // Save the current answer if one is selected
       if (selectedAnswer !== null && questions.length > 0) {
+        const questionId = questions[currentQuestionIndex]._id || questions[currentQuestionIndex].id || currentQuestionIndex.toString();
         const updatedAnswers = { 
           ...answers,
-          [questions[currentQuestionIndex].id]: selectedAnswer 
+          [questionId]: selectedAnswer 
         };
         setAnswers(updatedAnswers);
       }
@@ -87,7 +112,8 @@ const Assessment: React.FC = () => {
       
       // Load the previous answer if it exists
       const previousQuestion = questions[currentQuestionIndex - 1];
-      const previousAnswer = answers[previousQuestion.id];
+      const previousQuestionId = previousQuestion._id || previousQuestion.id || (currentQuestionIndex - 1).toString();
+      const previousAnswer = answers[previousQuestionId];
       setSelectedAnswer(previousAnswer !== undefined ? previousAnswer : null);
       
       // Reset timer
@@ -112,9 +138,10 @@ const Assessment: React.FC = () => {
   const handleNextQuestion = useCallback(() => {
     if (selectedAnswer !== null && questions.length > 0) {
       // Save the current answer
+      const questionId = questions[currentQuestionIndex]._id || questions[currentQuestionIndex].id || currentQuestionIndex.toString();
       const updatedAnswers = { 
         ...answers,
-        [questions[currentQuestionIndex].id]: selectedAnswer 
+        [questionId]: selectedAnswer 
       };
       setAnswers(updatedAnswers);
 
@@ -129,29 +156,81 @@ const Assessment: React.FC = () => {
           answer
         }));
         
-        console.log('Submitting final test with answers:', answersArray);
-        
         const token = sessionStorage.getItem('accessToken');
-        fetch(`${process.env.REACT_APP_API_URL}/tests/submit`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ 
-            testId,
-            answers: answersArray,
-            totalCompletionTime: totalTimeSpent
+        
+        if (quizId) {
+          // Handle quiz submission
+          console.log('Submitting quiz with answers:', answersArray);
+          
+          fetch(`${process.env.REACT_APP_API_URL}/quizzes/submit`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+              quizId: quizId,
+              answers: answersArray,
+              completionTime: totalTimeSpent,
+              timeLimit: quiz?.timeLimit
+            })
           })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setScore(data.data.score);
-            setCertificationLevel(data.data.certificationLevel);
-            
-            if (data.data.proceedToNextStep && currentStep < 3) {
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              // Use backend-calculated scores
+              const { score, percentage, correctAnswers, totalQuestions } = data.data;
+              
+              setScore(percentage);
+              setCertificationLevel('Quiz Completed');
+              setQuizResults(data.data); // Store complete results
+              setTestComplete(true);
+              
               showSuccess(
+                `Quiz submitted successfully! You scored ${percentage}% (${correctAnswers}/${totalQuestions} correct).`,
+                'Quiz Complete!',
+                {
+                  duration: 5000,
+                  actions: [
+                    {
+                      label: 'Return to Course',
+                      onClick: () => navigate(-1)
+                    }
+                  ]
+                }
+              );
+            } else {
+              showError('Failed to submit quiz. Please try again.', 'Submission Error');
+            }
+          })
+          .catch(error => {
+            console.error('Error submitting quiz:', error);
+            showError('Failed to submit quiz. Please check your connection and try again.', 'Network Error');
+          });
+        } else {
+          // Handle original assessment submission
+          console.log('Submitting final test with answers:', answersArray);
+          
+          fetch(`${process.env.REACT_APP_API_URL}/tests/submit`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+              testId,
+              answers: answersArray,
+              totalCompletionTime: totalTimeSpent
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              setScore(data.data.score);
+              setCertificationLevel(data.data.certificationLevel);
+              
+              if (data.data.proceedToNextStep && currentStep < 3) {
+                showSuccess(
                 `Great job! You scored ${data.data.score}% and achieved ${data.data.certificationLevel} certification. Proceeding to Step ${currentStep + 1}...`,
                 'Step Complete!',
                 {
@@ -177,38 +256,129 @@ const Assessment: React.FC = () => {
                 setLoading(true);
                 setTimeTrackingStarted(false); // Reset time tracking for next step
               }, 2000);
-            } else {
-              setTestComplete(true);
+              } else {
+                setTestComplete(true);
+              }
             }
-          }
-        })
-        .catch(error => {
-          console.error('Failed to submit test:', error);
-          showError(
-            'Failed to submit test. Please try again.',
-            'Submission Failed',
-            {
-              duration: 8000,
-              actions: [
-                {
-                  label: 'Try Again',
-                  onClick: () => handleNextQuestion()
-                },
-                {
-                  label: 'Go to Dashboard',
-                  onClick: () => navigate('/dashboard'),
-                  variant: 'secondary'
-                }
-              ]
-            }
-          );
-        });
+          })
+          .catch(error => {
+            console.error('Failed to submit test:', error);
+            showError(
+              'Failed to submit test. Please try again.',
+              'Submission Failed',
+              {
+                duration: 8000,
+                actions: [
+                  {
+                    label: 'Try Again',
+                    onClick: () => handleNextQuestion()
+                  },
+                  {
+                    label: 'Go to Dashboard',
+                    onClick: () => navigate('/dashboard'),
+                    variant: 'secondary'
+                  }
+                ]
+              }
+            );
+          });
+        }
       }
     }
   }, [selectedAnswer, currentQuestionIndex, questions, answers, testId, currentStep, showSuccess, showError, navigate]);
 
   // Fetch questions from backend
   useEffect(() => {
+    const fetchQuizData = async () => {
+      if (!quizId) return;
+      
+      try {
+        console.log(`Fetching quiz data for quiz ${quizId}...`);
+        setLoading(true);
+        const token = sessionStorage.getItem('accessToken');
+        
+        // Fetch quiz details
+        const quizResponse = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (quizResponse.ok) {
+          const quizData = await quizResponse.json();
+          const fetchedQuiz = quizData.data || quizData;
+          
+          // Check if student has already submitted this quiz
+          const attemptsResponse = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/my-attempts/${quizId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (attemptsResponse.ok) {
+            const attemptsData = await attemptsResponse.json();
+            if (attemptsData.success && attemptsData.data.length > 0) {
+              const completedAttempt = attemptsData.data.find((attempt: any) => 
+                attempt.status === 'submitted' || attempt.status === 'graded'
+              );
+              
+              if (completedAttempt) {
+                // Instead of redirecting, enter review mode
+                setReviewMode(true);
+                setCompletedAttemptData(completedAttempt);
+                setQuiz(fetchedQuiz);
+                setQuestions(fetchedQuiz.questions || []);
+                setQuizResults({
+                  score: completedAttempt.score || 0,
+                  percentage: completedAttempt.percentage || 0,
+                  correctAnswers: completedAttempt.correctAnswers || 0,
+                  totalQuestions: fetchedQuiz.questions?.length || 0
+                });
+                
+                // Set the user's answers from the completed attempt
+                if (completedAttempt.answers) {
+                  const answersMap: { [key: string]: number } = {};
+                  completedAttempt.answers.forEach((answer: any, index: number) => {
+                    answersMap[index.toString()] = answer.answer;
+                  });
+                  setAnswers(answersMap);
+                }
+                
+                setTestComplete(true); // Show results view
+                setLoading(false);
+                
+                showSuccess(
+                  'Quiz already completed. You can review your answers below.',
+                  'Review Mode',
+                  {
+                    duration: 3000
+                  }
+                );
+                return;
+              }
+            }
+          }
+          
+          setQuiz(fetchedQuiz);
+          setQuestions(fetchedQuiz.questions || []);
+          setTimeLeft(fetchedQuiz.timeLimit ? fetchedQuiz.timeLimit * 60 : 30 * 60); // Convert minutes to seconds
+          setTestId(fetchedQuiz._id);
+          
+          console.log('✅ Quiz data loaded:', fetchedQuiz);
+          setLoading(false);
+          return;
+        } else {
+          throw new Error('Failed to fetch quiz');
+        }
+      } catch (error) {
+        console.error('❌ Error fetching quiz:', error);
+        showError('Failed to load quiz. Please try again.', 'Error');
+        setLoading(false);
+        navigate('/dashboard');
+        return;
+      }
+    };
+
     const fetchQuestions = async () => {
       try {
         console.log(`Fetching questions for Step ${currentStep}...`);
@@ -276,10 +446,14 @@ const Assessment: React.FC = () => {
       }
     };
 
-    if (!testComplete && (loading || questions.length === 0)) {
-      fetchQuestions();
+    if (!testComplete && (loading || questions.length === 0) && !alreadyCompleted) {
+      if (quizId) {
+        fetchQuizData();
+      } else {
+        fetchQuestions();
+      }
     }
-  }, [currentStep, testComplete, loading, questions.length, showError, navigate]);
+  }, [currentStep, testComplete, loading, questions.length, showError, navigate, quizId, alreadyCompleted]);
 
   // Start time tracking when questions are loaded
   useEffect(() => {
@@ -311,45 +485,17 @@ const Assessment: React.FC = () => {
     return `${minutes} minute${minutes !== 1 ? 's' : ''} ${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''}`;
   };
 
-  // Download certificate
-  const downloadCertificate = async () => {
-    try {
-      const token = sessionStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/tests/certificate/${testId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `certificate-${certificationLevel}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      }
-    } catch (error) {
-      console.error('Failed to download certificate:', error);
-      showError(
-        'Failed to download certificate. Please try again.',
-        'Download Failed',
-        {
-          duration: 6000,
-          actions: [
-            {
-              label: 'Try Again',
-              onClick: () => downloadCertificate()
-            }
-          ]
-        }
-      );
+  // Load existing answer when question changes
+  useEffect(() => {
+    if (questions.length > 0 && currentQuestionIndex < questions.length) {
+      const currentQuestion = questions[currentQuestionIndex];
+      const currentQuestionId = currentQuestion._id || currentQuestion.id || currentQuestionIndex.toString();
+      const existingAnswer = answers[currentQuestionId];
+      setSelectedAnswer(existingAnswer !== undefined ? existingAnswer : null);
     }
-  };
+  }, [currentQuestionIndex, questions, answers]);
+
 
   // Loading screen
   if (loading) {
@@ -369,45 +515,105 @@ const Assessment: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-8 flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
           <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent text-center">
-            Assessment Complete!
+            {reviewMode ? 'Quiz Review' : 'Assessment Complete!'}
           </h2>
           
-          <div className={`mb-6 p-6 rounded-xl text-center ${
-            score >= 75 ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200' : 
-            score >= 50 ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200' : 
-            score >= 25 ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200' : 
-            'bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-200'
-          }`}>
-            <p className="text-5xl font-bold mb-2">{score}%</p>
-            <p className="text-2xl font-semibold text-gray-700">
-              Certification Level: <span className="text-indigo-600">{certificationLevel}</span>
-            </p>
-          </div>
+          {!reviewMode && (
+            <div className={`mb-6 p-6 rounded-xl text-center ${
+              score >= 75 ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200' : 
+              score >= 50 ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200' : 
+              score >= 25 ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200' : 
+              'bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-200'
+            }`}>
+              <p className="text-5xl font-bold mb-2">{score}%</p>
+              <p className="text-2xl font-semibold text-gray-700">
+                Certification Level: <span className="text-indigo-600">{certificationLevel}</span>
+              </p>
+            </div>
+          )}
 
-          <div className="mb-6 p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl">
-            <h3 className="font-semibold mb-2 text-gray-700">Assessment Summary:</h3>
-            <ul className="text-sm space-y-1 text-gray-600">
-              <li>✅ Total Questions Attempted: {Object.keys(answers).length}</li>
-              <li>✅ Final Step Reached: Step {currentStep}</li>
-              <li>✅ Time Taken: {formatTimeSpent(totalTimeSpent)}</li>
-            </ul>
-          </div>
+          {!reviewMode && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl">
+              <h3 className="font-semibold mb-2 text-gray-700">{quizId ? 'Quiz Summary:' : 'Assessment Summary:'}</h3>
+              <ul className="text-sm space-y-1 text-gray-600">
+                <li>✅ Total Questions Attempted: {Object.keys(answers).length}</li>
+                {!quizId && <li>✅ Final Step Reached: Step {currentStep}</li>}
+                <li>✅ Time Taken: {formatTimeSpent(totalTimeSpent)}</li>
+                {quizId && quiz && <li>✅ {quiz.type.charAt(0).toUpperCase() + quiz.type.slice(1)} Completed</li>}
+              </ul>
+            </div>
+          )}
 
-          {!certificationLevel.includes('Failed') && (
-            <button 
-              onClick={downloadCertificate}
-              className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg mb-4 border border-blue-400"
-            >
-              Download Certificate (PDF)
-            </button>
+          {/* Quiz Results with Correct Answers */}
+          {quizId && quizResults && quiz && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+              <h3 className="font-semibold mb-4 text-blue-800">Quiz Review</h3>
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {quiz.questions.map((question: any, index: number) => {
+                  const userAnswer = answers[index.toString()];
+                  const correctAnswerIndex = question.options?.indexOf(question.correctAnswer) ?? -1;
+                  const isCorrect = userAnswer === correctAnswerIndex;
+                  
+                  return (
+                    <div key={index} className={`p-4 rounded-lg border-2 ${
+                      isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                    }`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-medium text-gray-900">Question {index + 1}</h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                        </span>
+                      </div>
+                      
+                      <p className="text-gray-700 mb-3">{question.questionText}</p>
+                      
+                      <div className="space-y-2">
+                        {question.options?.map((option: string, optIndex: number) => (
+                          <div key={optIndex} className={`p-2 rounded text-sm ${
+                            optIndex === correctAnswerIndex && optIndex === userAnswer
+                              ? 'bg-green-200 text-green-900 font-medium' // Correct answer selected
+                            : optIndex === correctAnswerIndex
+                              ? 'bg-green-100 text-green-800 font-medium' // Correct answer not selected
+                            : optIndex === userAnswer
+                              ? 'bg-red-200 text-red-900' // Wrong answer selected
+                              : 'bg-gray-100 text-gray-700' // Not selected
+                          }`}>
+                            <span className="font-medium mr-2">{String.fromCharCode(65 + optIndex)}.</span>
+                            {option}
+                            {optIndex === correctAnswerIndex && (
+                              <span className="ml-2 text-green-600 font-medium">← Correct Answer</span>
+                            )}
+                            {optIndex === userAnswer && optIndex !== correctAnswerIndex && (
+                              <span className="ml-2 text-red-600 font-medium">← Your Answer</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
           
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg border border-emerald-400"
-          >
-            Return to Dashboard
-          </button>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg border border-blue-400"
+            >
+              {reviewMode ? 'Back to Course' : 'Return to Course'}
+            </button>
+            {!reviewMode && (
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg border border-emerald-400"
+              >
+                Dashboard
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -445,9 +651,14 @@ const Assessment: React.FC = () => {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Step {currentStep} Assessment
+                {quizId ? quiz?.title || 'Quiz' : `Step ${currentStep} Assessment`}
               </h2>
-              <p className="text-gray-600 font-medium mt-1">Level: {currentQuestion.level}</p>
+              <p className="text-gray-600 font-medium mt-1">
+                {quizId ? 
+                  `${quiz?.type ? quiz.type.charAt(0).toUpperCase() + quiz.type.slice(1) : 'Quiz'} • ${questions.length} Questions` :
+                  `Level: ${currentQuestion.level || 'N/A'}`
+                }
+              </p>
             </div>
             <div className={`text-xl font-bold px-5 py-3 rounded-xl ${
               timeLeft <= 10 
@@ -473,7 +684,7 @@ const Assessment: React.FC = () => {
 
           <div className="mb-8">
             <h3 className="text-xl font-semibold mb-6 text-gray-800 leading-relaxed">
-              {currentQuestion.text}
+              {currentQuestion.questionText || currentQuestion.text}
             </h3>
 
             <div className="space-y-3">
@@ -508,10 +719,12 @@ const Assessment: React.FC = () => {
 
           <div className="flex justify-between items-center pt-6 border-t border-gray-200">
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
-                <p className="font-medium"><strong>Competency:</strong> {currentQuestion.competency}</p>
-                <p className="font-medium"><strong>Step:</strong> {currentStep} of 3</p>
-              </div>
+              {!quizId && (
+                <div className="text-sm text-gray-600">
+                  <p className="font-medium"><strong>Competency:</strong> {currentQuestion.competency}</p>
+                  <p className="font-medium"><strong>Step:</strong> {currentStep} of 3</p>
+                </div>
+              )}
               
               <button
                 onClick={handleQuitTest}
@@ -545,20 +758,31 @@ const Assessment: React.FC = () => {
               >
                 {currentQuestionIndex < questions.length - 1 
                   ? 'Next →' 
-                  : `Complete Step ${currentStep}`}
+                  : quizId ? 'Submit Quiz' : `Complete Step ${currentStep}`}
               </button>
             </div>
           </div>
 
           <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
             <p className="text-sm text-blue-800">
-              <strong>Instructions:</strong> Select one answer and click Next. 
-              Each question has a 30-second timer.
-              <br />
-              <strong>Scoring:</strong> +1 point for correct answer, -0.5 points for wrong or unanswered questions.
-              {currentStep === 1 && ' Score below 25% means no retake allowed.'}
-              {currentStep === 2 && ' Score 75% or higher to proceed to Step 3.'}
-              {currentStep === 3 && ' This is your final step!'}
+              {quizId ? (
+                <>
+                  <strong>Instructions:</strong> Select one answer and click Next to proceed through the quiz.
+                  {quiz?.timeLimit && ` You have ${quiz.timeLimit} minutes to complete this ${quiz.type || 'quiz'}.`}
+                  <br />
+                  <strong>Note:</strong> Make sure to submit your quiz before the time runs out. You can navigate between questions using Previous and Next buttons.
+                </>
+              ) : (
+                <>
+                  <strong>Instructions:</strong> Select one answer and click Next. 
+                  Each question has a 30-second timer.
+                  <br />
+                  <strong>Scoring:</strong> +1 point for correct answer, -0.5 points for wrong or unanswered questions.
+                  {currentStep === 1 && ' Score below 25% means no retake allowed.'}
+                  {currentStep === 2 && ' Score 75% or higher to proceed to Step 3.'}
+                  {currentStep === 3 && ' This is your final step!'}
+                </>
+              )}
             </p>
           </div>
         </div>

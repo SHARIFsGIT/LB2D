@@ -3,10 +3,127 @@ import { AuthenticatedRequest } from '../types/common.types';
 import CourseResource from '../models/CourseResource.model';
 import Course from '../models/Course.model';
 import User from '../models/User.model';
+import ResourceProgress from '../models/ResourceProgress.model';
+import Enrollment from '../models/Enrollment.model';
 import { notifyStudents, notifyAdmins, notifyUser } from '../services/websocket.service';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+
+// Import other models needed for progress calculation
+import Video from '../models/Video.model';
+import VideoProgress from '../models/VideoProgress.model';
+import Quiz from '../models/Quiz.model';
+import QuizAttempt from '../models/QuizAttempt.model';
+
+// Utility function to update course progress
+const updateCourseProgress = async (userId: string, courseId: string) => {
+  try {
+    // Find the student's enrollment for this course
+    const enrollment = await Enrollment.findOne({
+      userId,
+      courseId
+    });
+
+    if (!enrollment) {
+      console.log(`No enrollment found for user ${userId} in course ${courseId}`);
+      return;
+    }
+
+    // Get course details
+    const course = await Course.findById(courseId);
+    if (!course) {
+      console.log(`Course ${courseId} not found`);
+      return;
+    }
+
+    // Count total approved and active quizzes in the course
+    const totalQuizzes = await Quiz.countDocuments({
+      courseId,
+      status: 'approved',
+      isActive: true
+    });
+
+    // Count total approved videos in the course
+    const totalVideos = await Video.countDocuments({
+      courseId,
+      status: 'approved'
+    });
+
+    // Count total approved resources in the course
+    const totalResources = await CourseResource.countDocuments({
+      courseId,
+      status: 'approved',
+      isActive: true
+    });
+
+    // Count completed videos by this student for this course
+    const completedVideos = await VideoProgress.countDocuments({
+      userId,
+      courseId,
+      completed: true
+    });
+
+    // Count completed resources by this student for this course
+    const completedResources = await ResourceProgress.countDocuments({
+      userId,
+      courseId,
+      completed: true
+    });
+
+    // Count completed quizzes by this student for this course
+    const completedQuizAttempts = await QuizAttempt.find({
+      studentId: userId,
+      status: { $in: ['submitted', 'graded'] }
+    }).populate({
+      path: 'quizId',
+      match: { courseId },
+      select: '_id'
+    });
+
+    const completedQuizzes = completedQuizAttempts.filter(attempt => attempt.quizId).length;
+
+    // Calculate total lessons and completed lessons
+    const totalLessons = totalVideos + totalQuizzes + totalResources;
+    const completedLessons = completedVideos + completedQuizzes + completedResources;
+
+    // Calculate progress percentage
+    const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+    // Update enrollment with new progress
+    await Enrollment.findByIdAndUpdate(enrollment._id, {
+      $set: {
+        'progress.lessonsCompleted': completedLessons,
+        'progress.totalLessons': totalLessons,
+        'progress.percentage': progressPercentage,
+        status: progressPercentage >= 100 ? 'completed' : 'active'
+      }
+    });
+
+    console.log(`📊 Course progress updated for user ${userId}:`, {
+      courseId,
+      totalVideos,
+      completedVideos,
+      totalQuizzes,
+      completedQuizzes,
+      totalResources,
+      completedResources,
+      totalLessons,
+      completedLessons,
+      progressPercentage: `${progressPercentage}%`
+    });
+
+    return {
+      totalLessons,
+      completedLessons,
+      progressPercentage
+    };
+
+  } catch (error) {
+    console.error('Error in updateCourseProgress:', error);
+    throw error;
+  }
+};
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -510,6 +627,7 @@ export const deleteResource = async (req: AuthenticatedRequest, res: Response) =
 export const downloadResource = async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   try {
     const { resourceId } = req.params;
+    const userId = req.userId;
 
     const resource = await CourseResource.findById(resourceId);
     if (!resource || !resource.isActive) {
@@ -519,9 +637,28 @@ export const downloadResource = async (req: AuthenticatedRequest, res: Response)
       });
     }
 
-    // Increment download count
+    // Track resource access/download
+    await ResourceProgress.findOneAndUpdate(
+      { userId, resourceId },
+      {
+        userId,
+        resourceId,
+        courseId: resource.courseId,
+        accessedAt: new Date(),
+        $inc: { downloadCount: 1 }
+      },
+      { 
+        upsert: true, 
+        new: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
+    // Increment global download count
     resource.downloadCount += 1;
     await resource.save();
+
+    console.log(`📁 Resource ${resourceId} downloaded by user ${userId}`);
 
     // Send file
     const filePath = path.join(process.cwd(), resource.fileUrl);
@@ -538,6 +675,98 @@ export const downloadResource = async (req: AuthenticatedRequest, res: Response)
     return res.status(500).json({
       success: false,
       message: 'Failed to download resource',
+      error: error.message
+    });
+  }
+};
+
+// Mark resource as completed (for students)
+export const markResourceCompleted = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { resourceId } = req.params;
+    const { timeSpent } = req.body;
+    const userId = req.userId;
+
+    const resource = await CourseResource.findById(resourceId);
+    if (!resource || !resource.isActive) {
+      return res.status(404).json({
+        success: false,
+        message: 'Resource not found'
+      });
+    }
+
+    // Check if already completed
+    const existingProgress = await ResourceProgress.findOne({ userId, resourceId });
+    const wasAlreadyCompleted = existingProgress?.completed;
+
+    // Update or create progress record
+    const progressData = await ResourceProgress.findOneAndUpdate(
+      { userId, resourceId },
+      {
+        userId,
+        resourceId,
+        courseId: resource.courseId,
+        completed: true,
+        completedAt: new Date(),
+        accessedAt: new Date(),
+        ...(timeSpent && { timeSpent: Math.max(timeSpent, 0) }),
+        $inc: { downloadCount: existingProgress ? 0 : 1 } // Only increment if new record
+      },
+      { 
+        upsert: true, 
+        new: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
+    // Update course progress if resource was newly completed
+    if (!wasAlreadyCompleted) {
+      try {
+        await updateCourseProgress(userId, resource.courseId.toString());
+        console.log(`✅ Updated course progress for student ${userId} after resource completion`);
+      } catch (progressError) {
+        console.error('Error updating course progress after resource completion:', progressError);
+        // Don't fail the resource completion if progress update fails
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Resource marked as completed successfully',
+      data: progressData
+    });
+  } catch (error: any) {
+    console.error('Error marking resource as completed:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to mark resource as completed',
+      error: error.message
+    });
+  }
+};
+
+// Get resource progress for a student
+export const getResourceProgress = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { resourceId } = req.params;
+    const userId = req.userId;
+
+    const progress = await ResourceProgress.findOne({ userId, resourceId });
+    
+    return res.status(200).json({
+      success: true,
+      data: progress || {
+        completed: false,
+        accessedAt: null,
+        downloadCount: 0,
+        timeSpent: 0
+      }
+    });
+  } catch (error: any) {
+    console.error('Error fetching resource progress:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch resource progress',
       error: error.message
     });
   }

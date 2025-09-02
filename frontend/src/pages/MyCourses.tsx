@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface EnrolledCourse {
@@ -75,13 +75,36 @@ const MyCourses: React.FC = () => {
       console.log('📚 Enrolled courses response:', data);
       
       if (data.success) {
-        console.log(`✅ Found ${data.data.length} enrollments:`, data.data.map((course: any) => ({
-          courseTitle: course.courseId?.title,
-          status: course.status,
-          enrollmentDate: course.enrollmentDate,
-          paymentStatus: course.paymentId?.status
-        })));
-        setEnrolledCourses(data.data);
+        // Filter out enrollments where the course has been deleted or doesn't exist
+        const validEnrollments = data.data.filter((enrollment: any) => {
+          const isValid = enrollment.courseId && 
+                         enrollment.courseId._id && 
+                         enrollment.courseId.title &&
+                         enrollment.courseId.status !== 'deleted';
+          
+          if (!isValid) {
+            console.log(`🗑️ Filtering out deleted/invalid course enrollment:`, {
+              enrollmentId: enrollment._id,
+              courseId: enrollment.courseId?._id,
+              courseTitle: enrollment.courseId?.title,
+              courseStatus: enrollment.courseId?.status,
+              enrollmentStatus: enrollment.status
+            });
+          }
+          
+          return isValid;
+        });
+
+        console.log(`✅ Found ${data.data.length} total enrollments, ${validEnrollments.length} valid:`, 
+          validEnrollments.map((course: any) => ({
+            courseTitle: course.courseId?.title,
+            status: course.status,
+            enrollmentDate: course.enrollmentDate,
+            paymentStatus: course.paymentId?.status
+          }))
+        );
+        
+        setEnrolledCourses(validEnrollments);
       } else {
         console.error('❌ Failed to fetch enrolled courses:', data.message);
       }
@@ -93,6 +116,12 @@ const MyCourses: React.FC = () => {
 
 
   const filteredCourses = enrolledCourses.filter(course => {
+    // Additional safety check: ensure course data is valid
+    if (!course.courseId || !course.courseId._id || !course.courseId.title) {
+      console.warn('⚠️ Invalid course data found, filtering out:', course);
+      return false;
+    }
+
     const isIncluded = (() => {
       switch (activeTab) {
         case 'active':
@@ -160,9 +189,9 @@ const MyCourses: React.FC = () => {
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
               {[
-                { key: 'active', label: 'Active Courses', count: enrolledCourses.filter(c => ['confirmed', 'active'].includes(c.status)).length },
-                { key: 'completed', label: 'Completed', count: enrolledCourses.filter(c => c.status === 'completed').length },
-                { key: 'all', label: 'All Courses', count: enrolledCourses.length }
+                { key: 'active', label: 'Active Courses', count: enrolledCourses.filter(c => c.courseId && c.courseId._id && ['confirmed', 'active'].includes(c.status)).length },
+                { key: 'completed', label: 'Completed', count: enrolledCourses.filter(c => c.courseId && c.courseId._id && c.status === 'completed').length },
+                { key: 'all', label: 'All Courses', count: enrolledCourses.filter(c => c.courseId && c.courseId._id).length }
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -192,55 +221,35 @@ const MyCourses: React.FC = () => {
                 <div className={`bg-gradient-to-r ${levelGradients[enrollment.courseId.level as keyof typeof levelGradients]} p-6 text-white relative overflow-hidden`}>
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
-                  <div className="relative z-10 flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center mb-3">
+                  <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center">
                         <div className="inline-flex items-center px-3 py-1 text-sm font-bold rounded-full bg-white/20 backdrop-blur-sm border border-white/30 mr-3">
                           <span className="mr-2">🌱</span>
                           {enrollment.courseId.level}
                         </div>
-                        {enrollment.status !== 'active' && enrollment.status !== 'confirmed' && (
+                        {enrollment.status !== 'active' && enrollment.status !== 'confirmed' && enrollment.status !== 'completed' && (
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/30`}>
                             {enrollment.status.toUpperCase()}
                           </span>
                         )}
                       </div>
-                      <h3 className="text-2xl font-bold mb-2">
-                        {enrollment.courseId.title}
-                      </h3>
-                      <p className="text-blue-100 opacity-90 flex items-center">
-                        <span className="mr-2">Instructor:</span>
-                        {enrollment.courseId.instructor}
-                      </p>
-                    </div>
-                    {/* Instructor's Photo */}
-                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/30 ml-4">
-                      {enrollment.courseId.supervisor ? (
-                        <>
-                          {enrollment.courseId.supervisor.profilePhoto ? (
-                            <img 
-                              src={enrollment.courseId.supervisor.profilePhoto} 
-                              alt={`${enrollment.courseId.supervisor.firstName} ${enrollment.courseId.supervisor.lastName}`}
-                              className="w-full h-full rounded-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                const fallbackDiv = e.currentTarget.nextElementSibling as HTMLElement;
-                                if (fallbackDiv) {
-                                  fallbackDiv.style.display = 'flex';
-                                }
-                              }}
-                            />
-                          ) : null}
-                          <div className={`w-full h-full rounded-full bg-white/30 flex items-center justify-center text-white font-bold text-lg ${enrollment.courseId.supervisor.profilePhoto ? 'hidden' : 'flex'}`}>
-                            {enrollment.courseId.supervisor.firstName.charAt(0)}
+                      {/* Completed Badge - Top Right */}
+                      {enrollment.status === 'completed' && (
+                        <div className="flex items-center space-x-2">
+                          <div className="px-4 py-2 rounded text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-400 text-white shadow-lg border-2 border-white/30">
+                            COMPLETED
                           </div>
-                        </>
-                      ) : (
-                        <div className="w-full h-full rounded-full bg-white/30 flex items-center justify-center text-white font-bold text-lg">
-                          {enrollment.courseId.instructor.charAt(0)}
                         </div>
                       )}
                     </div>
+                    <h3 className="text-2xl font-bold mb-2">
+                      {enrollment.courseId.title}
+                    </h3>
+                    <p className="text-blue-100 opacity-90 flex items-center">
+                      <span className="mr-2">Instructor:</span>
+                      {enrollment.courseId.instructor}
+                    </p>
                   </div>
                 </div>
 
@@ -248,20 +257,31 @@ const MyCourses: React.FC = () => {
                   {/* Progress Section */}
                   <div className="mb-6">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Learning Progress</span>
-                      <span className="text-sm font-bold text-blue-600">
-                        {enrollment.progress.percentage || 0}%
+                      <span className="text-sm font-medium text-gray-700">
+                        {enrollment.status === 'completed' ? 'Course Completed' : 'Learning Progress'}
+                      </span>
+                      <span className={`text-sm font-bold ${
+                        enrollment.status === 'completed' ? 'text-green-600' : 'text-blue-600'
+                      }`}>
+                        {enrollment.status === 'completed' ? '100' : Math.min(enrollment.progress.percentage || 0, 100)}%
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div 
-                        className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${enrollment.progress.percentage || 0}%` }}
+                        className={`h-3 rounded-full transition-all duration-500 ${
+                          enrollment.status === 'completed' 
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
+                            : 'bg-gradient-to-r from-blue-500 to-green-500'
+                        }`}
+                        style={{ width: `${enrollment.status === 'completed' ? '100' : Math.min(enrollment.progress.percentage || 0, 100)}%` }}
                       ></div>
                     </div>
                     <div className="flex justify-between text-xs text-gray-500 mt-1">
                       <span>
-                        {enrollment.progress.lessonsCompleted || 0} / {enrollment.progress.totalLessons || 0} lessons completed
+                        {enrollment.status === 'completed' 
+                          ? `${enrollment.progress.totalLessons || 0}/${enrollment.progress.totalLessons || 0} lessons completed`
+                          : `${Math.min(enrollment.progress.lessonsCompleted || 0, enrollment.progress.totalLessons || 0)}/${enrollment.progress.totalLessons || 0} lessons completed`
+                        }
                       </span>
                       <span>
                         {enrollment.courseId.duration} weeks duration
@@ -308,9 +328,27 @@ const MyCourses: React.FC = () => {
                       >
                         Continue Learning
                       </button>
+                    ) : enrollment.status === 'completed' ? (
+                      <div className="space-y-3">
+                        <button 
+                          onClick={() => navigate(`/course/${enrollment.courseId._id}/videos`)}
+                          className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+                        >
+                          View Course
+                        </button>
+                        {enrollment.certificateGenerated && (
+                          <button 
+                            onClick={() => handleDownloadCertificate(enrollment.courseId._id)}
+                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+                          >
+                            🏆 Download Certificate
+                          </button>
+                        )}
+                      </div>
                     ) : null}
 
-                    {enrollment.certificateGenerated && (
+                    {/* Certificate button for non-completed courses */}
+                    {enrollment.status !== 'completed' && enrollment.certificateGenerated && (
                       <button 
                         onClick={() => handleDownloadCertificate(enrollment.courseId._id)}
                         className="w-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
@@ -320,12 +358,6 @@ const MyCourses: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Achievement Badge */}
-                  {enrollment.progress.percentage >= 100 && (
-                    <div className="mt-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg p-3 text-center">
-                      <span className="font-bold">🏆 Course Completed!</span>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}

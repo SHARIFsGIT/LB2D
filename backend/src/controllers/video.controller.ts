@@ -4,11 +4,125 @@ import Course from '../models/Course.model';
 import Video from '../models/Video.model';
 import VideoProgress from '../models/VideoProgress.model';
 import User from '../models/User.model';
+import Enrollment from '../models/Enrollment.model';
+import Quiz from '../models/Quiz.model';
+import QuizAttempt from '../models/QuizAttempt.model';
+import CourseResource from '../models/CourseResource.model';
+import ResourceProgress from '../models/ResourceProgress.model';
 import emailService from '../services/email.service';
 import { notifyStudents, notifyAdmins, notifySupervisors, notifyUser } from '../services/websocket.service';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+
+// Utility function to update course progress
+const updateCourseProgress = async (userId: string, courseId: string) => {
+  try {
+    // Find the student's enrollment for this course
+    const enrollment = await Enrollment.findOne({
+      userId,
+      courseId
+    });
+
+    if (!enrollment) {
+      console.log(`No enrollment found for user ${userId} in course ${courseId}`);
+      return;
+    }
+
+    // Get course details
+    const course = await Course.findById(courseId);
+    if (!course) {
+      console.log(`Course ${courseId} not found`);
+      return;
+    }
+
+    // Count total approved and active quizzes in the course
+    const totalQuizzes = await Quiz.countDocuments({
+      courseId,
+      status: 'approved',
+      isActive: true
+    });
+
+    // Count total approved videos in the course
+    const totalVideos = await Video.countDocuments({
+      courseId,
+      status: 'approved'
+    });
+
+    // Count total approved resources in the course
+    const totalResources = await CourseResource.countDocuments({
+      courseId,
+      status: 'approved',
+      isActive: true
+    });
+
+    // Count completed videos by this student for this course
+    const completedVideos = await VideoProgress.countDocuments({
+      userId,
+      courseId,
+      completed: true
+    });
+
+    // Count completed resources by this student for this course
+    const completedResources = await ResourceProgress.countDocuments({
+      userId,
+      courseId,
+      completed: true
+    });
+
+    // Count completed quizzes by this student for this course
+    const completedQuizAttempts = await QuizAttempt.find({
+      studentId: userId,
+      status: { $in: ['submitted', 'graded'] }
+    }).populate({
+      path: 'quizId',
+      match: { courseId },
+      select: '_id'
+    });
+
+    const completedQuizzes = completedQuizAttempts.filter(attempt => attempt.quizId).length;
+
+    // Calculate total lessons and completed lessons
+    const totalLessons = totalVideos + totalQuizzes + totalResources;
+    const completedLessons = completedVideos + completedQuizzes + completedResources;
+
+    // Calculate progress percentage
+    const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+    // Update enrollment with new progress
+    await Enrollment.findByIdAndUpdate(enrollment._id, {
+      $set: {
+        'progress.lessonsCompleted': completedLessons,
+        'progress.totalLessons': totalLessons,
+        'progress.percentage': progressPercentage,
+        status: progressPercentage >= 100 ? 'completed' : 'active'
+      }
+    });
+
+    console.log(`📊 Course progress updated for user ${userId}:`, {
+      courseId,
+      totalVideos,
+      completedVideos,
+      totalQuizzes,
+      completedQuizzes,
+      totalResources,
+      completedResources,
+      totalLessons,
+      completedLessons,
+      progressPercentage: `${progressPercentage}%`
+    });
+
+    return {
+      totalLessons,
+      completedLessons,
+      progressPercentage
+    };
+
+  } catch (error) {
+    console.error('Error in updateCourseProgress:', error);
+    throw error;
+  }
+};
 
 // Function to convert Google Drive share URL to direct download URL
 const convertGoogleDriveURL = (url: string): string => {
@@ -809,6 +923,11 @@ export const updateVideoProgress = async (req: AuthenticatedRequest, res: Respon
     }
 
     const courseId = (video.courseId as any)._id;
+    const wasCompleted = progress >= 90 || completed;
+
+    // Get existing progress to check if this is a new completion
+    const existingProgress = await VideoProgress.findOne({ userId, videoId });
+    const wasAlreadyCompleted = existingProgress?.completed;
 
     // Update or create progress record
     const progressData = await VideoProgress.findOneAndUpdate(
@@ -819,9 +938,9 @@ export const updateVideoProgress = async (req: AuthenticatedRequest, res: Respon
         courseId,
         progress: Math.min(Math.max(progress || 0, 0), 100),
         watchTime: Math.max(watchTime || 0, 0),
-        completed: completed || progress >= 90,
+        completed: wasCompleted,
         lastWatchedAt: new Date(),
-        ...(completed || progress >= 90 ? { completedAt: new Date() } : {})
+        ...(wasCompleted ? { completedAt: new Date() } : {})
       },
       { 
         upsert: true, 
@@ -829,6 +948,17 @@ export const updateVideoProgress = async (req: AuthenticatedRequest, res: Respon
         setDefaultsOnInsert: true
       }
     );
+
+    // Update course progress if video was newly completed
+    if (wasCompleted && !wasAlreadyCompleted) {
+      try {
+        await updateCourseProgress(userId, courseId);
+        console.log(`✅ Updated course progress for student ${userId} after video completion`);
+      } catch (progressError) {
+        console.error('Error updating course progress after video completion:', progressError);
+        // Don't fail the video progress update if course progress update fails
+      }
+    }
 
     return res.status(200).json({
       success: true,
@@ -853,21 +983,28 @@ export const getStudentProgressBySupervisor = async (req: AuthenticatedRequest, 
     const courses = await Course.find({ supervisor: supervisorId });
     const courseIds = courses.map(course => course._id);
 
-    // Get all progress for these courses
-    const allProgress = await VideoProgress.find({
+    // Get enrollments for these courses (which include updated progress from quiz completion)
+    const enrollments = await Enrollment.find({
+      courseId: { $in: courseIds }
+    })
+    .populate('userId', 'firstName lastName email')
+    .populate('courseId', 'title level');
+
+    // Get detailed video progress for additional info
+    const videoProgress = await VideoProgress.find({
       courseId: { $in: courseIds }
     })
     .populate('userId', 'firstName lastName email')
     .populate('videoId', 'title duration sequenceNumber')
-    .populate('courseId', 'title level')
-    .sort('userId courseId videoId.sequenceNumber');
+    .populate('courseId', 'title level');
 
-    // Group progress by student and course
+    // Group data by student
     const studentProgress: any = {};
-    
-    allProgress.forEach(progress => {
-      const student = progress.userId as any;
-      const course = progress.courseId as any;
+
+    // First, process enrollments which have the accurate overall progress
+    enrollments.forEach(enrollment => {
+      const student = enrollment.userId as any;
+      const course = enrollment.courseId as any;
       const studentId = student._id.toString();
       
       if (!studentProgress[studentId]) {
@@ -882,40 +1019,97 @@ export const getStudentProgressBySupervisor = async (req: AuthenticatedRequest, 
       }
       
       const courseId = course._id.toString();
-      if (!studentProgress[studentId].courses[courseId]) {
-        studentProgress[studentId].courses[courseId] = {
-          course: {
-            id: course._id,
-            title: course.title,
-            level: course.level
-          },
-          videos: [],
-          overallProgress: 0,
-          completedVideos: 0,
-          totalVideos: 0
-        };
-      }
-      
-      studentProgress[studentId].courses[courseId].videos.push({
-        videoId: (progress.videoId as any)._id,
-        videoTitle: (progress.videoId as any).title,
-        progress: progress.progress,
-        completed: progress.completed,
-        watchTime: progress.watchTime,
-        lastWatchedAt: progress.lastWatchedAt
-      });
+      studentProgress[studentId].courses[courseId] = {
+        courseName: course.title,
+        course: {
+          id: course._id,
+          title: course.title,
+          level: course.level
+        },
+        // Use enrollment progress which includes quiz completion
+        overallProgress: enrollment.progress.percentage || 0,
+        completedVideos: 0, // Will be filled from video progress
+        totalVideos: 0, // Will be calculated
+        completedQuizzes: 0, // Will be calculated
+        totalQuizzes: 0, // Will be calculated
+        completedResources: 0, // Will be calculated
+        totalResources: 0, // Will be calculated
+        videos: []
+      };
     });
 
-    // Calculate overall progress for each course
-    Object.values(studentProgress).forEach((student: any) => {
-      Object.values(student.courses).forEach((courseData: any) => {
+    // Then add detailed video progress information
+    videoProgress.forEach(progress => {
+      const student = progress.userId as any;
+      const course = progress.courseId as any;
+      const studentId = student._id.toString();
+      const courseId = course._id.toString();
+      
+      // Ensure student and course exist in our data structure
+      if (studentProgress[studentId] && studentProgress[studentId].courses[courseId]) {
+        studentProgress[studentId].courses[courseId].videos.push({
+          videoId: (progress.videoId as any)._id,
+          videoTitle: (progress.videoId as any).title,
+          progress: progress.progress,
+          completed: progress.completed,
+          watchTime: progress.watchTime,
+          lastWatchedAt: progress.lastWatchedAt
+        });
+      }
+    });
+
+    // Calculate comprehensive stats for each course
+    for (const studentId of Object.keys(studentProgress)) {
+      const student = studentProgress[studentId];
+      
+      for (const courseId of Object.keys(student.courses)) {
+        const courseData = student.courses[courseId];
+        
+        // Calculate video stats
         const videos = courseData.videos;
         courseData.totalVideos = videos.length;
         courseData.completedVideos = videos.filter((v: any) => v.completed).length;
-        courseData.overallProgress = videos.length > 0 ? 
-          videos.reduce((sum: number, v: any) => sum + v.progress, 0) / videos.length : 0;
-      });
-    });
+        
+        // Calculate quiz stats
+        const totalQuizzes = await Quiz.countDocuments({
+          courseId,
+          status: 'approved',
+          isActive: true
+        });
+        
+        const completedQuizzes = await QuizAttempt.countDocuments({
+          userId: studentId,
+          quizId: { $in: await Quiz.find({ courseId, status: 'approved', isActive: true }).distinct('_id') },
+          status: { $in: ['submitted', 'graded'] }
+        });
+        
+        courseData.totalQuizzes = totalQuizzes;
+        courseData.completedQuizzes = completedQuizzes;
+        
+        console.log(`📊 Student ${studentId} Course ${courseId}:`, {
+          videos: `${courseData.completedVideos}/${courseData.totalVideos}`,
+          quizzes: `${completedQuizzes}/${totalQuizzes}`
+        });
+        
+        // Calculate resource stats
+        const totalResources = await CourseResource.countDocuments({
+          courseId,
+          status: 'approved'
+        });
+        
+        const completedResources = await ResourceProgress.countDocuments({
+          userId: studentId,
+          resourceId: { $in: await CourseResource.find({ courseId, status: 'approved' }).distinct('_id') },
+          completed: true
+        });
+        
+        courseData.totalResources = totalResources;
+        courseData.completedResources = completedResources;
+        
+        // Keep the enrollment progress as the authoritative overall progress
+        // (this already includes quiz completion)
+      }
+    }
 
     return res.status(200).json({
       success: true,

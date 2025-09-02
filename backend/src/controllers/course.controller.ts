@@ -4,6 +4,11 @@ import Enrollment from '../models/Enrollment.model';
 import Payment from '../models/Payment.model';
 import User from '../models/User.model';
 import Video from '../models/Video.model';
+import VideoProgress from '../models/VideoProgress.model';
+import Quiz from '../models/Quiz.model';
+import QuizAttempt from '../models/QuizAttempt.model';
+import CourseResource from '../models/CourseResource.model';
+import ResourceProgress from '../models/ResourceProgress.model';
 import emailService from '../services/email.service';
 import { notifyAdmins, notifySupervisors, notifyStudents, notifyUser, notifyRoleHierarchy } from '../services/websocket.service';
 
@@ -442,26 +447,84 @@ export const getUserEnrollments = async (req: AuthenticatedRequest, res: Respons
       .populate('paymentId')
       .sort({ createdAt: -1 });
     
-    // Enhanced enrollments with actual lesson counts based on approved videos
+    // Enhanced enrollments with actual lesson counts (videos + quizzes + resources)
     const enhancedEnrollments = await Promise.all(
       enrollments.map(async (enrollment) => {
         if (enrollment.courseId) {
-          // Count approved videos for this course
-          const approvedVideoCount = await Video.countDocuments({
-            courseId: enrollment.courseId._id,
+          const courseId = enrollment.courseId._id;
+          const userId = enrollment.userId;
+
+          // Count total approved videos in the course
+          const totalVideos = await Video.countDocuments({
+            courseId,
             status: 'approved'
           });
-          
-          // Update progress with actual lesson count
+
+          // Count total approved and active quizzes in the course
+          const totalQuizzes = await Quiz.countDocuments({
+            courseId,
+            status: 'approved',
+            isActive: true
+          });
+
+          // Count total approved resources in the course
+          const totalResources = await CourseResource.countDocuments({
+            courseId,
+            status: 'approved',
+            isActive: true
+          });
+
+          // Count completed videos by this student
+          const completedVideos = await VideoProgress.countDocuments({
+            userId,
+            courseId,
+            completed: true
+          });
+
+          // Count completed resources by this student
+          const completedResources = await ResourceProgress.countDocuments({
+            userId,
+            courseId,
+            completed: true
+          });
+
+          // Count completed quizzes by this student
+          const completedQuizAttempts = await QuizAttempt.find({
+            studentId: userId,
+            status: { $in: ['submitted', 'graded'] }
+          }).populate({
+            path: 'quizId',
+            match: { courseId },
+            select: '_id'
+          });
+
+          const completedQuizzes = completedQuizAttempts.filter(attempt => attempt.quizId).length;
+
+          // Calculate totals
+          const totalLessons = totalVideos + totalQuizzes + totalResources;
+          const completedLessons = completedVideos + completedQuizzes + completedResources;
+
+          // Update progress with comprehensive lesson count
           const enrollmentObj = enrollment.toObject();
-          enrollmentObj.progress = {
-            ...enrollmentObj.progress,
-            totalLessons: approvedVideoCount,
-            // Recalculate percentage based on actual lessons
-            percentage: approvedVideoCount > 0 
-              ? Math.round((enrollmentObj.progress.lessonsCompleted / approvedVideoCount) * 100)
-              : 0
-          };
+          
+          // For completed courses, ensure progress shows as complete
+          if (enrollmentObj.status === 'completed') {
+            enrollmentObj.progress = {
+              ...enrollmentObj.progress,
+              totalLessons: Math.max(totalLessons, 1), // At least 1 lesson for completed courses
+              lessonsCompleted: Math.max(totalLessons, 1), // All lessons completed
+              percentage: 100
+            };
+          } else {
+            enrollmentObj.progress = {
+              ...enrollmentObj.progress,
+              totalLessons,
+              lessonsCompleted: completedLessons,
+              percentage: totalLessons > 0 
+                ? Math.round((completedLessons / totalLessons) * 100)
+                : 0
+            };
+          }
           
           return enrollmentObj;
         }
