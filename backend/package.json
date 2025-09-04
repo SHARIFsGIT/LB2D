@@ -6,6 +6,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "start:prod": "ts-node --transpile-only src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -35,6 +36,7 @@
     "nodemailer": "^7.0.5",
     "pdfkit": "^0.17.1",
     "stripe": "^18.4.0",
+    "ts-node": "^10.9.1",
     "typescript": "^5.9.2",
     "winston": "^3.17.0",
     "ws": "^8.18.3"
