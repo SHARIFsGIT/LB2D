@@ -19,14 +19,12 @@ const updateCourseProgress = async (userId: string, courseId: string) => {
     });
 
     if (!enrollment) {
-      console.log(`No enrollment found for user ${userId} in course ${courseId}`);
       return;
     }
 
     // Get course details
     const course = await Course.findById(courseId);
     if (!course) {
-      console.log(`Course ${courseId} not found`);
       return;
     }
 
@@ -92,20 +90,6 @@ const updateCourseProgress = async (userId: string, courseId: string) => {
         status: progressPercentage >= 100 ? 'completed' : 'active'
       }
     });
-
-    console.log(`📊 Course progress updated for user ${userId}:`, {
-      courseId,
-      totalVideos,
-      completedVideos,
-      totalQuizzes,
-      completedQuizzes,
-      totalResources,
-      completedResources,
-      totalLessons,
-      completedLessons,
-      progressPercentage: `${progressPercentage}%`
-    });
-
     return {
       totalLessons,
       completedLessons,
@@ -1053,7 +1037,6 @@ export const submitQuizAttempt = async (req: AuthenticatedRequest, res: Response
     // Update course progress after successful quiz submission
     try {
       await updateCourseProgress(studentId, quiz.courseId.toString());
-      console.log(`✅ Updated course progress for student ${studentId} after quiz submission`);
     } catch (progressError) {
       console.error('Error updating course progress after quiz submission:', progressError);
       // Don't fail the quiz submission if progress update fails

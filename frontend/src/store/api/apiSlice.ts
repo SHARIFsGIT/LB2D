@@ -75,8 +75,7 @@ export const api = createApi({
         params: { token },
       }),
     }),
-    
-    
+
     requestOTP: builder.mutation({
       query: (email) => ({
         url: '/auth/request-otp',
@@ -92,8 +91,7 @@ export const api = createApi({
         data,
       }),
     }),
-    
-    
+
     validateToken: builder.query({
       query: () => ({
         url: '/auth/validate',
@@ -113,8 +111,7 @@ export const api = createApi({
       }),
       providesTags: ['User'],
     }),
-    
-    
+
     getUser: builder.query({
       query: (userId) => ({
         url: `/admin/users/${userId}`,
@@ -122,8 +119,7 @@ export const api = createApi({
       }),
       providesTags: ['User'],
     }),
-    
-    
+
     updateUser: builder.mutation({
       query: ({ userId, ...data }) => ({
         url: `/admin/users/${userId}`,
@@ -132,8 +128,7 @@ export const api = createApi({
       }),
       invalidatesTags: ['User', 'Stats'],
     }),
-    
-    
+
     deleteUser: builder.mutation({
       query: (userId) => ({
         url: `/admin/users/${userId}`,
@@ -141,8 +136,7 @@ export const api = createApi({
       }),
       invalidatesTags: ['User', 'Stats'],
     }),
-    
-    
+
     getUserStats: builder.query({
       query: () => ({
         url: '/admin/stats',
@@ -169,8 +163,7 @@ export const api = createApi({
       }),
       invalidatesTags: ['Test'],
     }),
-    
-    
+
     getTestResults: builder.query({
       query: (testId) => ({
         url: `/tests/results/${testId}`,
@@ -194,16 +187,14 @@ export const api = createApi({
       }),
       providesTags: ['Test'],
     }),
-    
-    
+
     downloadCertificate: builder.query({
       query: (testId) => ({
         url: `/tests/certificate/${testId}`,
         method: 'GET',
       }),
     }),
-    
-    
+
     getTestAnalytics: builder.query({
       query: (params) => ({
         url: '/admin/analytics',
@@ -214,7 +205,6 @@ export const api = createApi({
     }),
   }),
 });
-
 
 export const {
   useLoginMutation,

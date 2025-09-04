@@ -273,7 +273,6 @@ export const clearFailedAttempts = (req: Request): void => {
 export const clearAllRateLimits = (): void => {
   rateLimitStore.clear();
   bruteForceStore.clear();
-  console.log('🧹 All rate limits cleared for development');
 };
 
 export const clearRateLimitForIP = (ip: string): void => {
@@ -289,5 +288,4 @@ export const clearRateLimitForIP = (ip: string): void => {
       bruteForceStore.delete(key);
     }
   }
-  console.log(`🧹 Rate limits cleared for IP: ${ip}`);
 };

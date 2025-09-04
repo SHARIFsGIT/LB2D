@@ -38,7 +38,6 @@ export const fetchExchangeRate = async (): Promise<number> => {
       if (rate && typeof rate === 'number' && rate > 0) {
         cachedRate = rate;
         lastFetchTime = Date.now();
-        console.log(`Exchange rate updated: 1 EUR = ${rate} BDT`);
         return rate;
       }
     } catch (error) {

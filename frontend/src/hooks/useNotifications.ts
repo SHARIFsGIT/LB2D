@@ -80,13 +80,6 @@ export const useNotifications = () => {
       }
       
       // Log notification for debugging
-      console.log(`📢 Notification received for ${user?.role}:`, {
-        title: notification.title,
-        type: notification.type,
-        targetRole: notification.targetRole,
-        fromRole: notification.fromRole,
-        urgent: notification.urgent
-      });
     }
   }, [user?.role, user?.id]);
 
@@ -94,7 +87,6 @@ export const useNotifications = () => {
   const { isConnected } = useWebSocket({
     onNotification: handleNotification,
     onConnect: () => {
-      console.log('🔔 Notifications connected to WebSocket');
     }
   });
 

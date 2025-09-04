@@ -195,8 +195,6 @@ const AnalyticsDashboard: React.FC = () => {
   // Handle real-time notifications
   const handleNotification = useCallback(
     (notification: NotificationData) => {
-      console.log("📡 Real-time notification received:", notification);
-
       // Check if it's a user registration, enrollment, or video comment notification
       if (
         (notification.type === "admin" &&
@@ -227,7 +225,6 @@ const AnalyticsDashboard: React.FC = () => {
   const { isConnected, subscribe } = useWebSocket({
     onNotification: handleNotification,
     onConnect: () => {
-      console.log("📡 Admin dashboard connected to WebSocket");
       // Subscribe to admin notifications
       subscribe(["admin", "user-management", "general"]);
     },
@@ -362,7 +359,6 @@ const AnalyticsDashboard: React.FC = () => {
           }
         )
       ]);
-
 
       let combinedData = { tests: [], quizzes: [] };
 
@@ -781,16 +777,6 @@ Generated on: ${new Date().toLocaleString()}
       );
       return;
     }
-
-    console.log(
-      "Paying supervisor:",
-      supervisor.supervisorId,
-      "Month:",
-      currentMonth,
-      "Year:",
-      currentYear
-    );
-
     // Payment method selection
     const paymentMethods = [
       "bank_transfer",
@@ -863,12 +849,6 @@ Generated on: ${new Date().toLocaleString()}
           year: currentYear,
           paymentMethod: selectedMethod,
         };
-        console.log("Payment request body:", requestBody);
-        console.log(
-          "API URL:",
-          `${process.env.REACT_APP_API_URL}/analytics/supervisor-payment`
-        );
-
         const response = await fetch(
           `${process.env.REACT_APP_API_URL}/analytics/supervisor-payment`,
           {
@@ -880,12 +860,8 @@ Generated on: ${new Date().toLocaleString()}
             body: JSON.stringify(requestBody),
           }
         );
-
-        console.log("Payment response status:", response.status);
-
         if (response.ok) {
           const data = await response.json();
-          console.log("Payment success response:", data);
           alert(
             "✅ Payment Processed Successfully!\n\nThe salary payment has been marked as completed for the current month."
           );
@@ -897,8 +873,6 @@ Generated on: ${new Date().toLocaleString()}
           try {
             const responseText = await response.text();
             fullResponseText = responseText;
-            console.log("Full error response:", responseText);
-
             const errorData = JSON.parse(responseText);
             errorMessage =
               errorData.message ||
@@ -920,7 +894,6 @@ Generated on: ${new Date().toLocaleString()}
                 '\n\n💡 Tip: Click the "Initialize" button first to create salary records for all supervisors.';
             }
           } catch (parseError) {
-            console.log("Could not parse error response:", fullResponseText);
             errorMessage = `Server responded with status ${response.status}. Check console for details.`;
           }
 
@@ -965,7 +938,6 @@ Generated on: ${new Date().toLocaleString()}
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Payment toggle success:", data);
         fetchSupervisorAnalytics();
       } else {
         let errorMessage = "Failed to update payment status";
@@ -2179,7 +2151,6 @@ Generated on: ${new Date().toLocaleString()}
                         </p>
                       </div>
                     </div>
-
 
                     {/* Top Contributing Supervisors */}
                     <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-200">

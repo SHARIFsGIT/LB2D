@@ -29,14 +29,14 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const validateToken = useCallback(async (token: string) => {
     // Prevent multiple simultaneous validations
     if (validationInProgress.current || hasValidatedToken.current) {
-      console.log('🛑 AuthWrapper - Skipping validation (already in progress or completed)');
+
       return;
     }
     
     validationInProgress.current = true;
     
     try {
-      console.log('🔍 AuthWrapper - Validating token...');
+
       // API call to validate the token
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5005/api';
       const validateResponse = await fetch(`${apiUrl}/auth/validate-token`, {
@@ -46,12 +46,9 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
         }
       });
 
-      console.log('🔍 AuthWrapper - Validate response status:', validateResponse.status);
-
       if (validateResponse.ok) {
         const validateData = await validateResponse.json();
-        console.log('✅ AuthWrapper - Token validation successful:', validateData);
-        
+
         // Token is valid, now fetch the complete user profile including profile photo
         const profileResponse = await fetch(`${apiUrl}/users/profile`, {
           headers: {
@@ -62,20 +59,20 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
 
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
-          console.log('👤 AuthWrapper - Profile data:', profileData);
+
           if (profileData.success && profileData.data && profileData.data.user) {
             // Update user data with fresh data from server, including profile photo
             dispatch(updateUser(profileData.data.user));
           }
         } else {
-          console.log('⚠️ AuthWrapper - Profile fetch failed:', profileResponse.status);
+
         }
         
         // Mark validation as completed
         hasValidatedToken.current = true;
       } else {
         const errorData = await validateResponse.json().catch(() => ({}));
-        console.log('❌ AuthWrapper - Token validation failed:', validateResponse.status, errorData);
+
         // Token is invalid, clear auth state
         dispatch(logout());
         hasValidatedToken.current = true; // Mark as completed even if failed
@@ -93,7 +90,7 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   useEffect(() => {
     // Only validate token once when component mounts and token exists
     if (token && isInitialized && !hasValidatedToken.current) {
-      console.log('🔄 AuthWrapper - Triggering one-time token validation');
+
       validateToken(token);
     }
   }, [token, isInitialized, validateToken]);

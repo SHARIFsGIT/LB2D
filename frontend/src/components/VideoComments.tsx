@@ -51,28 +51,16 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
     
     // Only auto-check role if user appears to be pending (less intrusive)
     if (user?.role === 'Pending') {
-      console.log('🔄 User role is Pending - will check for updates in background');
     }
     
     // Debug user role information
-    console.log('🧑‍💼 Current user info:', {
-      id: user?.id,
-      email: user?.email,
-      role: user?.role,
-      firstName: user?.firstName,
-      lastName: user?.lastName
-    });
-    console.log('🔐 Current token (first 50 chars):', token?.substring(0, 50) + '...');
   }, [videoId]);
 
   const testApiConnection = async () => {
     try {
-      console.log('🌐 Testing API connection to:', `${process.env.REACT_APP_API_URL}/health`);
       const response = await fetch(`${process.env.REACT_APP_API_URL}/../health`);
-      console.log('💓 Health check status:', response.status);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ API server is running:', data);
       } else {
         console.error('❌ API server health check failed');
       }
@@ -84,7 +72,6 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
 
   const checkCurrentUserRole = async () => {
     try {
-      console.log('🔄 Checking current user role from server...');
       const response = await fetch(`${process.env.REACT_APP_API_URL}/users/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -94,10 +81,6 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📡 Full server response:', data);
-        console.log('👤 Server says user role is:', data.data?.user?.role);
-        console.log('🔄 Frontend thinks user role is:', user?.role);
-        
         // The backend returns user data under data.user, not data.data
         const serverUser = data.data?.user;
         
@@ -109,9 +92,6 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
         
         // Only update if both roles are valid and different
         if (serverUser.role && user?.role && serverUser.role !== user.role) {
-          console.log('⚠️ ROLE MISMATCH DETECTED!');
-          console.log(`🔄 Server role: "${serverUser.role}", Cached role: "${user.role}"`);
-          
           // Validate that the server role is a valid role
           const validRoles = ['Student', 'Supervisor', 'Admin', 'Pending'];
           if (!validRoles.includes(serverUser.role)) {
@@ -133,9 +113,6 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
             isActive: serverUser.isActive,
             createdAt: serverUser.createdAt
           };
-          
-          console.log('🔄 Updating with user data:', updatedUserData);
-          
           // Update the Redux store with the current server data
           dispatch(updateUser(updatedUserData));
           
@@ -147,7 +124,6 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
           console.error('❌ Server returned empty role');
           alert('Server returned invalid user data. Please try logging out and back in.');
         } else {
-          console.log('✅ Roles match - no update needed');
           alert('Your role is up to date!');
         }
       } else {
@@ -162,27 +138,18 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
 
   const fetchComments = async () => {
     try {
-      console.log('🔄 Fetching comments from:', `${process.env.REACT_APP_API_URL}/video-comments/video/${videoId}`);
-      console.log('🔑 Token present:', !!token);
-      
       const response = await fetch(`${process.env.REACT_APP_API_URL}/video-comments/video/${videoId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-
-      console.log('📡 Fetch comments response status:', response.status);
-
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Comments fetched successfully:', data);
         // Debug: Check if any comment has replies
         const hasAnyReplies = data.data.some((c: any) => c.replies && c.replies.length > 0);
         if (hasAnyReplies) {
-          console.log('✅ Found comments with replies in frontend!');
         } else {
-          console.log('❌ No replies found in frontend data');
         }
         setComments(data.data || []);
       } else {
@@ -216,11 +183,6 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
 
     setSubmitting(true);
     try {
-      console.log('🚀 Posting comment to:', `${process.env.REACT_APP_API_URL}/video-comments/video/${videoId}`);
-      console.log('📝 Comment data:', { comment: newComment.trim(), courseId });
-      console.log('🔑 Token present:', !!token);
-      console.log('👤 User role:', user?.role);
-      
       const response = await fetch(`${process.env.REACT_APP_API_URL}/video-comments/video/${videoId}`, {
         method: 'POST',
         headers: {
@@ -232,17 +194,12 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
           courseId: courseId // Add course ID for supervisor notification
         })
       });
-
-      console.log('📡 Response status:', response.status);
-
       if (response.ok) {
-        console.log('✅ Comment posted successfully');
         setNewComment('');
         fetchComments(); // Refresh comments
         
         // If user is a student, notify supervisors
         if (user?.role === 'Student') {
-          console.log('📧 Notifying supervisors about new student comment');
         }
       } else {
         const error = await response.json().catch(() => ({ message: 'Unknown error' }));
@@ -276,9 +233,6 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
       alert('You need to have an approved account to post replies. Please wait for account approval.');
       return;
     }
-
-    console.log('🔄 Submitting reply to parent:', parentCommentId);
-    console.log('👤 User role:', user?.role);
     setSubmitting(true);
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/video-comments/video/${videoId}`, {
@@ -293,18 +247,13 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
           courseId: courseId // Add course ID for consistency
         })
       });
-
-      console.log('Reply response status:', response.status);
-      
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ Reply created successfully:', result);
         setReplyText('');
         setReplyTo(null);
         fetchComments(); // Refresh comments
       } else {
         const error = await response.json();
-        console.log('❌ Reply failed:', error);
         alert(error.message || 'Failed to post reply');
       }
     } catch (error) {

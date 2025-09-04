@@ -241,4 +241,62 @@ export const testApi = {
     apiClient.get(`/tests/${id}/results`),
 };
 
+export const resourceApi = {
+  // Upload resource
+  upload: (courseId: string, formData: FormData) => 
+    apiClient.post('/resources/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+  
+  // Get course resources
+  getCourseResources: (courseId: string, params?: any) => 
+    apiClient.get(`/resources/course/${courseId}`, { params }),
+  
+  // Submit for approval
+  submitForApproval: (resourceId: string) => 
+    apiClient.patch(`/resources/${resourceId}/submit-approval`),
+  
+  // Update resource
+  update: (resourceId: string, data: any) => 
+    apiClient.put(`/resources/${resourceId}`, data),
+  
+  // Delete resource
+  delete: (resourceId: string) => 
+    apiClient.delete(`/resources/${resourceId}`),
+  
+  // View resource inline
+  view: (resourceId: string) => 
+    `${process.env.REACT_APP_API_URL || 'http://localhost:5005/api'}/resources/${resourceId}/view`,
+  
+  // Download resource
+  download: (resourceId: string) => 
+    `${process.env.REACT_APP_API_URL || 'http://localhost:5005/api'}/resources/${resourceId}/download`,
+  
+  // Mark as completed
+  markCompleted: (resourceId: string, timeSpent?: number) => 
+    apiClient.post(`/resources/${resourceId}/complete`, { timeSpent }),
+  
+  // Get progress
+  getProgress: (resourceId: string) => 
+    apiClient.get(`/resources/${resourceId}/progress`),
+  
+  // Get supervisor's resources
+  getSupervisorResources: () => 
+    apiClient.get('/resources/supervisor'),
+  
+  // Get statistics (supervisor/admin)
+  getStatistics: () => 
+    apiClient.get('/resources/statistics'),
+  
+  // Admin approval endpoints
+  getPending: () => 
+    apiClient.get('/resources/pending'),
+  
+  approve: (resourceId: string) => 
+    apiClient.put(`/resources/${resourceId}/approve`),
+  
+  reject: (resourceId: string, rejectionReason: string) => 
+    apiClient.put(`/resources/${resourceId}/reject`, { rejectionReason }),
+};
+
 export default apiClient;

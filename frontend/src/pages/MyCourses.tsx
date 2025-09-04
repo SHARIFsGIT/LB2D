@@ -63,8 +63,6 @@ const MyCourses: React.FC = () => {
   const fetchEnrolledCourses = async () => {
     try {
       const token = sessionStorage.getItem('accessToken');
-      console.log('🔍 Fetching enrolled courses...');
-      
       const response = await fetch(`${process.env.REACT_APP_API_URL}/courses/user/enrollments`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -72,8 +70,6 @@ const MyCourses: React.FC = () => {
       });
 
       const data = await response.json();
-      console.log('📚 Enrolled courses response:', data);
-      
       if (data.success) {
         // Filter out enrollments where the course has been deleted or doesn't exist
         const validEnrollments = data.data.filter((enrollment: any) => {
@@ -83,27 +79,10 @@ const MyCourses: React.FC = () => {
                          enrollment.courseId.status !== 'deleted';
           
           if (!isValid) {
-            console.log(`🗑️ Filtering out deleted/invalid course enrollment:`, {
-              enrollmentId: enrollment._id,
-              courseId: enrollment.courseId?._id,
-              courseTitle: enrollment.courseId?.title,
-              courseStatus: enrollment.courseId?.status,
-              enrollmentStatus: enrollment.status
-            });
           }
           
           return isValid;
         });
-
-        console.log(`✅ Found ${data.data.length} total enrollments, ${validEnrollments.length} valid:`, 
-          validEnrollments.map((course: any) => ({
-            courseTitle: course.courseId?.title,
-            status: course.status,
-            enrollmentDate: course.enrollmentDate,
-            paymentStatus: course.paymentId?.status
-          }))
-        );
-        
         setEnrolledCourses(validEnrollments);
       } else {
         console.error('❌ Failed to fetch enrolled courses:', data.message);
@@ -113,7 +92,6 @@ const MyCourses: React.FC = () => {
     }
     setLoading(false);
   };
-
 
   const filteredCourses = enrolledCourses.filter(course => {
     // Additional safety check: ensure course data is valid
@@ -132,8 +110,6 @@ const MyCourses: React.FC = () => {
           return true;
       }
     })();
-    
-    console.log(`🔍 Filter check for course "${course.courseId?.title}": status="${course.status}", activeTab="${activeTab}", included=${isIncluded}`);
     return isIncluded;
   });
 

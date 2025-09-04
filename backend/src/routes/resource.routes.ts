@@ -6,7 +6,11 @@ import {
   getCourseResources,
   updateResource,
   deleteResource,
+  viewResource,
   downloadResource,
+  markResourceCompleted,
+  getResourceProgress,
+  getSupervisorResources,
   getResourceStatistics,
   approveResource,
   rejectResource,
@@ -34,8 +38,20 @@ router.put('/:resourceId', authorize('Supervisor', 'Admin'), updateResource);
 // Delete resource
 router.delete('/:resourceId', authorize('Supervisor', 'Admin'), deleteResource);
 
+// View resource inline
+router.get('/:resourceId/view', viewResource);
+
 // Download resource
 router.get('/:resourceId/download', downloadResource);
+
+// Mark resource as completed (students only)
+router.post('/:resourceId/complete', authorize('Student'), markResourceCompleted);
+
+// Get resource progress
+router.get('/:resourceId/progress', getResourceProgress);
+
+// Get supervisor's resources
+router.get('/supervisor', authorize('Supervisor', 'Admin'), getSupervisorResources);
 
 // Statistics
 router.get('/statistics', authorize('Supervisor', 'Admin'), getResourceStatistics);

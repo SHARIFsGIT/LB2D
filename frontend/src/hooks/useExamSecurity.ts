@@ -220,7 +220,6 @@ export const useExamSecurity = (
     }
   }, []);
 
-  
   const exitFullscreen = useCallback(async () => {
     try {
       if (document.exitFullscreen) {

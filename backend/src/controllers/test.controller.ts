@@ -173,8 +173,6 @@ export const submitTest = asyncHandler(async (req: AuthenticatedRequest, res: Re
         timestamp: new Date()
       }
     });
-    console.log(`Notified student ${userId} about assessment result: ${score}% - ${certificationLevel}`);
-
     // Additional notification if test is completed (certificate available)
     if (!proceedToNextStep && test.status === 'completed') {
       await notifyUser(userId, {
@@ -193,7 +191,6 @@ export const submitTest = asyncHandler(async (req: AuthenticatedRequest, res: Re
           timestamp: new Date()
         }
       });
-      console.log(`Notified student ${userId} about certificate availability: ${certificationLevel}`);
     }
 
     // Notify supervisors about student assessment completion
@@ -280,12 +277,8 @@ export const getUserRankings = asyncHandler(async (req: AuthenticatedRequest, re
   const userId = req.userId;
 
   try {
-    console.log('Getting rankings for userId:', userId);
-    
     // Get current user's best scores
     const userTests = await Test.find({ userId, status: 'completed' });
-    console.log('User tests found:', userTests.length);
-    
     if (userTests.length === 0) {
       return res.status(200).json({
         success: true,
@@ -300,15 +293,10 @@ export const getUserRankings = asyncHandler(async (req: AuthenticatedRequest, re
 
     // Calculate user's best exam score
     const userBestScore = Math.max(...userTests.map(test => test.score));
-    console.log('User best score:', userBestScore);
-    
     // Get all completed tests from all users to calculate rankings
     const allTests = await Test.find({ status: 'completed' })
       .populate('userId', 'firstName lastName')
       .sort({ score: -1 });
-    
-    console.log('All completed tests found:', allTests.length);
-    
     // Group by user and get their best scores
     const userBestScores = new Map();
     allTests.forEach(test => {
@@ -327,13 +315,8 @@ export const getUserRankings = asyncHandler(async (req: AuthenticatedRequest, re
     // Convert to array and sort by score
     const rankings = Array.from(userBestScores.values())
       .sort((a, b) => b.score - a.score);
-    
-    console.log('Rankings array:', rankings.length, 'users');
-    
     // Find current user's rank
     const userRank = rankings.findIndex(entry => entry.userId === userId.toString()) + 1;
-    console.log('User rank:', userRank);
-    
     return res.status(200).json({
       success: true,
       data: {
@@ -405,9 +388,6 @@ export const getTestHistory = asyncHandler(async (req: AuthenticatedRequest, res
 
 // Get all test reports for admin analytics
 export const getTestReports = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<any> => {
-  console.log('getTestReports called with query:', req.query);
-  console.log('User role:', (req as any).userRole);
-  
   const { page = 1, limit = 20, userId, step, includeEnrolledOnly } = req.query;
   
   const skip = (Number(page) - 1) * Number(limit);
@@ -415,8 +395,6 @@ export const getTestReports = asyncHandler(async (req: AuthenticatedRequest, res
   try {
     // If includeEnrolledOnly is true, show enrolled students without tests
     if (includeEnrolledOnly === 'true') {
-      console.log('Fetching enrolled students without test results');
-      
       // Get enrolled students who don't have test results
       const studentsWithTests = await Test.distinct('userId');
       
@@ -434,9 +412,6 @@ export const getTestReports = asyncHandler(async (req: AuthenticatedRequest, res
         status: { $in: ['confirmed', 'active', 'completed'] },
         userId: { $nin: studentsWithTests }
       });
-      
-      console.log('Found enrolled students without tests:', enrolledStudents.length);
-      
       const formattedEnrollments = enrolledStudents.map(enrollment => ({
         id: `enrollment_${enrollment._id}`,
         user: {
@@ -480,22 +455,13 @@ export const getTestReports = asyncHandler(async (req: AuthenticatedRequest, res
     const filter: any = { status: 'completed' };
     if (userId) filter.userId = userId;
     if (step) filter.step = parseInt(step as string);
-    
-    console.log('Filter:', filter);
-    
     const tests = await Test.find(filter)
       .populate('userId', 'firstName lastName email')
       .sort('-completedAt')
       .limit(Number(limit))
       .skip(skip);
-      
-    console.log('Found tests:', tests.length);
-    
     const total = await Test.countDocuments(filter);
-    console.log('Total tests:', total);
-    
     const formattedTests = tests.map(test => {
-      console.log('Processing test:', test._id, 'user:', test.userId);
       return {
         id: test._id,
         user: {

@@ -26,14 +26,12 @@ const updateCourseProgress = async (userId: string, courseId: string) => {
     });
 
     if (!enrollment) {
-      console.log(`No enrollment found for user ${userId} in course ${courseId}`);
       return;
     }
 
     // Get course details
     const course = await Course.findById(courseId);
     if (!course) {
-      console.log(`Course ${courseId} not found`);
       return;
     }
 
@@ -99,20 +97,6 @@ const updateCourseProgress = async (userId: string, courseId: string) => {
         status: progressPercentage >= 100 ? 'completed' : 'active'
       }
     });
-
-    console.log(`📊 Course progress updated for user ${userId}:`, {
-      courseId,
-      totalVideos,
-      completedVideos,
-      totalQuizzes,
-      completedQuizzes,
-      totalResources,
-      completedResources,
-      totalLessons,
-      completedLessons,
-      progressPercentage: `${progressPercentage}%`
-    });
-
     return {
       totalLessons,
       completedLessons,
@@ -202,6 +186,24 @@ export const uploadResource = async (req: AuthenticatedRequest, res: Response) =
       resourceType = 'image';
     }
 
+    // Determine if file can be viewed inline
+    const inlineViewableTypes = [
+      'application/pdf',
+      'text/plain',
+      'text/html',
+      'text/css',
+      'text/javascript',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/svg+xml',
+      'audio/mpeg',
+      'audio/wav',
+      'audio/ogg'
+    ];
+    const isViewableInline = inlineViewableTypes.includes(file.mimetype);
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+
     // Create resource record in draft status
     const resource = await CourseResource.create({
       courseId,
@@ -213,6 +215,8 @@ export const uploadResource = async (req: AuthenticatedRequest, res: Response) =
       fileName: file.originalname,
       fileSize: file.size,
       mimeType: file.mimetype,
+      fileExtension,
+      isViewableInline,
       category,
       status: 'draft' // Start as draft
     });
@@ -265,11 +269,11 @@ export const submitResourceForApproval = async (req: AuthenticatedRequest, res: 
       });
     }
 
+    const wasRejected = resource.status === 'rejected';
+    
     if (resource.status === 'rejected') {
-      return res.status(400).json({
-        success: false,
-        message: 'Resource was rejected. Please edit and resubmit or create a new resource'
-      });
+      // Allow resubmission of rejected resources - clear rejection data
+      resource.rejectionReason = undefined;
     }
 
     resource.status = 'pending';
@@ -279,11 +283,14 @@ export const submitResourceForApproval = async (req: AuthenticatedRequest, res: 
     try {
       const supervisorInfo = resource.supervisorId as any;
       const courseInfo = resource.courseId as any;
+      const actionMessage = wasRejected 
+        ? `resubmitted ${resource.title} for approval` 
+        : `submitted ${resource.title} for approval`;
       
       await notifyAdmins({
         type: 'document_approval',
         title: 'Supervisor',
-        message: `${supervisorInfo?.firstName} ${supervisorInfo?.lastName} submitted ${resource.title} for approval`,
+        message: `${supervisorInfo?.firstName} ${supervisorInfo?.lastName} ${actionMessage}`,
         targetRole: 'Admin',
         fromRole: 'Supervisor',
         urgent: false,
@@ -301,7 +308,7 @@ export const submitResourceForApproval = async (req: AuthenticatedRequest, res: 
           status: 'pending',
           submittedAt: new Date().toISOString(),
           userRole: 'Supervisor',
-          actionType: 'submit_approval'
+          actionType: wasRejected ? 'resubmit_approval' : 'submit_approval'
         }
       });
     } catch (notificationError) {
@@ -403,8 +410,6 @@ export const approveResource = async (req: AuthenticatedRequest, res: Response) 
             actionType: 'upload'
           }
         });
-        console.log(`Notified supervisor ${supervisor.firstName} ${supervisor.lastName} about resource approval`);
-        console.log(`Notified all students about new ${resource.type}: ${resource.title} in course: ${course.title}`);
       }
     } catch (notificationError) {
       console.error('Failed to send resource approval notifications:', notificationError);
@@ -493,9 +498,13 @@ export const rejectResource = async (req: AuthenticatedRequest, res: Response) =
 // Get pending resources for approval (Admin only)
 export const getPendingResources = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const resources = await CourseResource.find({ status: 'pending' })
+    // Return resources that need admin review - pending, approved, and rejected
+    const resources = await CourseResource.find({ 
+      status: { $in: ['pending', 'approved', 'rejected'] } 
+    })
       .populate('supervisorId', 'firstName lastName')
-      .populate('courseId', 'title')
+      .populate('courseId', 'title level')
+      .populate('approvedBy', 'firstName lastName')
       .sort({ uploadedAt: -1 });
 
     return res.status(200).json({
@@ -506,7 +515,7 @@ export const getPendingResources = async (req: AuthenticatedRequest, res: Respon
   } catch (error: any) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch pending resources',
+      message: 'Failed to fetch resources for admin review',
       error: error.message
     });
   }
@@ -623,6 +632,79 @@ export const deleteResource = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
+// View resource inline (for supported file types)
+export const viewResource = async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  try {
+    const { resourceId } = req.params;
+    const userId = req.userId;
+
+    const resource = await CourseResource.findById(resourceId);
+    if (!resource || !resource.isActive) {
+      return res.status(404).json({
+        success: false,
+        message: 'Resource not found'
+      });
+    }
+
+    // Check if resource is approved (students can only view approved resources)
+    const userRole = req.userRole;
+    if (userRole === 'Student' && resource.status !== 'approved') {
+      return res.status(403).json({
+        success: false,
+        message: 'Resource is not available'
+      });
+    }
+
+    // Track resource access
+    await ResourceProgress.findOneAndUpdate(
+      { userId, resourceId },
+      {
+        userId,
+        resourceId,
+        courseId: resource.courseId,
+        accessedAt: new Date(),
+        $inc: { downloadCount: 1 }
+      },
+      { 
+        upsert: true, 
+        new: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
+    // Increment global download count
+    resource.downloadCount += 1;
+    await resource.save();
+    // Send file for inline viewing
+    const filePath = path.join(process.cwd(), resource.fileUrl);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: 'File not found on server'
+      });
+    }
+
+    // Set appropriate headers for inline viewing
+    res.setHeader('Content-Type', resource.mimeType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${resource.fileName}"`);
+    
+    // For security, add headers to prevent XSS
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    
+    // Stream the file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error: any) {
+    console.error('Error viewing resource:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to view resource',
+      error: error.message
+    });
+  }
+};
+
 // Download resource (increments download count)
 export const downloadResource = async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   try {
@@ -657,9 +739,6 @@ export const downloadResource = async (req: AuthenticatedRequest, res: Response)
     // Increment global download count
     resource.downloadCount += 1;
     await resource.save();
-
-    console.log(`📁 Resource ${resourceId} downloaded by user ${userId}`);
-
     // Send file
     const filePath = path.join(process.cwd(), resource.fileUrl);
     if (!fs.existsSync(filePath)) {
@@ -723,7 +802,6 @@ export const markResourceCompleted = async (req: AuthenticatedRequest, res: Resp
     if (!wasAlreadyCompleted) {
       try {
         await updateCourseProgress(userId, resource.courseId.toString());
-        console.log(`✅ Updated course progress for student ${userId} after resource completion`);
       } catch (progressError) {
         console.error('Error updating course progress after resource completion:', progressError);
         // Don't fail the resource completion if progress update fails
@@ -767,6 +845,31 @@ export const getResourceProgress = async (req: AuthenticatedRequest, res: Respon
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch resource progress',
+      error: error.message
+    });
+  }
+};
+
+// Get resources by supervisor
+export const getSupervisorResources = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const supervisorId = req.userId;
+    
+    const resources = await CourseResource.find({ supervisorId })
+      .populate('courseId', 'title level')
+      .populate('supervisorId', 'firstName lastName')
+      .populate('approvedBy', 'firstName lastName')
+      .sort({ uploadedAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: resources
+    });
+  } catch (error: any) {
+    console.error('Error fetching supervisor resources:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch supervisor resources',
       error: error.message
     });
   }

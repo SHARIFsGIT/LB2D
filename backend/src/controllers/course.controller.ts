@@ -38,10 +38,7 @@ export const getAllCourses = async (req: Request, res: Response) => {
     const courses = await Course.find(filter)
       .sort({ startDate: 1 })
       .select('-__v');
-    
-    console.log('getAllCourses - Found courses count:', courses.length);
     if (courses.length > 0) {
-      console.log('getAllCourses - Sample course IDs:', courses.slice(0, 3).map(c => c._id));
     }
     
     // Calculate dynamic current students for each course
@@ -75,8 +72,6 @@ export const getAllCourses = async (req: Request, res: Response) => {
 // Get single course (public)
 export const getCourse = async (req: Request, res: Response) => {
   try {
-    console.log('getCourse - Requested course ID:', req.params.id);
-    
     // Find course that is not deleted
     const course = await Course.findOne({
       _id: req.params.id,
@@ -84,15 +79,11 @@ export const getCourse = async (req: Request, res: Response) => {
     });
     
     if (!course) {
-      console.log('getCourse - Course not found for ID:', req.params.id);
       return res.status(404).json({
         success: false,
         message: 'Course not found'
       });
     }
-    
-    console.log('getCourse - Found course:', course.title);
-    
     // Calculate dynamic current students for this course
     const enrollmentCount = await Enrollment.countDocuments({
       courseId: course._id,
@@ -119,8 +110,6 @@ export const getCourse = async (req: Request, res: Response) => {
 export const createCourse = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const courseData = req.body;
-    console.log('Creating course with data:', courseData);
-    
     // Validate required fields
     if (!courseData.title || !courseData.level || !courseData.instructor) {
       return res.status(400).json({
@@ -172,8 +161,6 @@ export const createCourse = async (req: AuthenticatedRequest, res: Response) => 
               courseId: (course._id as any).toString()
             }
           );
-          console.log(`Course assignment notification sent to ${supervisor.email} for course: ${course.title}`);
-          
           // Send WebSocket notification to supervisor
           await notifyUser(courseData.supervisor, {
             id: `course_assign_${course._id}_${Date.now()}`,
@@ -241,7 +228,6 @@ export const createCourse = async (req: AuthenticatedRequest, res: Response) => 
           actionType: 'create'
         }
       });
-      console.log(`Notified all students about new course: ${course.title}`);
     } catch (error) {
       console.error('Failed to send student course notifications:', error);
     }
@@ -314,8 +300,6 @@ export const updateCourse = async (req: AuthenticatedRequest, res: Response) => 
               courseId: (course!._id as any).toString()
             }
           );
-          console.log(`Course assignment notification sent to ${supervisor.email} for updated course: ${course!.title}`);
-          
           // Send WebSocket notification to new supervisor
           await notifyUser(req.body.supervisor, {
             id: `course_update_${course!._id}_${Date.now()}`,
@@ -676,9 +660,6 @@ export const getSupervisorCourses = async (req: AuthenticatedRequest, res: Respo
       .populate('supervisor', 'firstName lastName email profilePhoto')
       .sort({ startDate: 1 })
       .select('-__v');
-    
-    console.log('getSupervisorCourses - Found courses count:', courses.length, 'for supervisor:', supervisorId);
-    
     // Calculate dynamic current students for each course
     const coursesWithDynamicStudents = await Promise.all(
       courses.map(async (course) => {

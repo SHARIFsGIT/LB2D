@@ -32,9 +32,6 @@ export const getVideoComments = async (req: AuthenticatedRequest, res: Response)
     const comments = await VideoComment.find({ videoId })
       .populate('userId', 'firstName lastName profilePhoto role')
       .sort({ createdAt: 1 });
-
-    console.log(`Found ${comments.length} total comments for video ${videoId}`);
-
     // Organize comments with replies - fixed comparison
     const organizedComments = comments
       .filter(comment => !comment.parentCommentId)
@@ -47,8 +44,7 @@ export const getVideoComments = async (req: AuthenticatedRequest, res: Response)
             return parentIdStr === commentIdStr;
           })
           .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        
-        
+
         return {
           _id: comment._id,
           comment: comment.comment,
@@ -181,7 +177,6 @@ export const addVideoComment = async (req: AuthenticatedRequest, res: Response) 
     // Send notification to supervisors when a student comments (not for replies)
     if (userRole === 'Student' && !parentCommentId) {
       try {
-        console.log(`🔔 Student ${userId} commented on video ${videoId} - preparing supervisor notification`);
         const user = await User.findById(userId).select('firstName lastName');
         const video = await Video.findById(videoId).select('title');
         const course = await Course.findById(courseId).select('title supervisor').populate('supervisor', 'firstName lastName');
@@ -213,17 +208,12 @@ export const addVideoComment = async (req: AuthenticatedRequest, res: Response) 
           
           // Send notification to course-specific supervisor if assigned
           if (course.supervisor && course.supervisor._id) {
-            console.log(`📢 Sending notification to course supervisor: ${course.supervisor.firstName} ${course.supervisor.lastName}`, notificationData);
             await notifyUser(course.supervisor._id.toString(), notificationData);
-            console.log(`✅ Notification sent successfully to course supervisor`);
           } else {
             // Fallback: Send to all supervisors if no specific supervisor is assigned
-            console.log(`📢 No specific supervisor assigned, sending notification to all supervisors:`, notificationData);
             await notifySupervisors(notificationData);
-            console.log(`✅ Notification sent successfully to all supervisors`);
           }
         } else {
-          console.log(`❌ Missing data - User: ${!!user}, Video: ${!!video}, Course: ${!!course}`);
         }
       } catch (notificationError) {
         console.error('Error sending notification to supervisors:', notificationError);
@@ -234,8 +224,6 @@ export const addVideoComment = async (req: AuthenticatedRequest, res: Response) 
     // Send notification to student when a supervisor replies to their comment
     if (userRole === 'Supervisor' && parentCommentId) {
       try {
-        console.log(`🔔 Supervisor ${userId} replied to comment ${parentCommentId} - preparing student notification`);
-        
         // Get the parent comment to find the original student
         const parentComment = await VideoComment.findById(parentCommentId).populate('userId', 'firstName lastName');
         const supervisor = await User.findById(userId).select('firstName lastName');
@@ -272,13 +260,9 @@ export const addVideoComment = async (req: AuthenticatedRequest, res: Response) 
                 actionType: 'reply'
               }
             };
-            
-            console.log(`📢 Sending reply notification to student ${studentId}:`, notificationData);
             await notifyUser(studentId, notificationData);
-            console.log(`✅ Reply notification sent successfully to student`);
           }
         } else {
-          console.log(`❌ Missing reply data - Parent: ${!!parentComment}, Supervisor: ${!!supervisor}, Video: ${!!video}, Course: ${!!course}`);
         }
       } catch (notificationError) {
         console.error('Error sending reply notification to student:', notificationError);
@@ -290,7 +274,6 @@ export const addVideoComment = async (req: AuthenticatedRequest, res: Response) 
     // This helps supervisors coordinate with each other about course content
     if (userRole === 'Supervisor' && !parentCommentId) {
       try {
-        console.log(`🔔 Supervisor ${userId} commented on video ${videoId} - preparing other supervisors notification`);
         const supervisor = await User.findById(userId).select('firstName lastName');
         const video = await Video.findById(videoId).select('title');
         const course = await Course.findById(courseId).select('title supervisor').populate('supervisor', 'firstName lastName');
@@ -321,10 +304,7 @@ export const addVideoComment = async (req: AuthenticatedRequest, res: Response) 
           };
           
           // Notify admins about supervisor comments for oversight
-          console.log(`📢 Sending supervisor comment notification to admins:`, notificationData);
           await notifyAdmins(notificationData);
-          console.log(`✅ Notification sent successfully to admins`);
-          
           // Also notify other supervisors if there's a specific course supervisor and it's not the same person
           if (course.supervisor && course.supervisor._id && course.supervisor._id.toString() !== userId) {
             const otherSupervisorNotification = {
@@ -333,12 +313,9 @@ export const addVideoComment = async (req: AuthenticatedRequest, res: Response) 
               message: `${supervisor.firstName} ${supervisor.lastName} posted a comment on ${video.title}`,
               targetRole: 'Supervisor'
             };
-            console.log(`📢 Sending notification to course supervisor: ${course.supervisor.firstName} ${course.supervisor.lastName}`);
             await notifyUser(course.supervisor._id.toString(), otherSupervisorNotification);
-            console.log(`✅ Notification sent successfully to course supervisor`);
           }
         } else {
-          console.log(`❌ Missing supervisor comment data - Supervisor: ${!!supervisor}, Video: ${!!video}, Course: ${!!course}`);
         }
       } catch (notificationError) {
         console.error('Error sending supervisor comment notification:', notificationError);

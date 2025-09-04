@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../store/store';
@@ -173,7 +173,6 @@ const Certificates: React.FC = () => {
       try {
         await navigator.share(shareData);
       } catch (error) {
-        console.log('Error sharing:', error);
         copyToClipboard(getVerificationUrl(cert));
       }
     } else {
@@ -807,7 +806,6 @@ const Certificates: React.FC = () => {
                             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold shimmer relative overflow-hidden"
                           >
                             <span className="flex items-center justify-center relative z-10">
-                              <span className="mr-2 text-lg">👁️</span>
                               Preview Certificate
                             </span>
                           </button>

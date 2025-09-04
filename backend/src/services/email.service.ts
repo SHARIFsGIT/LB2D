@@ -46,7 +46,6 @@ class EmailService {
         console.error('2. For Gmail, use an App Password (not your regular password)');
         console.error('3. Enable 2-factor authentication and generate an App Password');
       } else {
-        console.log('✅ Email service ready to send emails');
       }
     });
   }
@@ -92,9 +91,7 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      // console.log('Verification email sent successfully to:', email);
-      // console.log('Message ID:', info.messageId);
-      return info;
+      // // return info;
     } catch (error) {
       // console.error('Failed to send verification email:', error);
       throw error;
@@ -137,8 +134,7 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      // console.log('OTP email sent successfully to:', email);
-      return info;
+      // return info;
     } catch (error) {
       // console.error('Failed to send OTP email:', error);
       throw error;
@@ -186,8 +182,7 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      // console.log('Password reset email sent successfully to:', email);
-      return info;
+      // return info;
     } catch (error) {
       // console.error('Failed to send password reset email:', error);
       throw error;
@@ -201,7 +196,6 @@ class EmailService {
     const admins = await User.find({ role: 'Admin', isEmailVerified: true });
     
     if (admins.length === 0) {
-      console.log('No verified admin users found to notify');
       return;
     }
 
@@ -248,7 +242,6 @@ class EmailService {
       try {
         mailOptions.to = admin.email;
         await this.transporter.sendMail(mailOptions);
-        console.log(`Admin notification sent to: ${admin.email}`);
       } catch (error) {
         console.error(`Failed to send admin notification to ${admin.email}:`, error);
       }
@@ -326,7 +319,6 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('Enrollment confirmation email sent successfully to:', email);
       return info;
     } catch (error) {
       console.error('Failed to send enrollment confirmation email:', error);
@@ -374,8 +366,7 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      // console.log('Test completion email sent successfully to:', email);
-      return info;
+      // return info;
     } catch (error) {
       // console.error('Failed to send test completion email:', error);
       throw error;
@@ -449,7 +440,6 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('Contact form email sent successfully to:', adminEmail);
       return info;
     } catch (error) {
       console.error('Failed to send contact form email:', error);
@@ -517,7 +507,6 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('Video approval request email sent successfully to:', adminEmail);
       return info;
     } catch (error) {
       console.error('Failed to send video approval request email:', error);
@@ -590,7 +579,6 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('Video approval notification email sent successfully to:', supervisorEmail);
       return info;
     } catch (error) {
       console.error('Failed to send video approval notification email:', error);
@@ -659,7 +647,6 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`Role rejection notification email sent successfully to: ${email} for ${requestedRole} role`);
       return info;
     } catch (error) {
       console.error(`Failed to send role rejection notification email to ${email}:`, error);
@@ -777,7 +764,6 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`Role approval confirmation email sent successfully to: ${email} for ${approvedRole} role`);
       return info;
     } catch (error) {
       console.error(`Failed to send role approval confirmation email to ${email}:`, error);
@@ -876,7 +862,6 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`Course assignment notification sent successfully to ${email} for course: ${courseInfo.courseTitle}`);
       return info;
     } catch (error) {
       console.error(`Failed to send course assignment notification email to ${email}:`, error);
@@ -947,7 +932,6 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`Role change notification sent successfully to ${email}: ${oldRole} → ${newRole}`);
       return info;
     } catch (error) {
       console.error(`Failed to send role change notification email to ${email}:`, error);
@@ -1058,7 +1042,6 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`Student enrollment notification sent successfully to admin ${adminEmail}`);
       return info;
     } catch (error) {
       console.error(`Failed to send student enrollment notification to admin ${adminEmail}:`, error);

@@ -19,38 +19,30 @@ const Dashboard: React.FC = () => {
   
   // WebSocket notification handling for students
   const handleStudentNotification = useCallback((notification: NotificationData) => {
-    console.log('Student received notification:', notification);
-    
     // Handle different types of student notifications
     const notificationActions = {
       course: () => {
         // Refresh course-related data
-        console.log('New course available or course updated');
         // Could trigger a toast notification here
       },
       video: () => {
         // Refresh video content
-        console.log('New video uploaded by supervisor');
         // Could trigger a toast notification here
       },
       document: () => {
         // Refresh document/resource content
-        console.log('New document uploaded');
         // Could trigger a toast notification here
       },
       assessment: () => {
         // Refresh assessment data
-        console.log('Assessment update available');
         // Could trigger a toast notification here
       },
       certificate: () => {
         // Refresh certificate data
-        console.log('Certificate update available');
         // Could trigger a toast notification here
       },
       ranking: () => {
         // Refresh rankings
-        console.log('Performance ranking updated');
         refetchRankings();
       }
     };

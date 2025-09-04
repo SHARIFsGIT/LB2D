@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import VideoComments from '../components/VideoComments';
+import ResourceViewer from '../components/ResourceViewer';
 import { RootState } from '../store/store';
 
 interface Video {
@@ -51,11 +52,13 @@ interface Quiz {
 interface Resource {
   _id: string;
   title: string;
-  description?: string;
+  description: string;
   type: 'document' | 'audio' | 'image' | 'video' | 'link';
   fileName: string;
-  fileSize?: number;
-  fileType?: string; // File extension for display
+  fileSize: number;
+  mimeType: string;
+  fileExtension: string;
+  isViewableInline: boolean;
   category: string;
   status: string;
   downloadCount: number;
@@ -99,6 +102,10 @@ const CourseVideos: React.FC = () => {
   const [googleDriveWatchTime, setGoogleDriveWatchTime] = useState(0);
   const [googleDriveInterval, setGoogleDriveInterval] = useState<NodeJS.Timeout | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  
+  // Resource modal states
+  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+  const [showResourceModal, setShowResourceModal] = useState(false);
 
   useEffect(() => {
     if (courseId) {
@@ -110,9 +117,6 @@ const CourseVideos: React.FC = () => {
     
     // Add debug function to window for testing
     (window as any).testVideoUrl = (url: string) => {
-      console.log('🧪 Testing URL:', url);
-      console.log('🔗 Result:', getVideoUrl(url));
-      console.log('🌐 API URL env var:', process.env.REACT_APP_API_URL);
       return getVideoUrl(url);
     };
   }, [courseId]);
@@ -129,8 +133,6 @@ const CourseVideos: React.FC = () => {
   const fetchEnrollmentStatus = async () => {
     try {
       const token = sessionStorage.getItem('accessToken');
-      console.log('🎓 Fetching enrollment status for courseId:', courseId);
-      
       const response = await fetch(`${process.env.REACT_APP_API_URL}/courses/user/enrollments`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -151,12 +153,7 @@ const CourseVideos: React.FC = () => {
               status: currentEnrollment.status,
               progress: currentEnrollment.progress || { lessonsCompleted: 0, totalLessons: 0, percentage: 0 }
             });
-            console.log('📊 Found enrollment:', {
-              status: currentEnrollment.status,
-              progress: currentEnrollment.progress
-            });
           } else {
-            console.log('⚠️ No enrollment found for this course');
           }
         }
       } else {
@@ -171,19 +168,14 @@ const CourseVideos: React.FC = () => {
     try {
       // Get token from session storage
       const token = sessionStorage.getItem('accessToken');
-      console.log('🎥 Fetching course and videos for courseId:', courseId);
-      
       // Fetch course details
       const courseResponse = await fetch(`${process.env.REACT_APP_API_URL}/courses/${courseId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
-      console.log('📚 Course response status:', courseResponse.status);
       if (courseResponse.ok) {
         const courseData = await courseResponse.json();
-        console.log('📚 Course data:', courseData);
         if (courseData.success) {
           setCourse(courseData.data);
         }
@@ -197,24 +189,13 @@ const CourseVideos: React.FC = () => {
           'Authorization': `Bearer ${token}`
         }
       });
-
-      console.log('🎬 Videos response status:', videosResponse.status);
       if (videosResponse.ok) {
         const videosData = await videosResponse.json();
-        console.log('🎬 Videos data:', videosData);
         if (videosData.success) {
-          console.log('✅ Found videos:', videosData.data.length);
-          console.log('🎬 Video details:', videosData.data.map((v: Video) => ({
-            title: v.title,
-            duration: v.duration,
-            videoUrl: v.videoUrl
-          })));
           setVideos(videosData.data);
           if (videosData.data.length > 0) {
             setCurrentVideo(videosData.data[0]);
-            console.log('🎯 Set current video:', videosData.data[0].title, 'Duration:', videosData.data[0].duration, 'seconds');
           } else {
-            console.log('⚠️ No videos found for this course');
           }
 
           // Fetch video completion progress
@@ -230,8 +211,6 @@ const CourseVideos: React.FC = () => {
               if (progressData.success && progressData.data) {
                 const completedVideoIds = progressData.data.map((p: any) => p.videoId);
                 setWatchedVideos(new Set(completedVideoIds));
-                console.log('📊 Loaded video completion progress:', completedVideoIds);
-                
                 // Also load watch progress for each video
                 const savedProgress = progressData.data.reduce((acc: any, p: any) => {
                   acc[p.videoId] = p.progress || 100; // If completed, assume 100%
@@ -268,7 +247,6 @@ const CourseVideos: React.FC = () => {
         const data = await response.json();
         if (data.success) {
           setQuizzes(data.data || []);
-          console.log('📝 Fetched quizzes:', data.data);
         }
       } else {
         console.error('❌ Failed to fetch quizzes:', response.status);
@@ -291,7 +269,6 @@ const CourseVideos: React.FC = () => {
         const data = await response.json();
         if (data.success) {
           setResources(data.data || []);
-          console.log('📁 Fetched resources:', data.data);
         }
       } else {
         console.error('❌ Failed to fetch resources:', response.status);
@@ -301,38 +278,25 @@ const CourseVideos: React.FC = () => {
     }
   };
 
-  const handleResourceDownload = async (resource: Resource) => {
-    try {
-      const token = sessionStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/${resource._id}/download`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = resource.fileName;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        console.error('Failed to download resource');
-      }
-    } catch (error) {
-      console.error('Error downloading resource:', error);
-    }
+  const handleResourceComplete = () => {
+    // Refetch resources to update progress
+    fetchResources();
+    // Refetch enrollment status to update overall progress
+    fetchEnrollmentStatus();
   };
 
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   // Create unified timeline of all course content
@@ -409,7 +373,6 @@ const CourseVideos: React.FC = () => {
     // For completed courses, show all content as completed
     completedContentItems = totalContentItems;
     progressPercentage = 100;
-    console.log('🎉 Course is completed - showing 100% progress and all content as complete');
   } else {
     // For active courses, calculate based on actual completed videos
     completedContentItems = watchedVideos.size;
@@ -517,8 +480,9 @@ const CourseVideos: React.FC = () => {
       const quiz = item.data as Quiz;
       navigate(`/quiz/${quiz._id}`);
     } else if (item.type === 'resource') {
-      // Download or open resource
-      handleResourceDownload(item.data as Resource);
+      const resource = item.data as Resource;
+      setSelectedResource(resource);
+      setShowResourceModal(true);
     }
   };
 
@@ -566,7 +530,6 @@ const CourseVideos: React.FC = () => {
   };
 
   const handleVideoComplete = async (videoId: string) => {
-    console.log('✅ Video completed:', videoId);
     setWatchedVideos(prev => {
       const newSet = new Set(prev);
       newSet.add(videoId);
@@ -587,11 +550,8 @@ const CourseVideos: React.FC = () => {
   const handleVideoLoadedMetadata = (event: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget;
     const actualDuration = Math.round(video.duration);
-    console.log('🎥 Video metadata loaded. Actual duration:', actualDuration, 'seconds');
-    
     // Update the current video's duration if it differs significantly
     if (currentVideo && Math.abs(currentVideo.duration - actualDuration) > 5) {
-      console.log('⚠️ Duration mismatch! Database:', currentVideo.duration, 'Actual:', actualDuration);
       setCurrentVideo(prev => prev ? { ...prev, duration: actualDuration } : prev);
     }
   };
@@ -609,24 +569,17 @@ const CourseVideos: React.FC = () => {
   };
 
   const handleVideoLoadStart = () => {
-    console.log('🔄 Video loading started');
-    console.log('🔗 Original URL:', currentVideo?.videoUrl);
-    console.log('🔗 Processed URL:', currentVideo ? getVideoUrl(currentVideo.videoUrl) : 'N/A');
   };
 
   const handleVideoCanPlay = () => {
-    console.log('✅ Video can start playing');
-    console.log('🎥 Video element ready with src:', currentVideo ? getVideoUrl(currentVideo.videoUrl) : 'N/A');
   };
 
   const handleVideoPlay = () => {
     setIsVideoPlaying(true);
-    console.log('▶️ Video started playing');
   };
 
   const handleVideoPause = () => {
     setIsVideoPlaying(false);
-    console.log('⏸️ Video paused');
   };
 
   const handleVideoTimeUpdate = (event: React.SyntheticEvent<HTMLVideoElement>) => {
@@ -647,7 +600,6 @@ const CourseVideos: React.FC = () => {
           
           // Debug logging every 5% of actual watch time
           if (Math.floor(watchProgress) % 5 === 0 && Math.floor(watchProgress) !== Math.floor((prev[currentVideo._id] || 0) / video.duration * 100)) {
-            console.log('⏱️ Actual watch time progress:', Math.round(watchProgress) + '% (' + Math.round(newWatchTime) + 's watched of ' + Math.round(video.duration) + 's total)');
           }
           
           // Update the visual progress based on actual watch time
@@ -659,7 +611,6 @@ const CourseVideos: React.FC = () => {
             
             // Check if we just unlocked the next video based on actual watch time
             if (watchProgress >= 90 && (prevProgress[currentVideo._id] || 0) < 90 && user?.role === 'Student') {
-              console.log('🔓 Next video unlocked after watching 90% of duration!');
             }
             
             // Save progress to backend every 10% increment
@@ -675,7 +626,6 @@ const CourseVideos: React.FC = () => {
           // Enable Mark Complete button at 90% actual watch time (only for students)
           if (watchProgress >= 90 && !watchedVideos.has(currentVideo._id) && user?.role === 'Student') {
             setCanMarkComplete(true);
-            console.log('✅ Regular video 90% actually watched - Mark Complete button enabled');
           }
           
           return {
@@ -707,7 +657,6 @@ const CourseVideos: React.FC = () => {
       });
 
       if (response.ok) {
-        console.log(`✅ Progress saved: ${Math.round(progress)}% (${Math.round(watchTime)}s)`);
       }
     } catch (error) {
       console.error('❌ Error saving progress:', error);
@@ -716,25 +665,18 @@ const CourseVideos: React.FC = () => {
 
   const startGoogleDriveProgressTracking = () => {
     if (currentVideo && currentVideo.videoUrl.includes('drive.google.com')) {
-      console.log('Starting Google Drive progress tracking');
-      console.log('Video duration from database:', currentVideo.duration, 'seconds');
-      
       // Use the actual video duration from database (more accurate than estimation)
       const actualDuration = currentVideo.duration > 0 ? currentVideo.duration : 0; // No fallback - use actual duration
       
       // Resume from previous actual watch time if exists
       const existingWatchTime = actualWatchTime[currentVideo._id] || 0;
       setGoogleDriveWatchTime(existingWatchTime);
-      
-      console.log('Resuming from actual watch time:', Math.round(existingWatchTime) + 's watched of ' + actualDuration + 's total');
-      
       setCanMarkComplete(false);
       setIsVideoPlaying(false); // Start paused
       
       // Auto-start after a short delay to simulate user clicking play
       setTimeout(() => {
         setIsVideoPlaying(true);
-        console.log('▶️ Google Drive video auto-started');
       }, 2000);
       
       const interval = setInterval(() => {
@@ -753,7 +695,6 @@ const CourseVideos: React.FC = () => {
             // Debug logging for Google Drive videos (every 5% to avoid spam)
             const prevProgress = videoProgress[currentVideo._id] || 0;
             if (Math.floor(progress) % 5 === 0 && Math.floor(progress) !== Math.floor(prevProgress)) {
-              console.log('🎥 Google Drive actual watch time:', Math.round(progress) + '% (' + Math.round(newTime) + 's watched of ' + actualDuration + 's total)');
             }
             
             // Update progress display with actual watch time
@@ -765,7 +706,6 @@ const CourseVideos: React.FC = () => {
               
               // Check if we just unlocked the next video based on actual watch time
               if (progress >= 90 && (prevProgress[currentVideo._id] || 0) < 90 && user?.role === 'Student') {
-                console.log('🔓 Google Drive video - Next video unlocked after watching 90% of duration!');
               }
               
               return newProgress;
@@ -774,7 +714,6 @@ const CourseVideos: React.FC = () => {
             // Enable Mark Complete at 90% actual watch time
             if (progress >= 90 && !watchedVideos.has(currentVideo._id) && user?.role === 'Student') {
               setCanMarkComplete(true);
-              console.log('✅ Google Drive video 90% actually watched - Mark Complete button enabled');
             }
             
             return newTime;
@@ -790,15 +729,12 @@ const CourseVideos: React.FC = () => {
     if (googleDriveInterval) {
       clearInterval(googleDriveInterval);
       setGoogleDriveInterval(null);
-      console.log('⏹️ Stopped Google Drive progress tracking');
     }
   };
 
   const getVideoUrl = (url: string): string => {
     // Check if it's a Google Drive URL
     if (url.includes('drive.google.com')) {
-      console.log('🔗 Original Google Drive URL:', url);
-      
       // Extract file ID from different Google Drive URL formats
       let fileId = '';
       
@@ -817,7 +753,6 @@ const CourseVideos: React.FC = () => {
       if (fileId) {
         // Convert to direct download/streaming URL
         const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-        console.log('🔄 Converted to direct URL:', directUrl);
         return directUrl;
       } else {
         console.warn('⚠️ Could not extract Google Drive file ID from URL:', url);
@@ -829,12 +764,10 @@ const CourseVideos: React.FC = () => {
       // Remove /api from the base URL if present, since static files are served at root level
       const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5005';
       const fullUrl = `${baseUrl}${url}`;
-      console.log('🔗 Local video URL:', fullUrl);
       return fullUrl;
     }
     
     // For other URLs (YouTube, Vimeo, direct links), return as-is
-    console.log('🔗 External video URL:', url);
     return url;
   };
 
@@ -976,7 +909,6 @@ const CourseVideos: React.FC = () => {
           </div>
         )}
 
-        
         {/* Supervisor Info Bar */}
         {(user?.role === 'Supervisor' || user?.role === 'Admin') && (
           <div className="bg-gradient-to-r from-orange-100 via-red-100 to-pink-100 rounded-xl shadow-lg p-6 mb-8 border-2 border-orange-200">
@@ -1012,7 +944,6 @@ const CourseVideos: React.FC = () => {
                         allowFullScreen
                         title={currentVideo.title}
                         onLoad={() => {
-                          console.log('✅ Google Drive iframe loaded');
                           startGoogleDriveProgressTracking();
                         }}
                         allow="autoplay; encrypted-media"
@@ -1070,6 +1001,7 @@ const CourseVideos: React.FC = () => {
                 <p className="text-gray-500 text-lg">No videos available for this course.</p>
               </div>
             )}
+
           </div>
 
           {/* Course Content Timeline - Right Sidebar */}
@@ -1164,6 +1096,184 @@ const CourseVideos: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Resource Modal */}
+      {showResourceModal && selectedResource && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowResourceModal(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl max-h-[90vh] w-full overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <span className="text-2xl">
+                    {selectedResource.type === 'document' ? '📄' : 
+                     selectedResource.type === 'audio' ? '🎵' :
+                     selectedResource.type === 'image' ? '🖼️' : 
+                     selectedResource.type === 'video' ? '🎬' : '📎'}
+                  </span>
+                  <div>
+                    <h3 className="text-xl font-bold">{selectedResource.title}</h3>
+                    <p className="text-purple-100 text-sm">{selectedResource.fileName}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowResourceModal(false)}
+                  className="text-white hover:text-purple-200 transition-colors text-2xl font-bold p-2"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-auto max-h-[calc(90vh-200px)]">
+              {selectedResource.description && (
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <p className="text-gray-700">{selectedResource.description}</p>
+                </div>
+              )}
+
+              {/* Resource Content */}
+              <div className="mb-6">
+                {selectedResource.type === 'image' && (
+                  <div className="text-center">
+                    <img
+                      src={`${process.env.REACT_APP_API_URL || 'http://localhost:5005'}/api/resources/${selectedResource._id}/view`}
+                      alt={selectedResource.title}
+                      className="max-w-full h-auto rounded-lg shadow-md"
+                    />
+                  </div>
+                )}
+                
+                {selectedResource.type === 'audio' && (
+                  <div className="bg-gray-50 rounded-lg p-8">
+                    <div className="text-center mb-4">
+                      <span className="text-6xl">🎵</span>
+                      <h4 className="text-lg font-semibold mt-2">{selectedResource.title}</h4>
+                    </div>
+                    <audio
+                      controls
+                      className="w-full"
+                      src={`${process.env.REACT_APP_API_URL || 'http://localhost:5005'}/api/resources/${selectedResource._id}/view`}
+                    >
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+                )}
+                
+                {selectedResource.type === 'video' && (
+                  <div className="bg-black rounded-lg overflow-hidden">
+                    <video
+                      controls
+                      className="w-full h-auto"
+                      src={`${process.env.REACT_APP_API_URL || 'http://localhost:5005'}/api/resources/${selectedResource._id}/view`}
+                    >
+                      Your browser does not support the video element.
+                    </video>
+                  </div>
+                )}
+                
+                {selectedResource.type === 'document' && selectedResource.mimeType === 'application/pdf' && (
+                  <div className="border rounded-lg overflow-hidden" style={{ height: '500px' }}>
+                    <iframe
+                      src={`${process.env.REACT_APP_API_URL || 'http://localhost:5005'}/api/resources/${selectedResource._id}/view`}
+                      className="w-full h-full"
+                      title={selectedResource.title}
+                    />
+                  </div>
+                )}
+                
+                {selectedResource.type === 'document' && selectedResource.mimeType === 'text/plain' && (
+                  <div className="border rounded-lg overflow-hidden bg-white" style={{ height: '400px' }}>
+                    <iframe
+                      src={`${process.env.REACT_APP_API_URL || 'http://localhost:5005'}/api/resources/${selectedResource._id}/view`}
+                      className="w-full h-full"
+                      title={selectedResource.title}
+                    />
+                  </div>
+                )}
+
+                {/* Fallback for non-viewable resources */}
+                {!selectedResource.isViewableInline && (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <span className="text-6xl mb-4 block">📄</span>
+                    <h4 className="text-lg font-semibold mb-2">Preview not available</h4>
+                    <p className="text-gray-600 mb-4">This file type cannot be previewed inline.</p>
+                    <p className="text-sm text-gray-500">Use the download button below to view the file.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* File Info */}
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="font-semibold text-gray-600">File Type:</span>
+                    <p className="text-gray-800 capitalize">{selectedResource.type}</p>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-600">Size:</span>
+                    <p className="text-gray-800">{formatFileSize(selectedResource.fileSize)}</p>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-600">Category:</span>
+                    <p className="text-gray-800 capitalize">{selectedResource.category}</p>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-600">Downloads:</span>
+                    <p className="text-gray-800">{selectedResource.downloadCount}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => {
+                    window.open(`${process.env.REACT_APP_API_URL || 'http://localhost:5005'}/api/resources/${selectedResource._id}/download`, '_blank');
+                  }}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                >
+                  Download
+                </button>
+                
+                {user?.role === 'Student' && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const token = sessionStorage.getItem('accessToken');
+                        await fetch(`${process.env.REACT_APP_API_URL}/resources/${selectedResource._id}/complete`, {
+                          method: 'POST',
+                          headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({ timeSpent: 60 })
+                        });
+                        setShowResourceModal(false);
+                        fetchResources(); // Refresh to update progress
+                        fetchEnrollmentStatus(); // Update overall progress
+                      } catch (error) {
+                        console.error('Error marking resource as completed:', error);
+                      }
+                    }}
+                    className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
+                    Mark Complete
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

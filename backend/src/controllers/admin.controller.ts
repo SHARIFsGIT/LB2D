@@ -189,7 +189,6 @@ export const updateUser = asyncHandler(async (req: Request, res: Response): Prom
         userEmailData.lastName,
         userEmailData.newRole
       );
-      console.log(`Role approval confirmation email sent to ${userEmailData.email} for ${userEmailData.newRole} role`);
     } catch (emailError) {
       console.error(`Failed to send role approval email to ${userEmailData.email}:`, emailError);
     }
@@ -274,7 +273,6 @@ export const updateUser = asyncHandler(async (req: Request, res: Response): Prom
         userEmailData.requestedRole,
         userEmailData.rejectionReason
       );
-      console.log(`Role rejection notification email sent to ${userEmailData.email} for ${userEmailData.requestedRole} role`);
     } catch (emailError) {
       console.error(`Failed to send role rejection email to ${userEmailData.email}:`, emailError);
     }
@@ -326,7 +324,6 @@ export const updateUser = asyncHandler(async (req: Request, res: Response): Prom
         originalRole,
         userEmailData.newRole
       );
-      console.log(`Role change notification email sent to ${userEmailData.email}: ${originalRole} → ${userEmailData.newRole}`);
     } catch (emailError) {
       console.error(`Failed to send role change email to ${userEmailData.email}:`, emailError);
     }
@@ -424,7 +421,6 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response): Prom
     message: 'User deleted successfully'
   });
 });
-
 
 // Get user statistics (Admin only)
 export const getUserStats = asyncHandler(async (_req: Request, res: Response): Promise<any> => {

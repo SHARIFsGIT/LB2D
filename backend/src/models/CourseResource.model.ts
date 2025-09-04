@@ -10,6 +10,8 @@ export interface ICourseResource extends Document {
   fileName: string;
   fileSize?: number; // in bytes
   mimeType?: string;
+  fileExtension?: string;
+  isViewableInline: boolean;
   category: 'lesson' | 'homework' | 'reference' | 'exercise' | 'other';
   status: 'draft' | 'pending' | 'approved' | 'rejected';
   approvedBy?: mongoose.Types.ObjectId;
@@ -53,6 +55,11 @@ const courseResourceSchema: Schema = new Schema({
   },
   fileSize: Number, // in bytes
   mimeType: String,
+  fileExtension: String,
+  isViewableInline: {
+    type: Boolean,
+    default: false
+  },
   category: {
     type: String,
     enum: ['lesson', 'homework', 'reference', 'exercise', 'other'],

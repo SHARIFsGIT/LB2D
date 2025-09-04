@@ -22,9 +22,6 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
         message: 'Webhook signature verification failed'
       });
     }
-
-    console.log('Received Stripe webhook event:', event.type);
-
     // Handle different event types
     switch (event.type) {
       case 'payment_intent.succeeded':
@@ -44,7 +41,6 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
         break;
         
       default:
-        console.log(`Unhandled event type: ${event.type}`);
     }
 
     return res.status(200).json({
@@ -65,8 +61,6 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
 async function handlePaymentIntentSucceeded(paymentIntent: any) {
   try {
     const { id: paymentIntentId, metadata } = paymentIntent;
-    console.log('Processing successful payment:', paymentIntentId);
-
     // Find payment record
     const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
     if (!payment) {
@@ -98,7 +92,6 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
     });
 
     if (!enrollment) {
-      console.log(`📝 Creating new enrollment for user ${payment.userId} in course ${payment.courseId}`);
       enrollment = await Enrollment.create({
         userId: payment.userId,
         courseId: payment.courseId,
@@ -106,13 +99,10 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
         status: 'confirmed',
         enrollmentDate: new Date()
       });
-      console.log(`✅ New enrollment created with ID: ${enrollment._id}, status: ${enrollment.status}`);
     } else {
-      console.log(`📝 Updating existing enrollment ${enrollment._id} from status "${enrollment.status}" to "confirmed"`);
       enrollment.status = 'confirmed';
       enrollment.paymentId = payment._id as any;
       await enrollment.save();
-      console.log(`✅ Enrollment updated successfully`);
     }
 
     // Update course student count
@@ -127,11 +117,8 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
       const course = await Course.findById(payment.courseId);
       
       if (student && course) {
-        console.log(`Processing emails for payment ${payment.transactionId}`);
-        
         // Send enrollment confirmation email to student
         try {
-          console.log(`Sending enrollment email to student: ${student.email}`);
           await emailService.sendEnrollmentConfirmation(
             student.email,
             `${student.firstName} ${student.lastName}`,
@@ -149,7 +136,6 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
               paymentMethod: payment.paymentMethod
             }
           );
-          console.log(`✅ Student enrollment email sent successfully to ${student.email}`);
         } catch (studentEmailError) {
           console.error('❌ CRITICAL: Failed to send student enrollment email:', studentEmailError);
           console.error('Email config check required. Student will not receive enrollment confirmation.');
@@ -158,14 +144,11 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
         // Send admin notification email
         try {
           const adminUsers = await User.find({ role: 'Admin' });
-          console.log(`Found ${adminUsers.length} admin users for notification`);
-          
           if (adminUsers.length === 0) {
             console.warn('⚠️ WARNING: No admin users found to notify about enrollment');
           }
           
           for (const admin of adminUsers) {
-            console.log(`Sending admin notification to: ${admin.email}`);
             await emailService.sendStudentEnrollmentNotification(
               admin.email,
               admin.firstName,
@@ -183,7 +166,6 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
                 transactionId: payment.transactionId
               }
             );
-            console.log(`✅ Admin notification sent successfully to ${admin.email}`);
           }
         } catch (adminEmailError) {
           console.error('❌ CRITICAL: Failed to send admin notification email:', adminEmailError);
@@ -197,8 +179,6 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
       console.error('❌ CRITICAL: Failed to send notification emails:', emailError);
       console.error('Check email service configuration and database connectivity');
     }
-
-    console.log('Payment processed successfully:', paymentIntentId);
   } catch (error: any) {
     console.error('Error processing successful payment:', error);
   }
@@ -208,8 +188,6 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
 async function handlePaymentIntentFailed(paymentIntent: any) {
   try {
     const { id: paymentIntentId } = paymentIntent;
-    console.log('Processing failed payment:', paymentIntentId);
-
     // Find payment record
     const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
     if (!payment) {
@@ -227,8 +205,6 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
       { userId: payment.userId, courseId: payment.courseId },
       { status: 'cancelled' }
     );
-
-    console.log('Failed payment processed:', paymentIntentId);
   } catch (error: any) {
     console.error('Error processing failed payment:', error);
   }
@@ -238,8 +214,6 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
 async function handlePaymentIntentCanceled(paymentIntent: any) {
   try {
     const { id: paymentIntentId } = paymentIntent;
-    console.log('Processing canceled payment:', paymentIntentId);
-
     // Find payment record
     const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
     if (!payment) {
@@ -256,8 +230,6 @@ async function handlePaymentIntentCanceled(paymentIntent: any) {
       { userId: payment.userId, courseId: payment.courseId },
       { status: 'cancelled' }
     );
-
-    console.log('Canceled payment processed:', paymentIntentId);
   } catch (error: any) {
     console.error('Error processing canceled payment:', error);
   }
@@ -267,8 +239,6 @@ async function handlePaymentIntentCanceled(paymentIntent: any) {
 async function handlePaymentIntentRequiresAction(paymentIntent: any) {
   try {
     const { id: paymentIntentId } = paymentIntent;
-    console.log('Processing payment requiring action:', paymentIntentId);
-
     // Find payment record
     const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
     if (!payment) {
@@ -279,8 +249,6 @@ async function handlePaymentIntentRequiresAction(paymentIntent: any) {
     // Update payment status
     payment.status = 'requires_action';
     await payment.save();
-
-    console.log('Payment requiring action processed:', paymentIntentId);
   } catch (error: any) {
     console.error('Error processing payment requiring action:', error);
   }

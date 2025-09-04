@@ -12,7 +12,6 @@ const persistConfig = {
   whitelist: ['assessment'] // Remove 'auth' to prevent conflicts with sessionStorage
 };
 
-
 const rootReducer = combineReducers({
   auth: authReducer,
   assessment: assessmentReducer,

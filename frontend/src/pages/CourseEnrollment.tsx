@@ -164,13 +164,11 @@ const CourseEnrollment: React.FC = () => {
 
   const fetchCourse = async () => {
     try {
-      console.log('Fetching course with ID:', courseId);
-      console.log('API URL:', process.env.REACT_APP_API_URL);
+
       const response = await fetch(`${process.env.REACT_APP_API_URL}/courses/${courseId}`);
-      console.log('Response status:', response.status);
+
       const data = await response.json();
-      console.log('Response data:', data);
-      
+
       if (data.success) {
         setCourse(data.data);
       } else {
@@ -236,8 +234,7 @@ const CourseEnrollment: React.FC = () => {
   };
 
   const handlePaymentSuccess = async (paymentIntentId: string) => {
-    console.log('Payment successful:', paymentIntentId);
-    
+
     try {
       // Call backend to complete the enrollment
       const token = sessionStorage.getItem('accessToken');
@@ -255,7 +252,7 @@ const CourseEnrollment: React.FC = () => {
       const data = await response.json();
 
       if (data.success) {
-        console.log('Enrollment completed successfully:', data.data);
+
         setShowPaymentModal(false);
         showSuccess(
           '🎉 Enrollment successful! Welcome to your German language journey!',
@@ -292,7 +289,6 @@ const CourseEnrollment: React.FC = () => {
       'Payment Failed'
     );
   };
-
 
   if (!course) {
     return (

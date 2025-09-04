@@ -33,7 +33,6 @@ const Notification: React.FC<NotificationProps> = ({
     }
   }, [id, duration, onClose]);
 
-
   const getBackgroundColor = () => {
     switch (type) {
       case 'success':

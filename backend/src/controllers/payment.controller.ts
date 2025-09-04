@@ -90,9 +90,6 @@ export const initializePayment = async (req: AuthenticatedRequest, res: Response
   try {
     const { courseId, paymentMethod } = req.body;
     const userId = req.userId;
-
-    console.log('Payment initialization request:', { courseId, paymentMethod, userId });
-
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -180,8 +177,6 @@ export const initializePayment = async (req: AuthenticatedRequest, res: Response
       stripePaymentIntentId: stripeResult.data.paymentIntentId,
       status: 'pending'
     });
-
-    console.log('Payment initialized successfully:', { transactionId, paymentIntentId: stripeResult.data.paymentIntentId });
     return res.status(201).json({
       success: true,
       message: 'Payment initialized successfully',
@@ -622,9 +617,6 @@ export const clearAllPayments = async (req: AuthenticatedRequest, res: Response)
     
     // Clear all payment records
     const result = await Payment.deleteMany({});
-
-    console.log(`Cleared ${result.deletedCount} payment records`);
-
     return res.status(200).json({
       success: true,
       message: `Successfully cleared ${result.deletedCount} payment records`,

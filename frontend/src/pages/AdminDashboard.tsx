@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import ResourceApprovals from '../components/ResourceApprovals';
 import { NotificationData, useWebSocket } from '../hooks/useWebSocket';
 import { updateUser } from '../store/slices/authSlice';
 import { RootState } from '../store/store';
@@ -188,7 +189,6 @@ const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ video, onClose, o
     }
   };
 
-
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
@@ -259,8 +259,7 @@ const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ video, onClose, o
             onContextMenu={(e) => e.preventDefault()}
             onDragStart={(e) => e.preventDefault()}
           >
-            
-            
+
             {isGoogleDriveUrl ? (
               /* Google Drive Iframe Player */
               <iframe
@@ -284,19 +283,14 @@ const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ video, onClose, o
                 poster={video.thumbnailUrl}
                 onContextMenu={(e) => e.preventDefault()}
                 onLoadStart={() => {
-                  console.log('🎬 Video loading started:', processedVideoUrl);
                 }}
                 onLoadedMetadata={() => {
-                  console.log('📊 Video metadata loaded:', processedVideoUrl);
                 }}
                 onCanPlay={() => {
-                  console.log('▶️ Video can play:', processedVideoUrl);
                 }}
                 onCanPlayThrough={() => {
-                  console.log('✅ Video can play through:', processedVideoUrl);
                 }}
                 onLoadedData={() => {
-                  console.log('📁 Video data loaded:', processedVideoUrl);
                 }}
                 onError={(e) => {
                   console.error('❌ Video load error:', e);
@@ -332,10 +326,8 @@ const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ video, onClose, o
                   console.warn('⏸️ Video stalled:', processedVideoUrl);
                 }}
                 onSuspend={() => {
-                  console.log('⏯️ Video suspended:', processedVideoUrl);
                 }}
                 onWaiting={() => {
-                  console.log('⏳ Video waiting:', processedVideoUrl);
                 }}
               >
                 <source src={processedVideoUrl} type="video/mp4" />
@@ -357,7 +349,6 @@ const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ video, onClose, o
               <p className="text-gray-700 leading-relaxed">{video.description || 'No description provided'}</p>
             </div>
           </div>
-
 
           {/* Action Buttons */}
           {video.status === 'pending' && (
@@ -777,13 +768,9 @@ const AdminDashboard: React.FC = () => {
 
   // Handle real-time notifications for admin dashboard updates
   const handleAdminNotification = useCallback((notification: NotificationData) => {
-    console.log('🔔 Admin Dashboard received notification:', notification);
-    
     // Check if this notification is about the current user's role change
     if (notification.type === 'admin' && notification.data?.userId && currentUser?.id === notification.data.userId) {
       if (notification.title?.includes('Role Approved') || notification.title?.includes('Role Changed')) {
-        console.log('🔄 Current user role change detected via WebSocket');
-        
         // Refresh current user data from server
         const refreshUserData = async () => {
           try {
@@ -797,7 +784,6 @@ const AdminDashboard: React.FC = () => {
             if (validateResponse.ok) {
               const validateData = await validateResponse.json();
               if (validateData.success && validateData.data && validateData.data.user) {
-                console.log('✅ Refreshing user data after role change:', validateData.data.user);
                 dispatch(updateUser(validateData.data.user));
                 
                 // Show notification about role change
@@ -905,14 +891,12 @@ const AdminDashboard: React.FC = () => {
     }
     
     // Show console log for debugging specific notification types
-    console.log(`📊 Admin Dashboard refreshing data for: ${notification.type} - ${notification.title}`);
   }, [activeTab, token, currentUser, dispatch]);
 
   // WebSocket connection for admin dashboard
   const { isConnected, subscribe } = useWebSocket({
     onNotification: handleAdminNotification,
     onConnect: () => {
-      console.log('🔗 Admin Dashboard connected to WebSocket');
       // Subscribe to all admin-relevant notification types
       subscribe([
         'admin',              // Role approvals, user management
@@ -930,14 +914,11 @@ const AdminDashboard: React.FC = () => {
       ]);
     },
     onDisconnect: () => {
-      console.log('❌ Admin Dashboard disconnected from WebSocket');
     }
   });
   
   // Debug: Log current auth state
   useEffect(() => {
-    console.log('AdminDashboard - Current token:', token ? 'Present' : 'Missing');
-    console.log('AdminDashboard - Current user:', sessionStorage.getItem('user'));
   }, [token]);
 
   // Fetch users from API
@@ -950,7 +931,7 @@ const AdminDashboard: React.FC = () => {
 
     try {
       setLoading(true);
-      console.log('Fetching admin users...'); // Debug log
+      // Debug log
       const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/users?page=${currentPage}&limit=${itemsPerPage}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -958,11 +939,11 @@ const AdminDashboard: React.FC = () => {
         }
       });
 
-      console.log('Admin users response status:', response.status); // Debug log
+      // Debug log
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Admin users data:', data); // Debug log
+        // Debug log
         setUsers(data.data.users);
         setTotalPages(data.data.pagination.pages);
       } else if (response.status === 401) {
@@ -1089,8 +1070,6 @@ const AdminDashboard: React.FC = () => {
 
       // If admin-review endpoint doesn't exist, fallback to pending
       if (!response.ok && response.status === 404) {
-        console.log('admin-review endpoint not found, falling back to pending + rejected + approved');
-        
         // Get pending quizzes
         const pendingResponse = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/pending`, {
           headers: {
@@ -1154,8 +1133,6 @@ const AdminDashboard: React.FC = () => {
 
       // If admin-review endpoint doesn't exist, fallback to combining pending + rejected
       if (!response.ok && response.status === 404) {
-        console.log('admin-review endpoint not found, combining pending + rejected + approved quizzes');
-        
         const allQuizzes = [];
         
         // Get pending quizzes
@@ -1618,8 +1595,6 @@ const AdminDashboard: React.FC = () => {
         // If the updated user is the currently logged-in user and their role changed, 
         // update the current user's data in the auth state
         if (currentUser && editingUser.id === currentUser.id && updatedData.role && updatedData.role !== currentUser.role) {
-          console.log('Role changed for current user, updating auth state');
-          
           // Update the current user's role in Redux state
           dispatch(updateUser({ role: updatedData.role }));
           
@@ -1957,7 +1932,6 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-
 
         {/* Tab Navigation */}
         <div className="mb-8">
@@ -2557,8 +2531,14 @@ const AdminDashboard: React.FC = () => {
                               {resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}
                             </span>
                           </div>
-                          <span className="text-xs px-2 py-1 rounded-full font-medium bg-yellow-600">
-                            PENDING
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                            resource.status === 'pending' ? 'bg-yellow-600' :
+                            resource.status === 'approved' ? 'bg-green-600' :
+                            'bg-red-600'
+                          }`}>
+                            {resource.status === 'pending' ? 'PENDING' :
+                             resource.status === 'approved' ? 'APPROVED' :
+                             'REJECTED'}
                           </span>
                         </div>
                       </div>
@@ -2593,6 +2573,12 @@ const AdminDashboard: React.FC = () => {
                             <span>Uploaded:</span>
                             <span className="font-medium">{new Date(resource.uploadedAt).toLocaleDateString()}</span>
                           </div>
+                          {resource.status === 'rejected' && resource.rejectionReason && (
+                            <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-xs">
+                              <span className="font-medium text-red-800">Rejection Reason:</span>
+                              <p className="text-red-700 mt-1">{resource.rejectionReason}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -2604,25 +2590,27 @@ const AdminDashboard: React.FC = () => {
                             onClick={() => handleViewResource(resource)}
                             className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
                           >
-                            <span>👁️</span>
                             <span>View Document</span>
                           </button>
                           
-                          {/* Approve/Reject buttons */}
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleApproveResource(resource._id)}
-                              className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
-                            >
-                              ✅ Approve
-                            </button>
-                            <button
-                              onClick={() => handleRejectResource(resource._id)}
-                              className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
-                            >
-                              ❌ Reject
-                            </button>
-                          </div>
+                          {/* Approve/Reject buttons - only show for pending resources */}
+                          {resource.status === 'pending' && (
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleApproveResource(resource._id)}
+                                className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleRejectResource(resource._id)}
+                                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-300"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                          
                         </div>
                       </div>
                     </div>
@@ -2733,6 +2721,11 @@ const AdminDashboard: React.FC = () => {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Resource Approvals Section */}
+          <div className="mt-8">
+            <ResourceApprovals />
           </div>
         </div>
         )}

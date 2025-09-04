@@ -218,8 +218,6 @@ const CourseManagement: React.FC = () => {
         requirements: formData.requirements.filter(r => r.trim())
       };
 
-      console.log('Sending course data:', courseData);
-
       const url = editingCourse ? `${process.env.REACT_APP_API_URL}/courses/${editingCourse._id}` : `${process.env.REACT_APP_API_URL}/courses`;
       const method = editingCourse ? 'PUT' : 'POST';
 
@@ -314,10 +312,7 @@ const CourseManagement: React.FC = () => {
             label: 'Restore',
             onClick: async () => {
               try {
-                console.log('Restoring course:', courseId);
-                console.log('API URL:', process.env.REACT_APP_API_URL);
-                console.log('Token:', sessionStorage.getItem('accessToken'));
-                
+
                 const response = await fetch(`${process.env.REACT_APP_API_URL}/courses/${courseId}/restore`, {
                   method: 'PATCH',
                   headers: {
@@ -326,9 +321,7 @@ const CourseManagement: React.FC = () => {
                   }
                 });
 
-                console.log('Response status:', response.status);
                 const data = await response.json();
-                console.log('Response data:', data);
 
                 if (response.ok && data.success) {
                   fetchCourses();
@@ -461,7 +454,6 @@ const CourseManagement: React.FC = () => {
           </div>
         </div>
 
-
         {/* Courses Grid */}
         {loading ? (
           <div className="flex justify-center items-center py-20">
@@ -541,7 +533,6 @@ const CourseManagement: React.FC = () => {
                     </div>
 
                   </div>
-
 
                   {/* Available Spots */}
                   <div className="mb-6">

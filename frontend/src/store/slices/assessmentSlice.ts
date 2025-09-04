@@ -8,7 +8,6 @@ export interface Question {
   level: string;
 }
 
-
 export interface Answer {
   questionId: string;
   selectedOption: number;
@@ -40,7 +39,6 @@ export interface AssessmentState {
   error: string | null;
 }
 
-
 const initialState: AssessmentState = {
   testId: null,
   currentStep: 1,
@@ -56,7 +54,6 @@ const initialState: AssessmentState = {
   isLoading: false,
   error: null,
 };
-
 
 const assessmentSlice = createSlice({
   name: 'assessment',

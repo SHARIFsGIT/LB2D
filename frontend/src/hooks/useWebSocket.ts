@@ -59,7 +59,6 @@ export const useWebSocket = (options: WebSocketHookOptions = {}) => {
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
-        console.log('WebSocket: Connected');
         setIsConnected(true);
         setError(null);
         setReconnectAttempts(0);
@@ -80,7 +79,6 @@ export const useWebSocket = (options: WebSocketHookOptions = {}) => {
           if (data.type === 'notification') {
             onNotification?.(data.payload);
           } else if (data.type === 'auth_success') {
-            console.log('WebSocket: Authentication successful');
           } else if (data.type === 'auth_error') {
             console.error('WebSocket: Authentication failed');
             setError('Authentication failed');
@@ -91,15 +89,12 @@ export const useWebSocket = (options: WebSocketHookOptions = {}) => {
       };
 
       wsRef.current.onclose = (event) => {
-        console.log('WebSocket: Disconnected', event.code, event.reason);
         setIsConnected(false);
         onDisconnect?.();
 
         // Attempt to reconnect if not manually closed
         if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000); // Exponential backoff, max 30s
-          console.log(`WebSocket: Attempting to reconnect in ${delay}ms (attempt ${reconnectAttempts + 1})`);
-          
           reconnectTimeoutRef.current = setTimeout(() => {
             setReconnectAttempts(prev => prev + 1);
             connect();

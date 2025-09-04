@@ -83,8 +83,6 @@ const Profile: React.FC = () => {
         if (compressedDataUrl.length > 500000) {
           compressedDataUrl = canvas.toDataURL('image/jpeg', 0.2);
         }
-        
-        console.log(`Compressed image size: ${compressedDataUrl.length} bytes`);
         resolve(compressedDataUrl);
       };
       
@@ -162,11 +160,6 @@ const Profile: React.FC = () => {
       if (formData.profilePhoto && formData.profilePhoto !== user?.profilePhoto) {
         payload.profilePhoto = formData.profilePhoto;
       }
-
-      console.log('Updating profile with payload:', payload);
-      console.log('Using token:', token);
-      console.log('API URL:', `${process.env.REACT_APP_API_URL}/users/profile`);
-
       const response = await fetch(`${process.env.REACT_APP_API_URL}/users/profile`, {
         method: 'PUT',
         headers: {
@@ -177,9 +170,6 @@ const Profile: React.FC = () => {
       });
 
       const data = await response.json();
-      console.log('Response status:', response.status);
-      console.log('Response data:', data);
-
       if (response.ok && data.success) {
         // Update the user in Redux store
         dispatch(updateUser(data.data.user));
@@ -193,8 +183,6 @@ const Profile: React.FC = () => {
         if (payload.profilePhoto) {
           // Try again without the profile photo
           const { profilePhoto, ...payloadWithoutPhoto } = payload;
-          console.log('Payload too large, trying without photo:', payloadWithoutPhoto);
-          
           const retryResponse = await fetch(`${process.env.REACT_APP_API_URL}/users/profile`, {
             method: 'PUT',
             headers: {

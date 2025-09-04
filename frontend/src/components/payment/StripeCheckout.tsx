@@ -61,7 +61,6 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         showError(error.message || 'Payment failed', 'Payment Error');
         onError(error.message || 'Payment failed');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        console.log('Payment succeeded:', paymentIntent.id);
         showSuccess(
           `Payment successful! You are now enrolled in ${courseName}`,
           'Payment Completed',
@@ -69,7 +68,6 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         );
         onSuccess(paymentIntent.id);
       } else {
-        console.log('Payment status:', paymentIntent?.status);
         showError('Payment was not completed', 'Payment Error');
         onError('Payment was not completed');
       }
@@ -84,7 +82,6 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       setIsProcessing(false);
     }
   };
-
 
   return (
     <div className="max-w-xl mx-auto">

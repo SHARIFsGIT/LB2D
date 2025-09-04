@@ -79,12 +79,10 @@ const CourseCatalog: React.FC = () => {
   const fetchUserEnrollments = async () => {
     const token = sessionStorage.getItem("accessToken");
     if (!token) {
-      console.log('👤 No auth token found, skipping enrollment fetch');
       return;
     }
 
     try {
-      console.log('🔍 Fetching user enrollments...');
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/courses/user/enrollments`,
         {
@@ -94,9 +92,6 @@ const CourseCatalog: React.FC = () => {
         }
       );
       const data = await response.json();
-
-      console.log('📚 Enrollment API response:', data);
-
       if (data.success) {
         const enrollmentMap: { [key: string]: any } = {};
         data.data.forEach((enrollment: any) => {
@@ -104,10 +99,8 @@ const CourseCatalog: React.FC = () => {
           const courseId = enrollment.courseId?._id || enrollment.courseId;
           if (courseId) {
             enrollmentMap[courseId] = enrollment;
-            console.log(`✅ Mapped enrollment for course ${courseId}:`, enrollment.status);
           }
         });
-        console.log('📊 Final enrollment map:', enrollmentMap);
         setEnrollments(enrollmentMap);
       } else {
         console.warn('⚠️ Enrollment fetch failed:', data.message);
@@ -270,13 +263,6 @@ const CourseCatalog: React.FC = () => {
             const isFull = course.currentStudents >= course.maxStudents;
             
             // Debug logging for enrollment status
-            console.log(`🔍 Course ${course._id} (${course.title}):`, {
-              isEnrolled: !!isEnrolled,
-              enrollmentStatus: isEnrolled?.status,
-              isFull,
-              enrollmentExists: Object.prototype.hasOwnProperty.call(enrollments, course._id)
-            });
-
             return (
               <div
                 key={course._id}

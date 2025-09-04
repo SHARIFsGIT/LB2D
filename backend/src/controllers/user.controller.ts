@@ -6,13 +6,6 @@ export const updateProfile = async (req: Request, res: Response): Promise<any> =
   try {
     const userId = (req as any).userId;
     const { firstName, lastName, phone, profilePhoto } = req.body;
-
-    console.log('Update profile request:', {
-      userId,
-      body: req.body,
-      headers: req.headers.authorization ? 'Token present' : 'No token'
-    });
-
     // Validate required fields
     if (!firstName || !lastName) {
       return res.status(400).json({
@@ -24,21 +17,11 @@ export const updateProfile = async (req: Request, res: Response): Promise<any> =
     // Find the user
     const user = await User.findById(userId);
     if (!user) {
-      console.log('User not found for ID:', userId);
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-
-    console.log('Found user:', {
-      id: user._id,
-      email: user.email,
-      role: user.role,
-      currentFirstName: user.firstName,
-      currentLastName: user.lastName
-    });
-
     // Update only allowed fields
     const allowedUpdates = { firstName, lastName, phone, profilePhoto };
     
@@ -48,9 +31,6 @@ export const updateProfile = async (req: Request, res: Response): Promise<any> =
         delete allowedUpdates[key as keyof typeof allowedUpdates];
       }
     });
-
-    console.log('Updates to apply:', allowedUpdates);
-
     // Update user
     const updatedUser = await User.findByIdAndUpdate(
       userId,
@@ -59,20 +39,11 @@ export const updateProfile = async (req: Request, res: Response): Promise<any> =
     ).select('-password -refreshToken -emailVerificationToken -passwordResetToken -otpCode');
 
     if (!updatedUser) {
-      console.log('Failed to update user');
       return res.status(500).json({
         success: false,
         message: 'Failed to update user'
       });
     }
-
-    console.log('Successfully updated user:', {
-      id: updatedUser._id,
-      firstName: updatedUser.firstName,
-      lastName: updatedUser.lastName,
-      phone: updatedUser.phone
-    });
-
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',

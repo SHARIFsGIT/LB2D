@@ -160,8 +160,6 @@ const Assessment: React.FC = () => {
         
         if (quizId) {
           // Handle quiz submission
-          console.log('Submitting quiz with answers:', answersArray);
-          
           fetch(`${process.env.REACT_APP_API_URL}/quizzes/submit`, {
             method: 'POST',
             headers: {
@@ -209,8 +207,6 @@ const Assessment: React.FC = () => {
           });
         } else {
           // Handle original assessment submission
-          console.log('Submitting final test with answers:', answersArray);
-          
           fetch(`${process.env.REACT_APP_API_URL}/tests/submit`, {
             method: 'POST',
             headers: {
@@ -293,7 +289,6 @@ const Assessment: React.FC = () => {
       if (!quizId) return;
       
       try {
-        console.log(`Fetching quiz data for quiz ${quizId}...`);
         setLoading(true);
         const token = sessionStorage.getItem('accessToken');
         
@@ -347,13 +342,6 @@ const Assessment: React.FC = () => {
                 setTestComplete(true); // Show results view
                 setLoading(false);
                 
-                showSuccess(
-                  'Quiz already completed. You can review your answers below.',
-                  'Review Mode',
-                  {
-                    duration: 3000
-                  }
-                );
                 return;
               }
             }
@@ -363,8 +351,6 @@ const Assessment: React.FC = () => {
           setQuestions(fetchedQuiz.questions || []);
           setTimeLeft(fetchedQuiz.timeLimit ? fetchedQuiz.timeLimit * 60 : 30 * 60); // Convert minutes to seconds
           setTestId(fetchedQuiz._id);
-          
-          console.log('✅ Quiz data loaded:', fetchedQuiz);
           setLoading(false);
           return;
         } else {
@@ -381,7 +367,6 @@ const Assessment: React.FC = () => {
 
     const fetchQuestions = async () => {
       try {
-        console.log(`Fetching questions for Step ${currentStep}...`);
         setLoading(true);
         const token = sessionStorage.getItem('accessToken');
         const response = await fetch(`${process.env.REACT_APP_API_URL}/tests/start`, {
@@ -394,8 +379,6 @@ const Assessment: React.FC = () => {
         });
 
         const data = await response.json();
-        console.log('Questions fetched:', data);
-        
         if (data.success) {
           setQuestions(data.data.questions);
           setTestId(data.data.testId);
@@ -485,7 +468,6 @@ const Assessment: React.FC = () => {
     return `${minutes} minute${minutes !== 1 ? 's' : ''} ${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''}`;
   };
 
-
   // Load existing answer when question changes
   useEffect(() => {
     if (questions.length > 0 && currentQuestionIndex < questions.length) {
@@ -495,7 +477,6 @@ const Assessment: React.FC = () => {
       setSelectedAnswer(existingAnswer !== undefined ? existingAnswer : null);
     }
   }, [currentQuestionIndex, questions, answers]);
-
 
   // Loading screen
   if (loading) {

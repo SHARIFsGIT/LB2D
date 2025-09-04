@@ -25,14 +25,12 @@ const updateCourseProgress = async (userId: string, courseId: string) => {
     });
 
     if (!enrollment) {
-      console.log(`No enrollment found for user ${userId} in course ${courseId}`);
       return;
     }
 
     // Get course details
     const course = await Course.findById(courseId);
     if (!course) {
-      console.log(`Course ${courseId} not found`);
       return;
     }
 
@@ -98,20 +96,6 @@ const updateCourseProgress = async (userId: string, courseId: string) => {
         status: progressPercentage >= 100 ? 'completed' : 'active'
       }
     });
-
-    console.log(`📊 Course progress updated for user ${userId}:`, {
-      courseId,
-      totalVideos,
-      completedVideos,
-      totalQuizzes,
-      completedQuizzes,
-      totalResources,
-      completedResources,
-      totalLessons,
-      completedLessons,
-      progressPercentage: `${progressPercentage}%`
-    });
-
     return {
       totalLessons,
       completedLessons,
@@ -126,21 +110,17 @@ const updateCourseProgress = async (userId: string, courseId: string) => {
 
 // Function to convert Google Drive share URL to direct download URL
 const convertGoogleDriveURL = (url: string): string => {
-  console.log('🔍 Processing URL:', url);
-  
   // Check if it's a Google Drive URL
   if (url.includes('drive.google.com/file/d/')) {
     const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (fileIdMatch) {
       const fileId = fileIdMatch[1];
       const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-      console.log('✅ Converted Google Drive URL:', directUrl);
       return directUrl;
     }
   }
   
   // If not a Google Drive URL or conversion failed, return original
-  console.log('⚠️ URL unchanged:', url);
   return url;
 };
 
@@ -228,11 +208,6 @@ export const getCourseVideos = async (req: AuthenticatedRequest, res: Response) 
 
 // Upload video (Admin/Supervisor) - handles both file uploads and URL uploads
 export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
-  console.log('🎬 Video upload request received');
-  console.log('📋 Request body:', req.body);
-  console.log('👤 User info:', { userId: req.userId, userRole: req.userRole });
-  console.log('📁 Has file:', !!(req as any).file);
-
   try {
     const {
       courseId,
@@ -248,32 +223,15 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
 
     const userId = req.userId;
     const userRole = req.userRole;
-
-    console.log('🔍 Extracted data:', {
-      courseId,
-      title,
-      description,
-      videoUrl: videoUrl ? 'provided' : 'not provided',
-      sequenceNumber,
-      userId,
-      userRole
-    });
-
     // Check if user has permission to upload
-    console.log('🔐 Checking user permissions...');
     if (!userRole || !['Admin', 'Supervisor'].includes(userRole)) {
-      console.log('❌ Permission denied - userRole:', userRole);
       return res.status(403).json({
         success: false,
         message: 'Only Admin and Supervisor can upload videos'
       });
     }
-    console.log('✅ User permission check passed');
-
     // Check if course exists
-    console.log('🔍 Checking if course exists:', courseId);
     if (!courseId) {
-      console.log('❌ Missing courseId');
       return res.status(400).json({
         success: false,
         message: 'Course ID is required'
@@ -282,14 +240,11 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
 
     const course = await Course.findById(courseId);
     if (!course) {
-      console.log('❌ Course not found:', courseId);
       return res.status(404).json({
         success: false,
         message: 'Course not found'
       });
     }
-    console.log('✅ Course found:', course.title);
-
     // Handle file upload vs URL upload
     let finalVideoUrl = videoUrl;
     let finalVideoSize = parseInt(videoSize) || 0;
@@ -601,8 +556,6 @@ export const approveVideo = async (req: AuthenticatedRequest, res: Response) => 
             actionType: 'upload'
           }
         });
-        console.log(`Notified supervisor ${uploader.firstName} ${uploader.lastName} about video approval`);
-        console.log(`Notified all students about new video: ${video.title} in course: ${course.title}`);
       }
     } catch (notificationError) {
       console.error('Failed to send video approval notifications:', notificationError);
@@ -953,7 +906,6 @@ export const updateVideoProgress = async (req: AuthenticatedRequest, res: Respon
     if (wasCompleted && !wasAlreadyCompleted) {
       try {
         await updateCourseProgress(userId, courseId);
-        console.log(`✅ Updated course progress for student ${userId} after video completion`);
       } catch (progressError) {
         console.error('Error updating course progress after video completion:', progressError);
         // Don't fail the video progress update if course progress update fails
@@ -1085,12 +1037,6 @@ export const getStudentProgressBySupervisor = async (req: AuthenticatedRequest, 
         
         courseData.totalQuizzes = totalQuizzes;
         courseData.completedQuizzes = completedQuizzes;
-        
-        console.log(`📊 Student ${studentId} Course ${courseId}:`, {
-          videos: `${courseData.completedVideos}/${courseData.totalVideos}`,
-          quizzes: `${completedQuizzes}/${totalQuizzes}`
-        });
-        
         // Calculate resource stats
         const totalResources = await CourseResource.countDocuments({
           courseId,

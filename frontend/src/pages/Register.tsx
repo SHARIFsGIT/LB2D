@@ -43,8 +43,7 @@ const Register: React.FC = () => {
         navigate('/registration-success');
       }
     } catch (err: any) {
-      console.log('Registration error:', err);
-      
+
       // Check for detailed validation errors
       if (err.data?.errors) {
         // Check if there's a password error to show requirements

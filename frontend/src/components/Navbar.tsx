@@ -18,7 +18,6 @@ const Navbar: React.FC = () => {
   const { unreadCount, notifications, markAsRead, markAllAsRead, clearAll } =
     useNotifications();
 
-
   const handleLogout = () => {
     dispatch(logout());
     navigate("/");
@@ -197,7 +196,6 @@ const Navbar: React.FC = () => {
                     </div>
                   )}
 
-
                   <svg
                     className={`w-5 h-5 transform transition-transform duration-200 ${
                       isMenuOpen ? "rotate-180" : ""
@@ -301,7 +299,6 @@ const Navbar: React.FC = () => {
                                   if (minutes < 60) return `${minutes}m`;
                                   return `${Math.floor(minutes / 60)}h`;
                                 };
-
 
                                 const getNotificationBorderColor = (type: string, urgent?: boolean) => {
                                   if (urgent) return "border-l-red-300 shadow-red-100";

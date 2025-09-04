@@ -132,7 +132,10 @@ const getNextSequenceNumber = async (courseId: string): Promise<number> => {
     if (videosResponse.ok) {
       const videosData = await videosResponse.json();
       const videos = videosData.data || [];
-      const videoMaxSequence = Math.max(0, ...videos.map((v: any) => v.sequenceNumber || 0));
+      const videoMaxSequence = Math.max(
+        0,
+        ...videos.map((v: any) => v.sequenceNumber || 0)
+      );
       maxSequence = Math.max(maxSequence, videoMaxSequence);
     }
 
@@ -149,7 +152,10 @@ const getNextSequenceNumber = async (courseId: string): Promise<number> => {
     if (quizzesResponse.ok) {
       const quizzesData = await quizzesResponse.json();
       const quizzes = quizzesData.data || [];
-      const quizMaxSequence = Math.max(0, ...quizzes.map((q: any) => q.sequenceNumber || 0));
+      const quizMaxSequence = Math.max(
+        0,
+        ...quizzes.map((q: any) => q.sequenceNumber || 0)
+      );
       maxSequence = Math.max(maxSequence, quizMaxSequence);
     }
 
@@ -166,10 +172,12 @@ const getNextSequenceNumber = async (courseId: string): Promise<number> => {
     if (resourcesResponse.ok) {
       const resourcesData = await resourcesResponse.json();
       const resources = resourcesData.data || [];
-      const resourceMaxSequence = Math.max(0, ...resources.map((r: any) => r.sequenceNumber || 0));
+      const resourceMaxSequence = Math.max(
+        0,
+        ...resources.map((r: any) => r.sequenceNumber || 0)
+      );
       maxSequence = Math.max(maxSequence, resourceMaxSequence);
     }
-
   } catch (error) {
     console.error("Error fetching content for sequence calculation:", error);
   }
@@ -192,6 +200,7 @@ const CourseManagementModal: React.FC<CourseManagementModalProps> = ({
   const [showQuizForm, setShowQuizForm] = useState(false);
   const [showResourceForm, setShowResourceForm] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState<any>(null);
+  const [editingResource, setEditingResource] = useState<any>(null);
 
   const token = sessionStorage.getItem("accessToken");
 
@@ -312,10 +321,10 @@ const CourseManagementModal: React.FC<CourseManagementModalProps> = ({
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/quizzes/${quizId}/submit-approval`,
         {
-          method: 'PATCH',
+          method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
@@ -323,14 +332,14 @@ const CourseManagementModal: React.FC<CourseManagementModalProps> = ({
       if (response.ok) {
         // Refresh quizzes to update status
         fetchQuizzes();
-        alert('Quiz submitted for admin approval successfully!');
+        alert("Quiz submitted for admin approval successfully!");
       } else {
         const errorData = await response.json();
-        alert(errorData.message || 'Failed to submit quiz for approval');
+        alert(errorData.message || "Failed to submit quiz for approval");
       }
     } catch (error) {
-      console.error('Error submitting quiz for approval:', error);
-      alert('Failed to submit quiz for approval');
+      console.error("Error submitting quiz for approval:", error);
+      alert("Failed to submit quiz for approval");
     }
   };
 
@@ -339,10 +348,10 @@ const CourseManagementModal: React.FC<CourseManagementModalProps> = ({
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/quizzes/${quizId}/resubmit`,
         {
-          method: 'PATCH',
+          method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
@@ -350,14 +359,14 @@ const CourseManagementModal: React.FC<CourseManagementModalProps> = ({
       if (response.ok) {
         // Refresh quizzes to update status
         fetchQuizzes();
-        alert('Quiz resubmitted for admin approval successfully!');
+        alert("Quiz resubmitted for admin approval successfully!");
       } else {
         const errorData = await response.json();
-        alert(errorData.message || 'Failed to resubmit quiz for approval');
+        alert(errorData.message || "Failed to resubmit quiz for approval");
       }
     } catch (error) {
-      console.error('Error resubmitting quiz for approval:', error);
-      alert('Failed to resubmit quiz for approval');
+      console.error("Error resubmitting quiz for approval:", error);
+      alert("Failed to resubmit quiz for approval");
     }
   };
 
@@ -366,10 +375,10 @@ const CourseManagementModal: React.FC<CourseManagementModalProps> = ({
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/resources/${resourceId}/submit-approval`,
         {
-          method: 'PATCH',
+          method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
@@ -377,14 +386,14 @@ const CourseManagementModal: React.FC<CourseManagementModalProps> = ({
       if (response.ok) {
         // Refresh resources to update status
         fetchResources();
-        alert('Resource submitted for admin approval successfully!');
+        alert("Resource submitted for admin approval successfully!");
       } else {
         const errorData = await response.json();
-        alert(errorData.message || 'Failed to submit resource for approval');
+        alert(errorData.message || "Failed to submit resource for approval");
       }
     } catch (error) {
-      console.error('Error submitting resource for approval:', error);
-      alert('Failed to submit resource for approval');
+      console.error("Error submitting resource for approval:", error);
+      alert("Failed to submit resource for approval");
     }
   };
 
@@ -412,7 +421,7 @@ const CourseManagementModal: React.FC<CourseManagementModalProps> = ({
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/quizzes/${quizId}`,
         {
-          method: 'DELETE',
+          method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -423,17 +432,19 @@ const CourseManagementModal: React.FC<CourseManagementModalProps> = ({
 
       if (response.ok) {
         if (data.data?.requiresApproval) {
-          alert('Deletion request submitted to admin for approval. You will be notified once the admin reviews your request.');
+          alert(
+            "Deletion request submitted to admin for approval. You will be notified once the admin reviews your request."
+          );
         } else {
-          alert('Quiz deleted successfully');
+          alert("Quiz deleted successfully");
         }
         fetchQuizzes();
       } else {
-        alert(data.message || 'Failed to delete quiz');
+        alert(data.message || "Failed to delete quiz");
       }
     } catch (error) {
-      console.error('Error deleting quiz:', error);
-      alert('Failed to delete quiz');
+      console.error("Error deleting quiz:", error);
+      alert("Failed to delete quiz");
     }
   };
 
@@ -471,10 +482,10 @@ const CourseManagementModal: React.FC<CourseManagementModalProps> = ({
     }
   };
 
-  const handleDeleteResource = async (resourceId: string) => {
+  const handleDeleteResource = async (resourceId: string, resourceTitle: string) => {
     if (
       !window.confirm(
-        "Are you sure you want to delete this resource? This action cannot be undone."
+        `Are you sure you want to delete "${resourceTitle}"? This action cannot be undone.`
       )
     ) {
       return;
@@ -491,16 +502,63 @@ const CourseManagementModal: React.FC<CourseManagementModalProps> = ({
         }
       );
 
+      const data = await response.json();
+
       if (response.ok) {
-        alert("Resource deleted successfully");
-        fetchResources(); // Refresh the list
+        if (data.data?.requiresApproval) {
+          alert(
+            "Deletion request submitted to admin for approval. You will be notified once the admin reviews your request."
+          );
+        } else {
+          alert("Resource deleted successfully");
+        }
+        fetchResources();
       } else {
-        alert("Failed to delete resource");
+        alert(data.message || "Failed to delete resource");
       }
     } catch (error) {
       console.error("Error deleting resource:", error);
       alert("Failed to delete resource");
     }
+  };
+
+  // Add missing resource handlers to match quiz handlers
+  const handleResubmitResource = async (resourceId: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/resources/${resourceId}/submit-approval`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        // Refresh resources to update status
+        fetchResources();
+        alert("Resource resubmitted for admin approval successfully!");
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || "Failed to resubmit resource for approval");
+      }
+    } catch (error) {
+      console.error("Error resubmitting resource for approval:", error);
+      alert("Failed to resubmit resource for approval");
+    }
+  };
+
+  const handleEditResource = (resource: any) => {
+    setEditingResource(resource);
+    setShowResourceForm(true);
+  };
+
+  const handleViewResource = (resource: any) => {
+    // Set resource as view-only mode
+    setEditingResource({ ...resource, isViewOnly: true });
+    setShowResourceForm(true);
   };
 
   const handleGradeAttempt = (attempt: any) => {
@@ -525,9 +583,7 @@ Submitted: ${new Date(attempt.submittedAt).toLocaleString()}
         <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold text-white">
-                {course.title}
-              </h2>
+              <h2 className="text-2xl font-bold text-white">{course.title}</h2>
               <p className="text-purple-100">
                 Level: {course.level} | Duration: {course.duration} weeks
               </p>
@@ -633,24 +689,31 @@ Submitted: ${new Date(attempt.submittedAt).toLocaleString()}
                               <div>Time: {quiz.timeLimit} min</div>
                             )}
                             <div className="flex items-center space-x-2">
-                              <span className="text-xs text-gray-600">Status:</span>
-                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                quiz.status === 'pending' 
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : quiz.status === 'approved'
-                                  ? 'bg-green-100 text-green-700'
-                                  : quiz.status === 'rejected'
-                                  ? 'bg-red-100 text-red-700'
-                                  : 'bg-gray-100 text-gray-700'
-                              }`}>
-                                {quiz.status === 'draft' ? 'Draft' : quiz.status?.charAt(0).toUpperCase() + quiz.status?.slice(1)}
+                              <span className="text-xs text-gray-600">
+                                Status:
                               </span>
-                              {quiz.deletionStatus === 'pending' && (
+                              <span
+                                className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                  quiz.status === "pending"
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : quiz.status === "approved"
+                                    ? "bg-green-100 text-green-700"
+                                    : quiz.status === "rejected"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}
+                              >
+                                {quiz.status === "draft"
+                                  ? "Draft"
+                                  : quiz.status?.charAt(0).toUpperCase() +
+                                    quiz.status?.slice(1)}
+                              </span>
+                              {quiz.deletionStatus === "pending" && (
                                 <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 font-medium">
                                   Deletion Pending
                                 </span>
                               )}
-                              {quiz.deletionStatus === 'rejected' && (
+                              {quiz.deletionStatus === "rejected" && (
                                 <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 font-medium">
                                   Deletion Rejected
                                 </span>
@@ -659,54 +722,65 @@ Submitted: ${new Date(attempt.submittedAt).toLocaleString()}
                           </div>
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => quiz.status === 'approved' ? handleViewQuiz(quiz) : handleEditQuiz(quiz)}
-                              disabled={quiz.status === 'pending'}
+                              onClick={() =>
+                                quiz.status === "approved"
+                                  ? handleViewQuiz(quiz)
+                                  : handleEditQuiz(quiz)
+                              }
+                              disabled={quiz.status === "pending"}
                               className={`flex-1 text-xs px-2 py-1 rounded transition-colors ${
-                                quiz.status === 'pending'
-                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                  : quiz.status === 'approved'
-                                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                                  : quiz.status === 'rejected'
-                                  ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                quiz.status === "pending"
+                                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                  : quiz.status === "approved"
+                                  ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                  : quiz.status === "rejected"
+                                  ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                                  : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                               }`}
                             >
-                              {quiz.status === 'approved' ? 'View' : 'Edit'}
+                              {quiz.status === "approved" ? "View" : "Edit"}
                             </button>
-                            {quiz.status === 'pending' ? (
+                            {quiz.status === "pending" ? (
                               <button
                                 disabled
                                 className="flex-1 text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-700 cursor-not-allowed"
                               >
                                 Pending
                               </button>
-                            ) : quiz.status === 'rejected' ? (
+                            ) : quiz.status === "rejected" ? (
                               <button
                                 onClick={() => handleResubmitQuiz(quiz._id)}
                                 className="flex-1 text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
                               >
                                 Resubmit
                               </button>
-                            ) : quiz.status === 'approved' ? (
-                              // No second button for approved quizzes, just the View button and delete icon
-                              null
-                            ) : (
+                            ) : quiz.status ===
+                              "approved" ? // No second button for approved quizzes, just the View button and delete icon
+                            null : (
                               <button
-                                onClick={() => handleSubmitQuizForApproval(quiz._id)}
+                                onClick={() =>
+                                  handleSubmitQuizForApproval(quiz._id)
+                                }
                                 className="flex-1 text-xs px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
                               >
                                 Submit for Approval
                               </button>
                             )}
                             <button
-                              onClick={() => handleDeleteQuiz(quiz._id, quiz.title)}
-                              disabled={quiz.deletionStatus === 'pending'}
+                              onClick={() =>
+                                handleDeleteQuiz(quiz._id, quiz.title)
+                              }
+                              disabled={quiz.deletionStatus === "pending"}
                               className={`text-xs px-2 py-1 rounded transition-colors ${
-                                quiz.deletionStatus === 'pending'
-                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700'
+                                quiz.deletionStatus === "pending"
+                                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                  : "bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700"
                               }`}
-                              title={quiz.deletionStatus === 'pending' ? 'Deletion request pending admin approval' : 'Delete quiz'}
+                              title={
+                                quiz.deletionStatus === "pending"
+                                  ? "Deletion request pending admin approval"
+                                  : "Delete quiz"
+                              }
                             >
                               🗑️
                             </button>
@@ -718,31 +792,28 @@ Submitted: ${new Date(attempt.submittedAt).toLocaleString()}
                 </div>
               )}
 
-              {/* Resources Tab */}
+              {/* Documents & Audio Tab */}
               {activeTab === "resources" && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold">
-                      Documents & Audio Files
-                    </h3>
+                    <h3 className="text-xl font-bold">Documents & Audio</h3>
                     <button
                       onClick={() => setShowResourceForm(true)}
-                      className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
+                      className="bg-gradient-to-bl from-cyan-800 via-sky-600 to-gray-400 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
                     >
-                      <span>➕</span>
+                      <span>📄</span>
                       <span>Upload Resource</span>
                     </button>
                   </div>
 
                   {resources.length === 0 ? (
                     <div className="text-center py-12 bg-gray-50 rounded-xl">
-                      <div className="text-4xl mb-4">📁</div>
+                      <div className="text-4xl mb-4">📄</div>
                       <h4 className="text-lg font-medium text-gray-800 mb-2">
                         No Resources Yet
                       </h4>
                       <p className="text-gray-600">
-                        Upload documents, audio files, and other materials for
-                        your students!
+                        Upload your first document or audio file for this course!
                       </p>
                     </div>
                   ) : (
@@ -752,90 +823,122 @@ Submitted: ${new Date(attempt.submittedAt).toLocaleString()}
                           key={resource._id}
                           className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-shadow"
                         >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-start space-x-3">
-                              <div className="text-2xl">
-                                {resource.type === "document"
-                                  ? "📄"
-                                  : resource.type === "audio"
-                                  ? "🎵"
-                                  : resource.type === "image"
-                                  ? "🖼️"
-                                  : "📎"}
-                              </div>
-                              <div>
-                                <h4 className="font-semibold text-gray-900 text-sm">
-                                  {resource.title}
-                                </h4>
-                                <p className="text-xs text-gray-500 capitalize">
-                                  {resource.category}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-xs text-gray-600 space-y-1 mb-3">
-                            <div>{resource.fileName}</div>
-                            <div>Downloads: {resource.downloadCount}</div>
+                          <div className="flex justify-between items-start mb-3">
                             <div>
-                              {new Date(
-                                resource.uploadedAt
-                              ).toLocaleDateString()}
+                              <h4 className="font-semibold text-gray-900">
+                                {resource.title}
+                              </h4>
+                              <p className="text-sm text-gray-500 capitalize">
+                                {resource.type}
+                              </p>
                             </div>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                resource.isActive
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {resource.isActive ? "Active" : "Inactive"}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-600 space-y-1 mb-3">
+                            <div>File: {resource.fileName}</div>
+                            <div>Size: {Math.round((resource.fileSize || 0) / 1024)} KB</div>
+                            <div>Downloads: {resource.downloadCount || 0}</div>
                             <div className="flex items-center space-x-2">
-                              <span className="text-xs text-gray-600">Status:</span>
-                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                resource.status === 'pending' 
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : resource.status === 'approved'
-                                  ? 'bg-green-100 text-green-700'
-                                  : resource.status === 'rejected'
-                                  ? 'bg-red-100 text-red-700'
-                                  : 'bg-gray-100 text-gray-700'
-                              }`}>
-                                {resource.status === 'draft' ? 'Draft' : resource.status?.charAt(0).toUpperCase() + resource.status?.slice(1)}
+                              <span className="text-xs text-gray-600">
+                                Status:
                               </span>
+                              <span
+                                className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                  resource.status === "pending"
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : resource.status === "approved"
+                                    ? "bg-green-100 text-green-700"
+                                    : resource.status === "rejected"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}
+                              >
+                                {resource.status === "draft"
+                                  ? "Draft"
+                                  : resource.status?.charAt(0).toUpperCase() +
+                                    resource.status?.slice(1)}
+                              </span>
+                              {resource.deletionStatus === "pending" && (
+                                <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 font-medium">
+                                  Deletion Pending
+                                </span>
+                              )}
+                              {resource.deletionStatus === "rejected" && (
+                                <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 font-medium">
+                                  Deletion Rejected
+                                </span>
+                              )}
                             </div>
                           </div>
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => handleDownloadResource(resource)}
-                              className="flex-1 text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition-colors"
+                              onClick={() =>
+                                resource.status === "approved"
+                                  ? handleViewResource(resource)
+                                  : handleEditResource(resource)
+                              }
+                              disabled={resource.status === "pending"}
+                              className={`flex-1 text-xs px-2 py-1 rounded transition-colors ${
+                                resource.status === "pending"
+                                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                  : resource.status === "approved"
+                                  ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                  : resource.status === "rejected"
+                                  ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                                  : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                              }`}
                             >
-                              Download
+                              {resource.status === "approved" ? "View" : "Edit"}
                             </button>
-                            {resource.status === 'approved' ? (
-                              <button
-                                disabled
-                                className="flex-1 text-xs px-2 py-1 rounded bg-green-100 text-green-700 cursor-not-allowed"
-                              >
-                                Active
-                              </button>
-                            ) : resource.status === 'pending' ? (
+                            {resource.status === "pending" ? (
                               <button
                                 disabled
                                 className="flex-1 text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-700 cursor-not-allowed"
                               >
                                 Pending
                               </button>
-                            ) : resource.status === 'rejected' ? (
+                            ) : resource.status === "rejected" ? (
                               <button
-                                onClick={() => handleSubmitResourceForApproval(resource._id)}
-                                className="flex-1 text-xs px-2 py-1 rounded bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors"
+                                onClick={() => handleResubmitResource(resource._id)}
+                                className="flex-1 text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
                               >
                                 Resubmit
                               </button>
+                            ) : resource.status === "approved" ? (
+                              null
                             ) : (
                               <button
-                                onClick={() => handleSubmitResourceForApproval(resource._id)}
-                                className="flex-1 text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                                onClick={() =>
+                                  handleSubmitResourceForApproval(resource._id)
+                                }
+                                className="flex-1 text-xs px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
                               >
                                 Submit for Approval
                               </button>
                             )}
                             <button
-                              onClick={() => handleDeleteResource(resource._id)}
-                              className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-red-100 hover:text-red-700 transition-colors"
-                              title="Delete resource"
+                              onClick={() =>
+                                handleDeleteResource(resource._id, resource.title)
+                              }
+                              disabled={resource.deletionStatus === "pending"}
+                              className={`text-xs px-2 py-1 rounded transition-colors ${
+                                resource.deletionStatus === "pending"
+                                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                  : "bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700"
+                              }`}
+                              title={
+                                resource.deletionStatus === "pending"
+                                  ? "Deletion request pending admin approval"
+                                  : "Delete resource"
+                              }
                             >
                               🗑️
                             </button>
@@ -931,7 +1034,9 @@ Submitted: ${new Date(attempt.submittedAt).toLocaleString()}
               <div className="bg-white rounded-2xl p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-2xl font-bold text-gray-900">
-                    {editingQuiz ? `Edit ${editingQuiz.title}` : 'Create Quiz/Exam'}
+                    {editingQuiz
+                      ? `Edit ${editingQuiz.title}`
+                      : "Create Quiz/Exam"}
                   </h3>
                   <button
                     onClick={() => {
@@ -944,7 +1049,7 @@ Submitted: ${new Date(attempt.submittedAt).toLocaleString()}
                   </button>
                 </div>
 
-                <QuizForm 
+                <QuizForm
                   courseId={course._id}
                   editingQuiz={editingQuiz}
                   onSuccess={() => {
@@ -966,22 +1071,34 @@ Submitted: ${new Date(attempt.submittedAt).toLocaleString()}
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">Upload Resource</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {editingResource
+                      ? `${editingResource.isViewOnly ? 'View' : 'Edit'} ${editingResource.title}`
+                      : "Upload Resource"}
+                  </h3>
                   <button
-                    onClick={() => setShowResourceForm(false)}
+                    onClick={() => {
+                      setShowResourceForm(false);
+                      setEditingResource(null);
+                    }}
                     className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
                   >
                     ×
                   </button>
                 </div>
 
-                <ResourceUploadForm 
+                <ResourceUploadForm
                   courseId={course._id}
                   onSuccess={() => {
                     setShowResourceForm(false);
+                    setEditingResource(null);
                     fetchResources();
                   }}
-                  onCancel={() => setShowResourceForm(false)}
+                  onCancel={() => {
+                    setShowResourceForm(false);
+                    setEditingResource(null);
+                  }}
+                  editingResource={editingResource}
                 />
               </div>
             </div>
@@ -1000,9 +1117,14 @@ interface QuizFormProps {
   editingQuiz?: any;
 }
 
-const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, editingQuiz = null }) => {
+const QuizForm: React.FC<QuizFormProps> = ({
+  courseId,
+  onSuccess,
+  onCancel,
+  editingQuiz = null,
+}) => {
   const isViewOnly = editingQuiz?.isViewOnly || false;
-  
+
   const [formData, setFormData] = useState({
     title: editingQuiz?.title || "",
     description: editingQuiz?.description || "",
@@ -1012,18 +1134,19 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
     sequenceNumber: editingQuiz?.sequenceNumber || 1,
     questions: editingQuiz?.questions?.map((q: any) => ({
       ...q,
-      correctAnswer: typeof q.correctAnswer === 'string' 
-        ? q.options?.indexOf(q.correctAnswer) || 0 
-        : q.correctAnswer || 0
+      correctAnswer:
+        typeof q.correctAnswer === "string"
+          ? q.options?.indexOf(q.correctAnswer) || 0
+          : q.correctAnswer || 0,
     })) || [
       {
         questionText: "",
         questionType: "multiple-choice",
         options: ["", "", "", ""],
         correctAnswer: 0,
-        points: 10
-      }
-    ]
+        points: 10,
+      },
+    ],
   });
   const [loading, setLoading] = useState(false);
   const token = sessionStorage.getItem("accessToken");
@@ -1032,51 +1155,54 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
     const loadNextSequence = async () => {
       if (!editingQuiz) {
         const nextSequence = await getNextSequenceNumber(courseId);
-        setFormData(prev => ({ ...prev, sequenceNumber: nextSequence }));
+        setFormData((prev) => ({ ...prev, sequenceNumber: nextSequence }));
       }
     };
     loadNextSequence();
   }, [courseId, editingQuiz]);
 
   const addQuestion = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      questions: [...prev.questions, {
-        questionText: "",
-        questionType: "multiple-choice",
-        options: ["", "", "", ""],
-        correctAnswer: 0,
-        points: 10
-      }]
+      questions: [
+        ...prev.questions,
+        {
+          questionText: "",
+          questionType: "multiple-choice",
+          options: ["", "", "", ""],
+          correctAnswer: 0,
+          points: 10,
+        },
+      ],
     }));
   };
 
   const removeQuestion = (index: number) => {
     if (formData.questions.length > 1) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        questions: prev.questions.filter((_: any, i: number) => i !== index)
+        questions: prev.questions.filter((_: any, i: number) => i !== index),
       }));
     }
   };
 
   const updateQuestion = (index: number, field: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      questions: prev.questions.map((q: any, i: number) => 
+      questions: prev.questions.map((q: any, i: number) =>
         i === index ? { ...q, [field]: value } : q
-      )
+      ),
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Prevent submission in view-only mode
     if (isViewOnly) {
       return;
     }
-    
+
     setLoading(true);
 
     try {
@@ -1086,99 +1212,121 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
         courseId,
         questions: formData.questions.map((q: any) => ({
           ...q,
-          correctAnswer: q.options[q.correctAnswer] // Convert index to actual answer
-        }))
+          correctAnswer: q.options[q.correctAnswer], // Convert index to actual answer
+        })),
       };
 
-      const url = editingQuiz 
+      const url = editingQuiz
         ? `${process.env.REACT_APP_API_URL}/quizzes/${editingQuiz._id}`
         : `${process.env.REACT_APP_API_URL}/quizzes`;
-      
-      const method = editingQuiz ? 'PUT' : 'POST';
+
+      const method = editingQuiz ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(submitData),
       });
 
       if (response.ok) {
         const responseData = await response.json();
-        const quizId = editingQuiz ? editingQuiz._id : responseData.data?._id || responseData._id;
-        
+        const quizId = editingQuiz
+          ? editingQuiz._id
+          : responseData.data?._id || responseData._id;
+
         // If creating a new quiz OR editing a rejected quiz, automatically submit for approval
-        if (!editingQuiz || (editingQuiz && editingQuiz.status === 'rejected')) {
+        if (
+          !editingQuiz ||
+          (editingQuiz && editingQuiz.status === "rejected")
+        ) {
           try {
-            const action = editingQuiz ? 'resubmit' : 'submit';
-            console.log(`Attempting to ${action} quiz for approval:`, quizId);
-            
+            const action = editingQuiz ? "resubmit" : "submit";
             const submitResponse = await fetch(
               `${process.env.REACT_APP_API_URL}/quizzes/${quizId}/submit-approval`,
               {
-                method: 'PATCH',
+                method: "PATCH",
                 headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
                 },
               }
             );
 
             if (submitResponse.ok) {
               const submitData = await submitResponse.json();
-              console.log('Submission successful:', submitData);
-              const message = editingQuiz 
-                ? 'Quiz updated and resubmitted for approval successfully!'
-                : 'Quiz created and submitted for approval successfully!';
+              const message = editingQuiz
+                ? "Quiz updated and resubmitted for approval successfully!"
+                : "Quiz created and submitted for approval successfully!";
               alert(message);
             } else {
               const submitError = await submitResponse.json();
-              console.error('Submission failed:', submitResponse.status, submitError);
-              
+              console.error(
+                "Submission failed:",
+                submitResponse.status,
+                submitError
+              );
+
               // Try alternative endpoint format
               const alternativeResponse = await fetch(
                 `${process.env.REACT_APP_API_URL}/quizzes/${quizId}/approve-request`,
                 {
-                  method: 'PUT',
+                  method: "PUT",
                   headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
                   },
-                  body: JSON.stringify({ status: 'pending' })
+                  body: JSON.stringify({ status: "pending" }),
                 }
               );
 
               if (alternativeResponse.ok) {
-                console.log('Alternative submission successful');
-                const message = editingQuiz 
-                  ? 'Quiz updated and resubmitted for approval successfully!'
-                  : 'Quiz created and submitted for approval successfully!';
+                const message = editingQuiz
+                  ? "Quiz updated and resubmitted for approval successfully!"
+                  : "Quiz created and submitted for approval successfully!";
                 alert(message);
               } else {
-                console.error('Alternative submission also failed');
-                const baseMessage = editingQuiz ? 'Quiz updated successfully' : 'Quiz created successfully';
-                alert(`${baseMessage}, but failed to submit for approval. Error: ${submitError.message || 'Unknown error'}. Please try submitting manually.`);
+                console.error("Alternative submission also failed");
+                const baseMessage = editingQuiz
+                  ? "Quiz updated successfully"
+                  : "Quiz created successfully";
+                alert(
+                  `${baseMessage}, but failed to submit for approval. Error: ${
+                    submitError.message || "Unknown error"
+                  }. Please try submitting manually.`
+                );
               }
             }
           } catch (submitError) {
-            console.error('Error submitting quiz:', submitError);
-            const baseMessage = editingQuiz ? 'Quiz updated successfully' : 'Quiz created successfully';
-            alert(`${baseMessage}, but network error occurred during submission. Please try submitting manually.`);
+            console.error("Error submitting quiz:", submitError);
+            const baseMessage = editingQuiz
+              ? "Quiz updated successfully"
+              : "Quiz created successfully";
+            alert(
+              `${baseMessage}, but network error occurred during submission. Please try submitting manually.`
+            );
           }
         } else {
           // For regular updates (approved quizzes being edited), just show success
-          alert('Quiz updated successfully!');
+          alert("Quiz updated successfully!");
         }
         onSuccess();
       } else {
         const errorData = await response.json();
-        alert(`Failed to ${editingQuiz ? 'update' : 'create'} quiz: ${errorData.message || 'Unknown error'}`);
+        alert(
+          `Failed to ${editingQuiz ? "update" : "create"} quiz: ${
+            errorData.message || "Unknown error"
+          }`
+        );
       }
     } catch (error) {
-      console.error(`Error ${editingQuiz ? 'updating' : 'creating'} quiz:`, error);
-      alert(`Failed to ${editingQuiz ? 'update' : 'create'} quiz`);
+      console.error(
+        `Error ${editingQuiz ? "updating" : "creating"} quiz:`,
+        error
+      );
+      alert(`Failed to ${editingQuiz ? "update" : "create"} quiz`);
     } finally {
       setLoading(false);
     }
@@ -1187,24 +1335,38 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Show rejection reason if editing a rejected quiz */}
-      {editingQuiz && editingQuiz.status === 'rejected' && editingQuiz.rejectionReason && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Quiz was rejected</h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p><strong>Reason:</strong> {editingQuiz.rejectionReason}</p>
+      {editingQuiz &&
+        editingQuiz.status === "rejected" &&
+        editingQuiz.rejectionReason && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  Quiz was rejected
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>
+                    <strong>Reason:</strong> {editingQuiz.rejectionReason}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-      
+        )}
+
       {/* Sequence Number and Quiz Title Row - matching video upload style */}
       <div className="grid grid-cols-5 gap-4">
         <div className="col-span-1">
@@ -1214,7 +1376,12 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
           <input
             type="number"
             value={formData.sequenceNumber}
-            onChange={(e) => setFormData({...formData, sequenceNumber: Number(e.target.value)})}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                sequenceNumber: Number(e.target.value),
+              })
+            }
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             min="1"
             disabled={isViewOnly}
@@ -1228,7 +1395,9 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
           <input
             type="text"
             value={formData.title}
-            onChange={(e) => setFormData({...formData, title: e.target.value})}
+            onChange={(e) =>
+              setFormData({ ...formData, title: e.target.value })
+            }
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Enter quiz title"
             disabled={isViewOnly}
@@ -1243,7 +1412,9 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
         </label>
         <textarea
           value={formData.description}
-          onChange={(e) => setFormData({...formData, description: e.target.value})}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           rows={4}
           placeholder="Describe what students will be assessed on"
@@ -1259,7 +1430,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
           </label>
           <select
             value={formData.type}
-            onChange={(e) => setFormData({...formData, type: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="quiz">Quiz</option>
@@ -1273,7 +1444,9 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
           <input
             type="number"
             value={formData.timeLimit}
-            onChange={(e) => setFormData({...formData, timeLimit: Number(e.target.value)})}
+            onChange={(e) =>
+              setFormData({ ...formData, timeLimit: Number(e.target.value) })
+            }
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             min="1"
             required
@@ -1286,7 +1459,9 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
           <input
             type="number"
             value={formData.attemptLimit}
-            onChange={(e) => setFormData({...formData, attemptLimit: Number(e.target.value)})}
+            onChange={(e) =>
+              setFormData({ ...formData, attemptLimit: Number(e.target.value) })
+            }
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             min="1"
             required
@@ -1307,19 +1482,28 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
             <span>Add Question</span>
           </button>
         </div>
-        
+
         <div className="space-y-4">
           {formData.questions.map((question: any, index: number) => (
-            <div key={index} className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+            <div
+              key={index}
+              className="bg-gray-50 border border-gray-200 rounded-xl p-6"
+            >
               <div className="flex justify-between items-start mb-4">
-                <h5 className="text-lg font-semibold text-gray-800">Question {index + 1}</h5>
+                <h5 className="text-lg font-semibold text-gray-800">
+                  Question {index + 1}
+                </h5>
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-600">Points:</label>
+                    <label className="text-sm font-medium text-gray-600">
+                      Points:
+                    </label>
                     <input
                       type="number"
                       value={question.points}
-                      onChange={(e) => updateQuestion(index, 'points', Number(e.target.value))}
+                      onChange={(e) =>
+                        updateQuestion(index, "points", Number(e.target.value))
+                      }
                       className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       min="1"
                     />
@@ -1336,25 +1520,32 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
                   )}
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <input
                   type="text"
                   value={question.questionText}
-                  onChange={(e) => updateQuestion(index, 'questionText', e.target.value)}
+                  onChange={(e) =>
+                    updateQuestion(index, "questionText", e.target.value)
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter your question here"
                   required
                 />
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {question.options.map((option: string, optIndex: number) => (
-                    <div key={optIndex} className="flex items-center space-x-3 bg-white border border-gray-200 rounded-lg p-3">
+                    <div
+                      key={optIndex}
+                      className="flex items-center space-x-3 bg-white border border-gray-200 rounded-lg p-3"
+                    >
                       <input
                         type="radio"
                         name={`correct-${index}`}
                         checked={question.correctAnswer === optIndex}
-                        onChange={() => updateQuestion(index, 'correctAnswer', optIndex)}
+                        onChange={() =>
+                          updateQuestion(index, "correctAnswer", optIndex)
+                        }
                         className="text-blue-600 focus:ring-blue-500"
                       />
                       <input
@@ -1363,10 +1554,12 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
                         onChange={(e) => {
                           const newOptions = [...question.options];
                           newOptions[optIndex] = e.target.value;
-                          updateQuestion(index, 'options', newOptions);
+                          updateQuestion(index, "options", newOptions);
                         }}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder={`Option ${String.fromCharCode(65 + optIndex)}`}
+                        placeholder={`Option ${String.fromCharCode(
+                          65 + optIndex
+                        )}`}
                         required
                       />
                     </div>
@@ -1394,7 +1587,17 @@ const QuizForm: React.FC<QuizFormProps> = ({ courseId, onSuccess, onCancel, edit
             disabled={loading}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? (editingQuiz ? 'Updating...' : 'Creating...') : (editingQuiz ? `Update ${formData.type.charAt(0).toUpperCase() + formData.type.slice(1)}` : `Create ${formData.type.charAt(0).toUpperCase() + formData.type.slice(1)}`)}
+            {loading
+              ? editingQuiz
+                ? "Updating..."
+                : "Creating..."
+              : editingQuiz
+              ? `Update ${
+                  formData.type.charAt(0).toUpperCase() + formData.type.slice(1)
+                }`
+              : `Create ${
+                  formData.type.charAt(0).toUpperCase() + formData.type.slice(1)
+                }`}
           </button>
         )}
       </div>
@@ -1407,24 +1610,32 @@ interface ResourceUploadFormProps {
   courseId: string;
   onSuccess: () => void;
   onCancel: () => void;
+  editingResource?: any;
 }
 
-const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({ courseId, onSuccess, onCancel }) => {
+const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
+  courseId,
+  onSuccess,
+  onCancel,
+  editingResource,
+}) => {
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    category: "lesson",
-    sequenceNumber: 1
+    title: editingResource?.title || "",
+    description: editingResource?.description || "",
+    category: editingResource?.category || "lesson",
+    sequenceNumber: editingResource?.sequenceNumber || 1,
   });
   const [file, setFile] = useState<File | null>(null);
-  const [uploadType, setUploadType] = useState<"document" | "audio">("document");
+  const [uploadType, setUploadType] = useState<"document" | "audio">(
+    (editingResource?.type === "audio" ? "audio" : "document") as "document" | "audio"
+  );
   const [loading, setLoading] = useState(false);
   const token = sessionStorage.getItem("accessToken");
 
   useEffect(() => {
     const loadNextSequence = async () => {
       const nextSequence = await getNextSequenceNumber(courseId);
-      setFormData(prev => ({ ...prev, sequenceNumber: nextSequence }));
+      setFormData((prev) => ({ ...prev, sequenceNumber: nextSequence }));
     };
     loadNextSequence();
   }, [courseId]);
@@ -1433,53 +1644,98 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({ courseId, onSuc
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
-      
+
       // Auto-detect file type and set appropriate category
       const fileType = selectedFile.type;
-      if (fileType.startsWith('audio/')) {
-        setUploadType('audio');
-        setFormData(prev => ({ ...prev, category: 'exercise' }));
+      if (fileType.startsWith("audio/")) {
+        setUploadType("audio");
+        setFormData((prev) => ({ ...prev, category: "exercise" }));
       } else {
-        setUploadType('document');
+        setUploadType("document");
       }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) {
-      alert('Please select a file');
+    
+    // Skip file requirement for editing existing resources
+    if (!editingResource && !file) {
+      alert("Please select a file");
       return;
     }
-    
+
+    // Check if this is view-only mode
+    if (editingResource?.isViewOnly) {
+      alert("This resource is in view-only mode");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const uploadData = new FormData();
-      uploadData.append('file', file);
-      uploadData.append('courseId', courseId);
-      uploadData.append('title', formData.title);
-      uploadData.append('description', formData.description);
-      uploadData.append('category', formData.category);
-      uploadData.append('sequenceNumber', formData.sequenceNumber.toString());
+      if (editingResource) {
+        // Update existing resource
+        const updateData = {
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          sequenceNumber: formData.sequenceNumber,
+        };
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: uploadData,
-      });
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/resources/${editingResource._id}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updateData),
+          }
+        );
 
-      if (response.ok) {
-        onSuccess();
+        if (response.ok) {
+          onSuccess();
+        } else {
+          const errorData = await response.json();
+          alert(
+            `Failed to update resource: ${errorData.message || "Unknown error"}`
+          );
+        }
       } else {
-        const errorData = await response.json();
-        alert(`Failed to upload resource: ${errorData.message || 'Unknown error'}`);
+        // Create new resource
+        const uploadData = new FormData();
+        uploadData.append("file", file!);
+        uploadData.append("courseId", courseId);
+        uploadData.append("title", formData.title);
+        uploadData.append("description", formData.description);
+        uploadData.append("category", formData.category);
+        uploadData.append("sequenceNumber", formData.sequenceNumber.toString());
+
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/resources/upload`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: uploadData,
+          }
+        );
+
+        if (response.ok) {
+          onSuccess();
+        } else {
+          const errorData = await response.json();
+          alert(
+            `Failed to upload resource: ${errorData.message || "Unknown error"}`
+          );
+        }
       }
     } catch (error) {
-      console.error('Error uploading resource:', error);
-      alert('Failed to upload resource');
+      console.error("Error with resource:", error);
+      alert(editingResource ? "Failed to update resource" : "Failed to upload resource");
     } finally {
       setLoading(false);
     }
@@ -1487,6 +1743,39 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({ courseId, onSuc
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Show rejection reason if editing a rejected resource */}
+      {editingResource &&
+        editingResource.status === "rejected" &&
+        editingResource.rejectionReason && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  Resource was rejected
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>
+                    <strong>Reason:</strong> {editingResource.rejectionReason}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       {/* Sequence Number and Resource Title Row - matching video upload style */}
       <div className="grid grid-cols-5 gap-4">
         <div className="col-span-1">
@@ -1496,10 +1785,16 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({ courseId, onSuc
           <input
             type="number"
             value={formData.sequenceNumber}
-            onChange={(e) => setFormData({...formData, sequenceNumber: Number(e.target.value)})}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                sequenceNumber: Number(e.target.value),
+              })
+            }
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             min="1"
             required
+            disabled={editingResource?.isViewOnly}
           />
         </div>
         <div className="col-span-4">
@@ -1509,10 +1804,13 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({ courseId, onSuc
           <input
             type="text"
             value={formData.title}
-            onChange={(e) => setFormData({...formData, title: e.target.value})}
+            onChange={(e) =>
+              setFormData({ ...formData, title: e.target.value })
+            }
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Enter resource title"
             required
+            disabled={editingResource?.isViewOnly}
           />
         </div>
       </div>
@@ -1523,11 +1821,14 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({ courseId, onSuc
         </label>
         <textarea
           value={formData.description}
-          onChange={(e) => setFormData({...formData, description: e.target.value})}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           rows={4}
           placeholder="Describe how students will use this resource"
           required
+          disabled={editingResource?.isViewOnly}
         />
       </div>
 
@@ -1537,8 +1838,11 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({ courseId, onSuc
         </label>
         <select
           value={formData.category}
-          onChange={(e) => setFormData({...formData, category: e.target.value})}
+          onChange={(e) =>
+            setFormData({ ...formData, category: e.target.value })
+          }
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          disabled={editingResource?.isViewOnly}
         >
           <option value="lesson">📚 Lesson Material</option>
           <option value="homework">📝 Homework</option>
@@ -1606,8 +1910,11 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({ courseId, onSuc
               <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className="text-2xl">
-                    {file.type.startsWith('audio/') ? '🎵' : 
-                     file.type.startsWith('image/') ? '🖼️' : '📄'}
+                    {file.type.startsWith("audio/")
+                      ? "🎵"
+                      : file.type.startsWith("image/")
+                      ? "🖼️"
+                      : "📄"}
                   </div>
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">{file.name}</div>
@@ -1621,18 +1928,25 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({ courseId, onSuc
             )}
           </div>
         </div>
-        
+
         <div className="mt-2 text-sm text-gray-500">
           <div className="flex items-start space-x-2">
-            <span>💡</span>
             <div>
               <strong>Supported formats:</strong>
               <div className="mt-1">
-                <span className="inline-block mr-4">📄 Documents: PDF, DOC, DOCX, TXT</span>
-                <span className="inline-block mr-4">🖼️ Images: JPG, PNG, GIF</span>
-                <span className="inline-block">🎵 Audio: MP3, WAV, OGG, M4A</span>
+                <span className="inline-block bg-purple-100 text-gray-800 text-sm px-1 py-1 mr-2 rounded">
+                  Documents: PDF, DOC, DOCX, TXT
+                </span>
+                <span className="inline-block bg-blue-100 text-gray-800 text-sm px-1 py-1 mr-2 rounded">
+                  Images: JPG, PNG, GIF
+                </span>
+                <span className="inline-block bg-pink-100 text-gray-800 text-sm px-1 py-1 mr-2 rounded">
+                  Audio: MP3, WAV, OGG, M4A
+                </span>
+                <span className="inline-block bg-orange-100 text-gray-800 text-sm px-1 py-1 rounded">
+                  Maximum file size: 50MB
+                </span>
               </div>
-              <div className="mt-1 text-gray-400">Maximum file size: 50MB</div>
             </div>
           </div>
         </div>
@@ -1648,13 +1962,19 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({ courseId, onSuc
         >
           Cancel
         </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Uploading...' : `Upload ${uploadType === 'document' ? 'Document' : 'Audio File'}`}
-        </button>
+        {!editingResource?.isViewOnly && (
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading
+              ? editingResource ? "Updating..." : "Uploading..."
+              : editingResource
+              ? "Update Resource"
+              : `Upload ${uploadType === "document" ? "Document" : "Audio File"}`}
+          </button>
+        )}
       </div>
     </form>
   );
@@ -1670,43 +1990,61 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
   // Get progress information for a specific student
   const getStudentProgressInfo = (studentId: string) => {
-    const studentData = studentProgress.find(sp => sp.student.id === studentId);
+    const studentData = studentProgress.find(
+      (sp) => sp.student.id === studentId
+    );
     if (!studentData) return null;
 
     // Calculate overall progress across all courses
     const courses = Object.values(studentData.courses);
     if (courses.length === 0) return null;
 
-    const totalProgress = courses.reduce((sum: number, course: any) => sum + course.overallProgress, 0);
+    const totalProgress = courses.reduce(
+      (sum: number, course: any) => sum + course.overallProgress,
+      0
+    );
     const averageProgress = totalProgress / courses.length;
-    const totalVideos = courses.reduce((sum: number, course: any) => sum + course.totalVideos, 0);
-    const completedVideos = courses.reduce((sum: number, course: any) => sum + course.completedVideos, 0);
+    const totalVideos = courses.reduce(
+      (sum: number, course: any) => sum + course.totalVideos,
+      0
+    );
+    const completedVideos = courses.reduce(
+      (sum: number, course: any) => sum + course.completedVideos,
+      0
+    );
 
     return {
       averageProgress: Math.round(averageProgress),
       completedVideos,
       totalVideos,
-      courses: courses
+      courses: courses,
     };
   };
 
   // Get login-based attendance data for a specific student
   const getStudentAttendanceInfo = (studentId: string) => {
     // Calculate attendance based on login activity
-    const enrollmentDate = new Date(student.enrollments[0]?.enrollmentDate || Date.now());
+    const enrollmentDate = new Date(
+      student.enrollments[0]?.enrollmentDate || Date.now()
+    );
     const currentDate = new Date();
-    
+
     // Calculate days since enrollment
-    const daysDifference = Math.floor((currentDate.getTime() - enrollmentDate.getTime()) / (1000 * 60 * 60 * 24));
+    const daysDifference = Math.floor(
+      (currentDate.getTime() - enrollmentDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
     const totalExpectedDays = Math.max(1, daysDifference); // At least 1 day
-    
+
     // Simulate login-based attendance (in real app, this would come from login tracking API)
     let presentDays = 0;
-    
+
     if (student.lastLogin) {
       const lastLoginDate = new Date(student.lastLogin);
-      const daysSinceLastLogin = Math.floor((currentDate.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24));
-      
+      const daysSinceLastLogin = Math.floor(
+        (currentDate.getTime() - lastLoginDate.getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+
       // If they logged in recently (within 7 days), assume better attendance
       if (daysSinceLastLogin <= 7) {
         presentDays = Math.floor(totalExpectedDays * 0.7); // 70% attendance for active users
@@ -1719,15 +2057,16 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
       // No login data, assume minimal attendance
       presentDays = Math.floor(totalExpectedDays * 0.1);
     }
-    
+
     const absentDays = totalExpectedDays - presentDays;
-    const attendanceRate = totalExpectedDays > 0 ? (presentDays / totalExpectedDays) * 100 : 0;
+    const attendanceRate =
+      totalExpectedDays > 0 ? (presentDays / totalExpectedDays) * 100 : 0;
 
     return {
       present: presentDays,
       absent: absentDays,
       rate: Math.round(attendanceRate),
-      isRealData: true
+      isRealData: true,
     };
   };
 
@@ -1746,7 +2085,6 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
         return "bg-gray-100 text-gray-800";
     }
   };
-
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -1828,18 +2166,20 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {(() => {
                 const progressInfo = getStudentProgressInfo(student._id);
-                
+
                 if (student.enrollments && student.enrollments.length > 0) {
                   return student.enrollments.map((enrollment, index) => {
                     // Get real progress data
                     let realProgress = 0;
-                    
+
                     if (progressInfo && progressInfo.courses) {
-                      const matchingCourse = progressInfo.courses.find((course: any) => 
-                        course.courseName === enrollment.courseName
+                      const matchingCourse = progressInfo.courses.find(
+                        (course: any) =>
+                          course.courseName === enrollment.courseName
                       );
                       if (matchingCourse) {
-                        realProgress = (matchingCourse as any).overallProgress || 0;
+                        realProgress =
+                          (matchingCourse as any).overallProgress || 0;
                       }
                     }
 
@@ -1880,61 +2220,74 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
                         <div className="text-sm text-gray-500">
                           Enrolled:{" "}
-                          {new Date(enrollment.enrollmentDate).toLocaleDateString()}
+                          {new Date(
+                            enrollment.enrollmentDate
+                          ).toLocaleDateString()}
                         </div>
                       </div>
                     );
                   });
                 } else {
                   // Show progress data from API if available
-                  if (progressInfo && progressInfo.courses && progressInfo.courses.length > 0) {
-                    return progressInfo.courses.map((course: any, index: number) => (
-                      <div
-                        key={index}
-                        className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200"
-                      >
-                        <div className="mb-4">
-                          <h4 className="font-bold text-lg text-gray-900">
-                            {course.courseName || 'Unknown Course'}
-                          </h4>
-                          <p className="text-gray-600">
-                            Level: {course.courseLevel || 'N/A'}
-                          </p>
-                        </div>
+                  if (
+                    progressInfo &&
+                    progressInfo.courses &&
+                    progressInfo.courses.length > 0
+                  ) {
+                    return progressInfo.courses.map(
+                      (course: any, index: number) => (
+                        <div
+                          key={index}
+                          className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200"
+                        >
+                          <div className="mb-4">
+                            <h4 className="font-bold text-lg text-gray-900">
+                              {course.courseName || "Unknown Course"}
+                            </h4>
+                            <p className="text-gray-600">
+                              Level: {course.courseLevel || "N/A"}
+                            </p>
+                          </div>
 
-                        <div className="mb-4">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-medium text-gray-700">
-                              Progress
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div
-                              className="bg-gradient-to-r from-blue-400 to-blue-600 h-3 rounded-full transition-all duration-500"
-                              style={{
-                                width: `${Math.min(course.overallProgress, 100)}%`,
-                              }}
-                            />
-                          </div>
-                          <div className="text-right mt-1">
-                            <div className="text-sm text-gray-600 font-medium">
-                              {Math.round(course.overallProgress)}%
+                          <div className="mb-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium text-gray-700">
+                                Progress
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                              <div
+                                className="bg-gradient-to-r from-blue-400 to-blue-600 h-3 rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${Math.min(
+                                    course.overallProgress,
+                                    100
+                                  )}%`,
+                                }}
+                              />
+                            </div>
+                            <div className="text-right mt-1">
+                              <div className="text-sm text-gray-600 font-medium">
+                                {Math.round(course.overallProgress)}%
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="text-sm text-gray-500">
-                          Last Updated: {new Date().toLocaleDateString()}
+                          <div className="text-sm text-gray-500">
+                            Last Updated: {new Date().toLocaleDateString()}
+                          </div>
                         </div>
-                      </div>
-                    ));
+                      )
+                    );
                   }
                 }
-                
+
                 return (
                   <div className="col-span-full bg-gray-50 rounded-2xl p-8 text-center">
                     <div className="text-4xl mb-4">📚</div>
-                    <p className="text-gray-600">No course enrollments found.</p>
+                    <p className="text-gray-600">
+                      No course enrollments found.
+                    </p>
                   </div>
                 );
               })()}
@@ -1977,10 +2330,12 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                       <div className="text-4xl font-bold text-red-600 mb-2">
                         {realAttendanceInfo?.absent || 0}
                       </div>
-                      <div className="text-sm text-red-800 font-medium">Absent Days</div>
+                      <div className="text-sm text-red-800 font-medium">
+                        Absent Days
+                      </div>
                     </div>
                   </div>
-                  
+
                   <div className="mb-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-lg font-semibold text-gray-800">
@@ -2032,15 +2387,12 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
 
   // Update courseId when selectedCourse changes
   useEffect(() => {
-    console.log('🔄 useEffect triggered - selectedCourse changed:', selectedCourse);
     if (selectedCourse?._id) {
-      console.log('✅ Setting courseId to:', selectedCourse._id);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        courseId: selectedCourse._id
+        courseId: selectedCourse._id,
       }));
     } else {
-      console.log('❌ selectedCourse._id is missing');
     }
   }, [selectedCourse]);
 
@@ -2049,7 +2401,7 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
     const loadNextSequence = async () => {
       if (formData.courseId) {
         const nextSequence = await getNextSequenceNumber(formData.courseId);
-        setFormData(prev => ({ ...prev, sequenceNumber: nextSequence }));
+        setFormData((prev) => ({ ...prev, sequenceNumber: nextSequence }));
       }
     };
     loadNextSequence();
@@ -2063,16 +2415,25 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
       // Validate file size (500MB limit)
       const maxSize = 500 * 1024 * 1024; // 500MB
       if (file.size > maxSize) {
-        alert('File too large. Maximum size is 500MB.');
-        e.target.value = ''; // Clear the input
+        alert("File too large. Maximum size is 500MB.");
+        e.target.value = ""; // Clear the input
         return;
       }
 
       // Validate file type
-      const allowedTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv', 'video/webm'];
+      const allowedTypes = [
+        "video/mp4",
+        "video/mpeg",
+        "video/quicktime",
+        "video/x-msvideo",
+        "video/x-ms-wmv",
+        "video/webm",
+      ];
       if (!allowedTypes.includes(file.type)) {
-        alert('Invalid file type. Please select a video file (MP4, MPEG, MOV, AVI, WMV, or WEBM).');
-        e.target.value = ''; // Clear the input
+        alert(
+          "Invalid file type. Please select a video file (MP4, MPEG, MOV, AVI, WMV, or WEBM)."
+        );
+        e.target.value = ""; // Clear the input
         return;
       }
 
@@ -2089,12 +2450,6 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUploading(true);
-
-    console.log('📝 UploadVideoModal handleSubmit called');
-    console.log('🎯 selectedCourse:', selectedCourse);
-    console.log('📋 formData.courseId:', formData.courseId);
-    console.log('📦 Full formData:', formData);
-
     try {
       if (uploadType === "file" && videoFile) {
         // Handle file upload
@@ -2357,9 +2712,9 @@ const SupervisorDashboard: React.FC = () => {
   const [myVideos, setMyVideos] = useState<Video[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"courses" | "students" | "videos" | "salary">(
-    "courses"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "courses" | "students" | "videos" | "salary"
+  >("courses");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCourseManagementModal, setShowCourseManagementModal] =
     useState(false);
@@ -2403,12 +2758,12 @@ const SupervisorDashboard: React.FC = () => {
   useEffect(() => {
     if (activeTab === "salary") {
       fetchSalaryData();
-      
+
       // Set up automatic refresh every 30 seconds when on salary tab
       const intervalId = setInterval(() => {
         fetchSalaryData();
       }, 30000); // 30 seconds
-      
+
       // Cleanup interval when leaving salary tab
       return () => clearInterval(intervalId);
     }
@@ -2432,7 +2787,7 @@ const SupervisorDashboard: React.FC = () => {
       approvedVideos: myVideos.filter((v) => v.status === "approved").length,
     };
 
-    console.log("Updating stats:", newStats); // Debug logging
+    // Debug logging
     setStats(newStats);
   }, [students, testResults, myVideos, courses]);
 
@@ -2522,10 +2877,18 @@ const SupervisorDashboard: React.FC = () => {
 
   // Get student performance rankings
   const getStudentRankings = () => {
-    const studentScores: { [key: string]: { student: any, totalScore: number, testCount: number, quizCount: number, averageScore: number } } = {};
-    
+    const studentScores: {
+      [key: string]: {
+        student: any;
+        totalScore: number;
+        testCount: number;
+        quizCount: number;
+        averageScore: number;
+      };
+    } = {};
+
     // Process test results
-    testResults.forEach(result => {
+    testResults.forEach((result) => {
       const studentId = result.userId._id;
       if (!studentScores[studentId]) {
         studentScores[studentId] = {
@@ -2533,15 +2896,15 @@ const SupervisorDashboard: React.FC = () => {
           totalScore: 0,
           testCount: 0,
           quizCount: 0,
-          averageScore: 0
+          averageScore: 0,
         };
       }
       studentScores[studentId].totalScore += result.score;
       studentScores[studentId].testCount += 1;
     });
-    
+
     // Process quiz results
-    quizResults.forEach(result => {
+    quizResults.forEach((result) => {
       const studentId = result.studentId._id;
       if (!studentScores[studentId]) {
         studentScores[studentId] = {
@@ -2549,39 +2912,44 @@ const SupervisorDashboard: React.FC = () => {
           totalScore: 0,
           testCount: 0,
           quizCount: 0,
-          averageScore: 0
+          averageScore: 0,
         };
       }
       studentScores[studentId].totalScore += result.percentage;
       studentScores[studentId].quizCount += 1;
     });
-    
+
     // Calculate average scores and convert to array
-    const rankings = Object.values(studentScores).map(entry => ({
+    const rankings = Object.values(studentScores).map((entry) => ({
       ...entry,
-      averageScore: entry.testCount + entry.quizCount > 0 
-        ? Math.round(entry.totalScore / (entry.testCount + entry.quizCount))
-        : 0,
-      totalAssessments: entry.testCount + entry.quizCount
+      averageScore:
+        entry.testCount + entry.quizCount > 0
+          ? Math.round(entry.totalScore / (entry.testCount + entry.quizCount))
+          : 0,
+      totalAssessments: entry.testCount + entry.quizCount,
     }));
-    
+
     // Sort by average score (highest first)
     return rankings.sort((a, b) => b.averageScore - a.averageScore);
   };
 
-
   // Get progress information for a specific student (for student list display)
   const getStudentProgressInfo = (studentId: string) => {
-    const studentData = studentProgress.find((sp: any) => sp.student.id === studentId);
+    const studentData = studentProgress.find(
+      (sp: any) => sp.student.id === studentId
+    );
     if (!studentData) return null;
 
     // Calculate overall progress across all courses
     const courses = Object.values(studentData.courses);
     if (courses.length === 0) return null;
 
-    const totalProgress = courses.reduce((sum: number, course: any) => sum + course.overallProgress, 0);
+    const totalProgress = courses.reduce(
+      (sum: number, course: any) => sum + course.overallProgress,
+      0
+    );
     const averageProgress = totalProgress / courses.length;
-    
+
     // Calculate comprehensive lesson counts (videos + quizzes + resources)
     const totalLessons = courses.reduce((sum: number, course: any) => {
       const videos = course.totalVideos || 0;
@@ -2589,41 +2957,31 @@ const SupervisorDashboard: React.FC = () => {
       const resources = course.totalResources || 0;
       return sum + videos + quizzes + resources;
     }, 0);
-    
+
     const completedLessons = courses.reduce((sum: number, course: any) => {
       const completedVideos = course.completedVideos || 0;
       const completedQuizzes = course.completedQuizzes || 0;
       const completedResources = course.completedResources || 0;
-      const calculatedCompleted = completedVideos + completedQuizzes + completedResources;
-      
+      const calculatedCompleted =
+        completedVideos + completedQuizzes + completedResources;
+
       // If overall progress is 100%, use total lessons as completed count
       // This handles cases where individual tracking might be inconsistent
       if (course.overallProgress >= 100) {
-        const courseTotalLessons = (course.totalVideos || 0) + (course.totalQuizzes || 0) + (course.totalResources || 0);
+        const courseTotalLessons =
+          (course.totalVideos || 0) +
+          (course.totalQuizzes || 0) +
+          (course.totalResources || 0);
         return sum + courseTotalLessons;
       }
-      
+
       return sum + calculatedCompleted;
     }, 0);
-
-    console.log(`📋 Student ${studentId} Progress:`, {
-      totalLessons,
-      completedLessons,
-      averageProgress,
-      courses: courses.map((c: any) => ({
-        name: c.courseName,
-        overall: c.overallProgress + '%',
-        videos: `${c.completedVideos || 0}/${c.totalVideos || 0}`,
-        quizzes: `${c.completedQuizzes || 0}/${c.totalQuizzes || 0}`,
-        resources: `${c.completedResources || 0}/${c.totalResources || 0}`
-      }))
-    });
-
     return {
       averageProgress: Math.round(averageProgress),
       completedVideos: completedLessons,
       totalVideos: totalLessons,
-      courses: courses
+      courses: courses,
     };
   };
 
@@ -2642,7 +3000,6 @@ const SupervisorDashboard: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📊 Student Progress Data:', data);
         setStudentProgress(data.data || []);
       }
     } catch (error) {
@@ -2718,7 +3075,7 @@ const SupervisorDashboard: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Fetched courses data:", data); // Debug logging
+        // Debug logging
         setCourses(data.data || []);
       } else {
         console.error(
@@ -2746,15 +3103,17 @@ const SupervisorDashboard: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Fetched my salary data:", data);
         setSalaryData(data.data || null);
         setLastUpdated(new Date());
       } else {
         const errorText = await response.text();
-        console.error("Failed to fetch salary data:", response.status, errorText);
-        
+        console.error(
+          "Failed to fetch salary data:",
+          response.status,
+          errorText
+        );
+
         if (response.status === 404) {
-          console.log("No salary record found - supervisor needs salary initialization");
           setSalaryData(null);
         }
       }
@@ -2766,11 +3125,8 @@ const SupervisorDashboard: React.FC = () => {
 
   const handleVideoUpload = async (videoData: any) => {
     try {
-      console.log('🎬 handleVideoUpload called with videoData:', videoData);
-      console.log('📋 courseId from videoData:', videoData.courseId);
-      
       let requestOptions: RequestInit;
-      
+
       // Check if this is a file upload or URL upload
       if (videoData.uploadType === "file" && videoData.file) {
         // Handle file upload with FormData
@@ -3288,23 +3644,29 @@ const SupervisorDashboard: React.FC = () => {
                             </p>
                             {/* Progress Information */}
                             {(() => {
-                              const progressInfo = getStudentProgressInfo(student._id);
+                              const progressInfo = getStudentProgressInfo(
+                                student._id
+                              );
                               if (!progressInfo) return null;
-                              
+
                               return (
                                 <div className="mt-2">
                                   <div className="flex items-center justify-between text-xs">
                                     <span className="text-gray-600">
-                                      {progressInfo.completedVideos || 0}/{progressInfo.totalVideos || 0} lessons completed
+                                      {progressInfo.completedVideos || 0}/
+                                      {progressInfo.totalVideos || 0} lessons
+                                      completed
                                     </span>
                                     <span className="text-blue-600 font-medium">
                                       {progressInfo.averageProgress}%
                                     </span>
                                   </div>
                                   <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
-                                    <div 
+                                    <div
                                       className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-300"
-                                      style={{ width: `${progressInfo.averageProgress}%` }}
+                                      style={{
+                                        width: `${progressInfo.averageProgress}%`,
+                                      }}
                                     ></div>
                                   </div>
                                 </div>
@@ -3316,7 +3678,6 @@ const SupervisorDashboard: React.FC = () => {
                     ))}
                 </div>
               )}
-
             </div>
           </div>
         )}
@@ -3479,15 +3840,21 @@ const SupervisorDashboard: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
             <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-3xl font-bold text-white">My Salary Overview</h2>
+                <h2 className="text-3xl font-bold text-white">
+                  My Salary Overview
+                </h2>
                 {lastUpdated && (
                   <div className="text-green-100 text-sm">
-                    Updated: {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    Updated:{" "}
+                    {lastUpdated.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </div>
                 )}
               </div>
             </div>
-            
+
             <div className="p-6">
               {salaryData ? (
                 <div className="space-y-6">
@@ -3496,7 +3863,9 @@ const SupervisorDashboard: React.FC = () => {
                     <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-100">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-sm font-medium text-green-600 mb-1">Monthly Salary</h3>
+                          <h3 className="text-sm font-medium text-green-600 mb-1">
+                            Monthly Salary
+                          </h3>
                           <p className="text-2xl font-bold text-green-800">
                             €{salaryData.monthlySalary?.toLocaleString() || 0}
                           </p>
@@ -3506,13 +3875,17 @@ const SupervisorDashboard: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-sm font-medium text-blue-600 mb-1">Total Paid This Year</h3>
+                          <h3 className="text-sm font-medium text-blue-600 mb-1">
+                            Total Paid This Year
+                          </h3>
                           <p className="text-2xl font-bold text-blue-800">
-                            €{salaryData.totalPaidThisYear?.toLocaleString() || 0}
+                            €
+                            {salaryData.totalPaidThisYear?.toLocaleString() ||
+                              0}
                           </p>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -3520,13 +3893,18 @@ const SupervisorDashboard: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-100">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-sm font-medium text-purple-600 mb-1">Payments Received</h3>
+                          <h3 className="text-sm font-medium text-purple-600 mb-1">
+                            Payments Received
+                          </h3>
                           <p className="text-2xl font-bold text-purple-800">
-                            {salaryData.monthlyPayments?.filter((p: any) => p.paid).length || 0}/12
+                            {salaryData.monthlyPayments?.filter(
+                              (p: any) => p.paid
+                            ).length || 0}
+                            /12
                           </p>
                         </div>
                         <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -3541,73 +3919,124 @@ const SupervisorDashboard: React.FC = () => {
                     <h3 className="text-xl font-bold text-gray-800 mb-4">
                       {new Date().getFullYear()} Payment Status
                     </h3>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                      {salaryData.monthlyPayments?.map((payment: any, index: number) => {
-                        const monthName = new Date(2024, index).toLocaleDateString('en-US', { month: 'short' });
-                        return (
-                          <div key={index} className={`p-4 rounded-lg text-center border-2 ${
-                            payment.paid 
-                              ? 'bg-green-50 border-green-200' 
-                              : 'bg-gray-50 border-gray-200'
-                          }`}>
-                            <div className={`text-2xl mb-2 ${payment.paid ? 'text-green-600' : 'text-gray-400'}`}>
-                              {payment.paid ? '✅' : '⏳'}
-                            </div>
-                            <div className="text-sm font-medium text-gray-700">{monthName}</div>
-                            <div className={`text-xs mt-1 ${payment.paid ? 'text-green-600' : 'text-gray-500'}`}>
-                              {payment.paid ? (
-                                <span>
-                                  €{payment.amount?.toLocaleString()}<br/>
-                                  <span className="text-xs">
-                                    {payment.paidDate ? new Date(payment.paidDate).toLocaleDateString() : 'Paid'}
-                                    {payment.paymentMethod && (
-                                      <><br/><span className="capitalize">{payment.paymentMethod.replace('_', ' ')}</span></>
-                                    )}
+                      {salaryData.monthlyPayments?.map(
+                        (payment: any, index: number) => {
+                          const monthName = new Date(
+                            2024,
+                            index
+                          ).toLocaleDateString("en-US", { month: "short" });
+                          return (
+                            <div
+                              key={index}
+                              className={`p-4 rounded-lg text-center border-2 ${
+                                payment.paid
+                                  ? "bg-green-50 border-green-200"
+                                  : "bg-gray-50 border-gray-200"
+                              }`}
+                            >
+                              <div
+                                className={`text-2xl mb-2 ${
+                                  payment.paid
+                                    ? "text-green-600"
+                                    : "text-gray-400"
+                                }`}
+                              >
+                                {payment.paid ? "✅" : "⏳"}
+                              </div>
+                              <div className="text-sm font-medium text-gray-700">
+                                {monthName}
+                              </div>
+                              <div
+                                className={`text-xs mt-1 ${
+                                  payment.paid
+                                    ? "text-green-600"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                {payment.paid ? (
+                                  <span>
+                                    €{payment.amount?.toLocaleString()}
+                                    <br />
+                                    <span className="text-xs">
+                                      {payment.paidDate
+                                        ? new Date(
+                                            payment.paidDate
+                                          ).toLocaleDateString()
+                                        : "Paid"}
+                                      {payment.paymentMethod && (
+                                        <>
+                                          <br />
+                                          <span className="capitalize">
+                                            {payment.paymentMethod.replace(
+                                              "_",
+                                              " "
+                                            )}
+                                          </span>
+                                        </>
+                                      )}
+                                    </span>
                                   </span>
-                                </span>
-                              ) : (
-                                <span>Pending</span>
-                              )}
+                                ) : (
+                                  <span>Pending</span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        }
+                      )}
                     </div>
                   </div>
 
                   {/* Assigned Courses */}
-                  {salaryData.assignedCourses && salaryData.assignedCourses.length > 0 && (
-                    <div className="bg-blue-50 rounded-xl p-6">
-                      <h3 className="text-xl font-bold text-gray-800 mb-4">My Assigned Courses</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {salaryData.assignedCourses.map((course: any, index: number) => (
-                          <div key={index} className="bg-white p-4 rounded-lg border border-blue-100">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-medium text-gray-800">{course.title}</h4>
-                                <p className="text-sm text-blue-600">Level: {course.level}</p>
+                  {salaryData.assignedCourses &&
+                    salaryData.assignedCourses.length > 0 && (
+                      <div className="bg-blue-50 rounded-xl p-6">
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">
+                          My Assigned Courses
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {salaryData.assignedCourses.map(
+                            (course: any, index: number) => (
+                              <div
+                                key={index}
+                                className="bg-white p-4 rounded-lg border border-blue-100"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h4 className="font-medium text-gray-800">
+                                      {course.title}
+                                    </h4>
+                                    <p className="text-sm text-blue-600">
+                                      Level: {course.level}
+                                    </p>
+                                  </div>
+                                  <div className="text-2xl">🎓</div>
+                                </div>
                               </div>
-                              <div className="text-2xl">🎓</div>
-                            </div>
-                          </div>
-                        ))}
+                            )
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               ) : (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">💳</div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">No Salary Data Available</h3>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    No Salary Data Available
+                  </h3>
                   <p className="text-gray-600">
-                    Your salary information hasn't been set up yet. Please contact the administrator to initialize your salary record.
+                    Your salary information hasn't been set up yet. Please
+                    contact the administrator to initialize your salary record.
                   </p>
                 </div>
               )}
             </div>
           </div>
         )}
+
       </div>
 
       {/* Upload Video Modal */}
