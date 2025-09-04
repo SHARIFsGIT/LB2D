@@ -6,18 +6,18 @@ bash
 
 PORT=5000
 NODE_ENV=production
-MONGODB_URI=mongodb+srv://sharifaiub15:O0dFXPmtLhluCYNQ@cluster0.icvbfpa.mongodb.net/learn-bangla-to-deutsch-production?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/learn-bangla-to-deutsch-production?retryWrites=true&w=majority
 JWT_ACCESS_SECRET=BANGLA_DEUTSCH_2024_SUPER_SECURE_JWT_PRODUCTION_KEY_O0dFXPmtLhluCYNQ
 JWT_REFRESH_SECRET=BANGLA_DEUTSCH_2024_SUPER_SECURE_JWT_PRODUCTION_REFRESH_KEY_O0dFXPmtLhluCYNQ
 JWT_ACCESS_EXPIRES_IN=7d
 JWT_REFRESH_EXPIRES_IN=30d
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
-EMAIL_USER=sharifaiub15@gmail.com
-EMAIL_PASS=wfza jrgl uigf uidy
-TWILIO_ACCOUNT_SID=AC522c0071c8ddb88a0d759c3516ad565a
-TWILIO_AUTH_TOKEN=c87fe96a104629db950790275ed3c83a
-TWILIO_PHONE_NUMBER=+13642047001
+EMAIL_USER=<your-email@gmail.com>
+EMAIL_PASS=<your-app-password>
+TWILIO_ACCOUNT_SID=<your-twilio-account-sid>
+TWILIO_AUTH_TOKEN=<your-twilio-auth-token>
+TWILIO_PHONE_NUMBER=<your-twilio-phone-number>
 CLIENT_URL=https://your-vercel-app.vercel.app
 EMAIL_FROM=sharifaiub15@gmail.com
 
