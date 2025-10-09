@@ -11,6 +11,7 @@ import CourseResource from '../models/CourseResource.model';
 import ResourceProgress from '../models/ResourceProgress.model';
 import emailService from '../services/email.service';
 import notificationService from '../services/notification.service';
+import { notifySupervisors, notifyStudents } from '../services/websocket.service';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';

@@ -21,7 +21,7 @@ export interface AuthenticatedRequest extends Request {
 
 export interface NotificationData {
   id?: string;
-  type: 'payment' | 'enrollment' | 'course' | 'test' | 'video' | 'video_comment' | 'admin' | 'general' | 'user_registration' | 'role_change' | 'supervisor_action' | 'student_action' | 'document' | 'assessment' | 'certificate' | 'ranking' | 'document_approval';
+  type: 'payment' | 'enrollment' | 'course' | 'test' | 'video' | 'video_comment' | 'admin' | 'general' | 'user_registration' | 'role_change' | 'supervisor_action' | 'student_action' | 'document' | 'assessment' | 'certificate' | 'ranking' | 'document_approval' | 'quiz' | 'resource';
   title: string;
   message: string;
   userId?: string;
@@ -31,4 +31,5 @@ export interface NotificationData {
   urgent?: boolean;
   fromRole?: 'Admin' | 'Student' | 'Supervisor' | 'System';
   toRole?: 'Admin' | 'Student' | 'Supervisor' | 'all';
+  read?: boolean;
 }

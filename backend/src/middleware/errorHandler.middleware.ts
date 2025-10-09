@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { MongoError } from 'mongodb';
-import { ValidationError } from 'mongoose';
+import mongoose from 'mongoose';
 import logger from '../utils/logger';
 import { ResponseUtil } from '../utils/response.util';
 import config from '../config/app.config';
+
+type ValidationError = mongoose.Error.ValidationError;
 
 export interface AppError extends Error {
   statusCode?: number;

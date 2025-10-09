@@ -11,6 +11,7 @@ import CourseResource from '../models/CourseResource.model';
 import ResourceProgress from '../models/ResourceProgress.model';
 import emailService from '../services/email.service';
 import notificationService from '../services/notification.service';
+import { notifyUser, notifyAdmins } from '../services/websocket.service';
 
 interface AuthenticatedRequest extends Request {
   userId?: string;

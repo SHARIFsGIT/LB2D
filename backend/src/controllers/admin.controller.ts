@@ -6,6 +6,7 @@ import CourseResource from '../models/CourseResource.model';
 import Enrollment from '../models/Enrollment.model';
 import emailService from '../services/email.service';
 import notificationService from '../services/notification.service';
+import { notifyRoleHierarchy } from '../services/websocket.service';
 
 // Get all users (only Admin can access)
 export const getAllUsers = asyncHandler(async (req: Request, res: Response): Promise<any> => {
