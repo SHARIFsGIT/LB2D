@@ -1,0 +1,873 @@
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useNotifications } from "../hooks/useNotifications";
+import { logout } from "../store/slices/authSlice";
+import { RootState } from "../store/store";
+import Button from "./common/Button";
+
+const Navbar: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const { isAuthenticated, user } = useSelector(
+    (state: RootState) => state.auth
+  );
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const { unreadCount, notifications, markAsRead, markAllAsRead, clearAll } =
+    useNotifications();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/");
+  };
+
+  // Hide these pages for logged-in users
+  const navItems = !isAuthenticated
+    ? [
+        { name: "Home", path: "/" },
+        { name: "Courses", path: "/courses" },
+        { name: "About", path: "/about" },
+        { name: "Contact", path: "/contact" },
+      ]
+    : [];
+
+  const userMenuItems = isAuthenticated
+    ? [
+        ...(user?.role === "Admin"
+          ? [
+              { name: "Admin Dashboard", path: "/admin" },
+              { name: "Manage Courses", path: "/admin/courses" },
+              { name: "Analytics", path: "/admin/analytics" },
+            ]
+          : user?.role === "Supervisor"
+          ? [
+              { name: "Dashboard", path: "/supervisor" },
+              { name: "Settings", path: "/profile" },
+            ]
+          : user?.role === "Student"
+          ? [
+              { name: "Dashboard", path: "/dashboard" },
+              { name: "My Courses", path: "/my-courses" },
+              { name: "Certificates", path: "/certificates" },
+              { name: "Profile", path: "/profile" },
+            ]
+          : [{ name: "Profile", path: "/profile" }]),
+      ]
+    : [];
+
+  // Navigate to relevant page based on notification type and data
+  const handleNotificationClick = (notification: any) => {
+    // Mark as read
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
+
+    // Close notification dropdown
+    setShowNotifications(false);
+
+    // Navigate based on notification type and data
+    switch (notification.type) {
+      case 'video_comment':
+        if (notification.data?.videoId && notification.data?.courseId) {
+          navigate(`/course/${notification.data.courseId}/videos`);
+        }
+        break;
+        
+      case 'video':
+        if (notification.data?.videoId && notification.data?.courseId) {
+          navigate(`/course/${notification.data.courseId}/videos`);
+        }
+        break;
+        
+      case 'document':
+        if (notification.data?.courseId) {
+          // Navigate to course videos page where resources are likely accessed
+          navigate(`/course/${notification.data.courseId}/videos`);
+        }
+        break;
+        
+      case 'course':
+        if (notification.data?.courseId) {
+          // Navigate to course details or supervisor's course management
+          if (user?.role === 'Supervisor') {
+            navigate('/supervisor');
+          } else if (user?.role === 'Admin') {
+            navigate('/admin/courses');
+          } else {
+            navigate('/courses');
+          }
+        }
+        break;
+        
+      case 'enrollment':
+        if (notification.data?.courseId) {
+          navigate('/my-courses');
+        }
+        break;
+        
+      case 'payment':
+        navigate('/my-courses');
+        break;
+        
+      case 'admin':
+      case 'user_registration':
+        if (user?.role === 'Admin') {
+          navigate('/admin');
+        }
+        break;
+        
+      default:
+        // For other notification types, navigate to role-specific default page
+        if (user?.role === 'Admin') {
+          navigate('/admin');
+        } else if (user?.role === 'Supervisor') {
+          navigate('/supervisor');
+        } else {
+          navigate('/dashboard');
+        }
+        break;
+    }
+  };
+
+  return (
+    <nav className="bg-white shadow-lg sticky top-0 z-50 relative">
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-green-600 via-red-600 to-yellow-500 shadow-sm"></div>
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="cursor-pointer group" onClick={() => navigate("/")}>
+            <div className="text-xl font-bold bg-gradient-to-r from-green-700 via-red-700 to-yellow-600 bg-clip-text text-transparent">
+              Learn Bangla to Deutsch
+            </div>
+            <div className="text-xs text-gray-500">
+              German for Bengali Speakers
+            </div>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            {navItems.map((item) => (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  location.pathname === item.path
+                    ? "text-red-600 bg-red-50"
+                    : "text-gray-700"
+                }`}
+              >
+                <span>{item.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* User Menu / Auth Buttons */}
+          <div className="flex items-center space-x-4">
+            {isAuthenticated ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="relative flex items-center space-x-2 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-out bg-gradient-to-r from-slate-50 to-gray-50 hover:from-slate-100 hover:to-gray-100 text-slate-700 hover:text-slate-800 border border-slate-200 hover:border-slate-300"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-sm font-bold overflow-hidden text-white">
+                    {user?.profilePhoto ? (
+                      <img
+                        src={user.profilePhoto}
+                        alt="Profile"
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <span>
+                        {user?.firstName?.charAt(0)?.toUpperCase()}
+                        {user?.lastName?.charAt(0)?.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <span className="hidden md:block font-medium text-gray-700">
+                    {user?.firstName}
+                  </span>
+
+                  {/* Notification Count Badge */}
+                  {unreadCount > 0 && (
+                    <div className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1 shadow-lg animate-pulse">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </div>
+                  )}
+
+                  <svg
+                    className={`w-5 h-5 transform transition-transform duration-200 ${
+                      isMenuOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {/* Dropdown Menu */}
+                {isMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-[100]">
+                    <div className="py-2">
+                      {/* Notifications Menu Item */}
+                      <button
+                        onClick={() => setShowNotifications(!showNotifications)}
+                        className="w-full text-left px-4 py-2 flex items-center justify-between text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <span className="font-medium">Notifications</span>
+                          {unreadCount > 0 && (
+                            <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                              {unreadCount > 99 ? "99+" : unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        <svg
+                          className={`w-4 h-4 transform transition-transform text-gray-400 ${
+                            showNotifications ? "rotate-180" : ""
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
+
+                      {/* Notifications Dropdown Content with Smooth Transition */}
+                      <div 
+                        className={`border-t border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50 transition-all duration-300 ease-in-out transform origin-top relative z-[110] ${
+                          showNotifications 
+                            ? 'max-h-96 opacity-100 scale-y-100 visible' 
+                            : 'max-h-0 opacity-0 scale-y-95 invisible'
+                        }`}
+                        style={{
+                          minHeight: showNotifications ? (notifications.length === 0 ? '120px' : 'auto') : '0',
+                          backgroundColor: showNotifications ? 'rgba(248, 250, 252, 0.95)' : 'transparent'
+                        }}
+                      >
+                        <div className="px-4 py-3 max-h-72 overflow-y-auto">
+                          {/* Notifications Header */}
+                          <div className="flex items-center justify-between mb-4 mt-2">
+                            {notifications.length > 0 && (
+                              <div className="w-full flex justify-center space-x-4">
+                                {unreadCount > 0 && (
+                                  <button
+                                    onClick={markAllAsRead}
+                                    className="flex-1 text-sm text-blue-700 font-semibold transition-all duration-200 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg border border-blue-200 shadow-sm text-center"
+                                  >
+                                    Mark all read
+                                  </button>
+                                )}
+                                <button
+                                  onClick={clearAll}
+                                  className="flex-1 text-sm text-gray-700 font-semibold transition-all duration-200 bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-lg border border-gray-200 shadow-sm text-center"
+                                >
+                                  Clear all
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Notifications List */}
+                          {notifications.length === 0 ? (
+                            <div className="py-4 text-center min-h-[100px] flex flex-col items-center justify-center">
+                              <div className="text-4xl mb-3 filter drop-shadow-sm">🔔</div>
+                              <p className="text-gray-600 text-sm font-semibold">No notifications yet</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {notifications.map((notification) => {
+                                const formatTime = (timestamp: Date) => {
+                                  const now = new Date();
+                                  const diff = now.getTime() - timestamp.getTime();
+                                  const minutes = Math.floor(diff / 60000);
+                                  if (minutes < 1) return "now";
+                                  if (minutes < 60) return `${minutes}m`;
+                                  return `${Math.floor(minutes / 60)}h`;
+                                };
+
+                                const getNotificationBorderColor = (type: string, urgent?: boolean) => {
+                                  if (urgent) return "border-l-red-300 shadow-red-100";
+                                  switch (type) {
+                                    case "admin":
+                                    case "role_change":
+                                      return "border-l-purple-300 shadow-purple-100";
+                                    case "enrollment":
+                                      return "border-l-emerald-300 shadow-emerald-100";
+                                    case "course":
+                                      return "border-l-blue-300 shadow-blue-100";
+                                    case "video":
+                                      return "border-l-indigo-300 shadow-indigo-100";
+                                    case "video_comment":
+                                      return "border-l-amber-300 shadow-amber-100";
+                                    case "assessment":
+                                    case "test":
+                                      return "border-l-pink-300 shadow-pink-100";
+                                    case "certificate":
+                                      return "border-l-yellow-300 shadow-yellow-100";
+                                    case "supervisor_action":
+                                      return "border-l-orange-300 shadow-orange-100";
+                                    case "student_action":
+                                      return "border-l-cyan-300 shadow-cyan-100";
+                                    case "payment":
+                                      return "border-l-green-300 shadow-green-100";
+                                    case "user_registration":
+                                      return "border-l-violet-300 shadow-violet-100";
+                                    case "document":
+                                      return "border-l-teal-300 shadow-teal-100";
+                                    case "ranking":
+                                      return "border-l-rose-300 shadow-rose-100";
+                                    case "general":
+                                      return "border-l-gray-300 shadow-gray-100";
+                                    default:
+                                      return "border-l-slate-300 shadow-slate-100";
+                                  }
+                                };
+
+                                return (
+                                  <div
+                                    key={notification.id}
+                                    className={`p-4 rounded-xl cursor-pointer transition-all duration-200 backdrop-blur-sm hover:shadow-md ${
+                                      !notification.read
+                                        ? `bg-gradient-to-r from-white to-gray-50/80 border-l-4 ${getNotificationBorderColor(notification.type, notification.urgent)} shadow-lg border border-gray-100`
+                                        : "bg-gray-50/70 border border-gray-200 hover:bg-gray-100/70"
+                                    }`}
+                                    onClick={() => handleNotificationClick(notification)}
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex items-start space-x-2 flex-1 min-w-0">
+                                        <div className="flex-1 min-w-0">
+                                          {notification.type === 'video_comment' ? (
+                                            // Special display format for video comment notifications
+                                            <div className="space-y-2">
+                                              <div className="flex items-center space-x-2">
+                                                <div className={`w-2 h-2 rounded-full ${!notification.read ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                                                  notification.fromRole === 'Student' 
+                                                    ? 'bg-blue-100 text-blue-800' 
+                                                    : notification.fromRole === 'Supervisor'
+                                                    ? 'bg-purple-100 text-purple-800'
+                                                    : 'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                  {notification.title}
+                                                </span>
+                                              </div>
+                                              <p className={`text-sm leading-relaxed ${!notification.read ? "text-gray-700" : "text-gray-500"}`}>
+                                                {notification.message}
+                                              </p>
+                                            </div>
+                                          ) : (
+                                            // Default display format for other notifications
+                                            <div>
+                                              <p className={`text-sm mt-1 leading-relaxed ${!notification.read ? "text-gray-700" : "text-gray-500"}`}>
+                                                {notification.message}
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col items-end space-y-1 flex-shrink-0 ml-2">
+                                        <span className={`text-xs font-medium ${!notification.read ? 'text-gray-500' : 'text-gray-400'}`}>
+                                          {formatTime(notification.timestamp)}
+                                        </span>
+                                        <div className="text-xs text-blue-600 opacity-70 hover:opacity-100 transition-opacity">
+                                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                          </svg>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Admin Dashboard Options */}
+                      {user?.role === "Admin" && (
+                        <>
+                          <button
+                            onClick={() => {
+                              navigate("/admin");
+                              setIsMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2 flex items-center space-x-3 text-gray-700"
+                          >
+                            <span>Dashboard</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              navigate("/admin/analytics");
+                              setIsMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2 flex items-center space-x-3 text-gray-700"
+                          >
+                            <span>Analytics</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              navigate("/admin/courses");
+                              setIsMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2 flex items-center space-x-3 text-gray-700"
+                          >
+                            <span>Manage Courses</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              navigate("/profile");
+                              setIsMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2 flex items-center space-x-3 text-gray-700"
+                          >
+                            <span>Settings</span>
+                          </button>
+                        </>
+                      )}
+
+                      {/* Student Dashboard Options */}
+                      {user?.role === "Student" && (
+                        <>
+                          <button
+                            onClick={() => {
+                              navigate("/dashboard");
+                              setIsMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2 flex items-center space-x-3 text-gray-700"
+                          >
+                            <span>Dashboard</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              navigate("/profile");
+                              setIsMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2 flex items-center space-x-3 text-gray-700"
+                          >
+                            <span>Settings</span>
+                          </button>
+                        </>
+                      )}
+
+                      {/* Other user types (Supervisor, etc.) */}
+                      {user?.role !== "Admin" &&
+                        user?.role !== "Student" &&
+                        userMenuItems.map((item) => (
+                          <button
+                            key={item.path}
+                            onClick={() => {
+                              navigate(item.path);
+                              setIsMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2 flex items-center space-x-3 text-gray-700"
+                          >
+                            <span>{item.name}</span>
+                          </button>
+                        ))}
+
+                      <div className="border-t border-gray-200 mt-2 pt-2">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 flex items-center space-x-3 text-red-600"
+                        >
+                          <span>Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <Button
+                  onClick={() => navigate("/login")}
+                  variant="secondary"
+                  className="group relative hidden md:block bg-gradient-to-r from-slate-50 to-gray-50 text-slate-700 border-2 border-slate-200 hover:border-slate-500 hover:shadow-lg hover:bg-gradient-to-r hover:from-slate-200 hover:to-gray-200 hover:text-slate-900 transition-all duration-[2500ms] ease-[cubic-bezier(0.16,1,0.3,1)] font-semibold overflow-hidden"
+                >
+                  {/* Login Button Stars - More stars added */}
+                  <div className="fixed w-4 h-4 top-[8%] left-[12%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-blue-600 drop-shadow-[0_0_12px_rgba(96,165,250,0.9)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-2 h-2 top-[28%] left-[85%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-indigo-500 drop-shadow-[0_0_8px_rgba(129,140,248,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-3 h-3 bottom-[18%] left-[45%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-slate-600 drop-shadow-[0_0_10px_rgba(71,85,105,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-2 h-2 top-[45%] left-[25%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2800ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-gray-500 drop-shadow-[0_0_7px_rgba(107,114,128,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-3 h-3 top-[12%] right-[20%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-blue-400 drop-shadow-[0_0_9px_rgba(96,165,250,0.7)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-2 h-2 bottom-[8%] right-[15%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-slate-400 drop-shadow-[0_0_6px_rgba(148,163,184,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-3 h-3 top-[60%] left-[70%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.7)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-2 h-2 bottom-[35%] left-[8%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-gray-400 drop-shadow-[0_0_6px_rgba(156,163,175,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <span className="relative z-10">Login</span>
+                </Button>
+                <Button
+                  onClick={() => navigate("/register")}
+                  className="group relative bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:shadow-xl hover:from-emerald-700 hover:to-teal-800 shadow-lg transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] font-semibold overflow-hidden"
+                >
+                  {/* Sign Up Button Stars - More stars added */}
+                  <div className="fixed w-5 h-5 top-[8%] left-[18%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-white drop-shadow-[0_0_15px_rgba(255,255,255,0.9)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-3 h-3 top-[25%] right-[12%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2800ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-emerald-200 drop-shadow-[0_0_10px_rgba(167,243,208,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-2 h-2 bottom-[22%] left-[65%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-teal-200 drop-shadow-[0_0_8px_rgba(153,246,228,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-4 h-4 top-[45%] left-[8%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-cyan-300 drop-shadow-[0_0_12px_rgba(165,243,252,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-2 h-2 bottom-[8%] right-[28%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-green-300 drop-shadow-[0_0_9px_rgba(134,239,172,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-3 h-3 top-[15%] right-[45%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-emerald-100 drop-shadow-[0_0_8px_rgba(209,250,229,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-2 h-2 top-[58%] left-[75%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-teal-300 drop-shadow-[0_0_7px_rgba(94,234,212,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-3 h-3 bottom-[12%] left-[35%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-green-200 drop-shadow-[0_0_10px_rgba(187,247,208,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-2 h-2 top-[35%] left-[88%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2900ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-cyan-200 drop-shadow-[0_0_6px_rgba(165,243,252,0.7)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-3 h-3 bottom-[40%] left-[15%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3800ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-emerald-300 drop-shadow-[0_0_11px_rgba(110,231,183,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <span className="relative z-10">Sign Up</span>
+                </Button>
+              </div>
+            )}
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 rounded-lg"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 py-4">
+            <div className="space-y-2">
+              {navItems.map((item) => (
+                <button
+                  key={item.path}
+                  onClick={() => {
+                    navigate(item.path);
+                    setIsMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center space-x-3 ${
+                    location.pathname === item.path
+                      ? "text-red-600 bg-red-50"
+                      : "text-gray-700"
+                  }`}
+                >
+                  <span>{item.name}</span>
+                </button>
+              ))}
+
+              {!isAuthenticated && (
+                <div className="pt-4 border-t border-gray-200 space-y-2">
+                  <Button
+                    onClick={() => navigate("/login")}
+                    variant="secondary"
+                    className="group relative w-full bg-gradient-to-r from-slate-50 to-gray-50 text-slate-700 border-2 border-slate-200 hover:border-slate-500 hover:shadow-lg hover:bg-gradient-to-r hover:from-slate-200 hover:to-gray-200 hover:text-slate-900 transition-all duration-[2500ms] ease-[cubic-bezier(0.16,1,0.3,1)] font-semibold overflow-hidden"
+                  >
+                    {/* Mobile Login Button Stars - Enhanced */}
+                    <div className="fixed w-4 h-4 top-[10%] left-[15%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-blue-600 drop-shadow-[0_0_12px_rgba(96,165,250,0.9)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <div className="fixed w-2 h-2 top-[40%] right-[18%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-indigo-500 drop-shadow-[0_0_8px_rgba(129,140,248,0.8)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <div className="fixed w-3 h-3 bottom-[15%] left-[50%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-slate-500 drop-shadow-[0_0_10px_rgba(100,116,139,0.8)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <div className="fixed w-2 h-2 top-[25%] left-[75%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2800ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-gray-500 drop-shadow-[0_0_7px_rgba(107,114,128,0.8)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <div className="fixed w-3 h-3 bottom-[35%] right-[8%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-blue-400 drop-shadow-[0_0_9px_rgba(96,165,250,0.7)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <span className="relative z-10">Login</span>
+                  </Button>
+                  <Button
+                    onClick={() => navigate("/register")}
+                    className="group relative w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:shadow-xl hover:from-emerald-700 hover:to-teal-800 shadow-lg transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] font-semibold overflow-hidden"
+                  >
+                    {/* Mobile Sign Up Button Stars - Enhanced */}
+                    <div className="fixed w-5 h-5 top-[8%] left-[18%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-white drop-shadow-[0_0_15px_rgba(255,255,255,0.9)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <div className="fixed w-3 h-3 top-[28%] right-[12%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2800ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-emerald-200 drop-shadow-[0_0_10px_rgba(167,243,208,0.8)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <div className="fixed w-2 h-2 bottom-[25%] left-[65%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-teal-200 drop-shadow-[0_0_8px_rgba(153,246,228,0.8)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <div className="fixed w-4 h-4 top-[50%] left-[8%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-cyan-300 drop-shadow-[0_0_12px_rgba(165,243,252,0.8)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <div className="fixed w-2 h-2 bottom-[10%] right-[25%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-green-300 drop-shadow-[0_0_9px_rgba(134,239,172,0.8)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <div className="fixed w-3 h-3 top-[15%] right-[40%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-emerald-100 drop-shadow-[0_0_8px_rgba(209,250,229,0.8)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <div className="fixed w-2 h-2 top-[42%] right-[70%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-teal-300 drop-shadow-[0_0_7px_rgba(94,234,212,0.8)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <div className="fixed w-3 h-3 bottom-[35%] left-[25%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 784.11 815.53"
+                        className="w-full h-full fill-green-200 drop-shadow-[0_0_10px_rgba(187,247,208,0.8)]"
+                      >
+                        <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                      </svg>
+                    </div>
+                    <span className="relative z-10">Get Started</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Click outside to close menu */}
+      {isMenuOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsMenuOpen(false)}
+        ></div>
+      )}
+    </nav>
+  );
+};
+
+export default Navbar;
