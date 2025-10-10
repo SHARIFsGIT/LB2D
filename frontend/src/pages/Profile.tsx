@@ -298,7 +298,7 @@ const Profile: React.FC = () => {
   };
 
   const handleLogoutFromDevice = async (deviceId: string) => {
-    if (!confirm('Are you sure you want to logout from this device?')) {
+    if (!window.confirm('Are you sure you want to logout from this device?')) {
       return;
     }
 
