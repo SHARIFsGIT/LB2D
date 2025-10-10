@@ -20,7 +20,9 @@ export const register = asyncHandler(async (req: Request, res: Response, _next: 
 // Login user
 export const login = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<any> => {
   const userAgent = req.get('user-agent') || 'Unknown';
-  const result = await authService.login(req.body, userAgent);
+  const deviceFingerprint = req.body.deviceFingerprint; // Device fingerprint from frontend
+  const deviceName = req.body.deviceName; // Human-readable device name
+  const result = await authService.login(req.body, userAgent, deviceFingerprint, deviceName);
 
   return ResponseUtil.success(res, 'Login successful', result);
 });
@@ -353,6 +355,7 @@ export const getDeviceSessions = asyncHandler(async (req: Request, res: Response
   // Format device sessions for frontend
   const formattedSessions = sortedSessions.map((session, index) => ({
     deviceId: session.deviceId,
+    deviceName: session.deviceName || 'Unknown Device',
     loginTime: session.loginTime,
     userAgent: session.userAgent || 'Unknown Device',
     isCurrent: currentRefreshToken ? session.refreshToken === currentRefreshToken : index === 0

@@ -3,6 +3,8 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface DeviceSession {
   deviceId: string;
+  fingerprint?: string; // Device fingerprint for identifying same device
+  deviceName?: string; // Human-readable device name
   refreshToken: string;
   loginTime: Date;
   userAgent?: string;
@@ -107,6 +109,8 @@ const userSchema = new Schema<IUser>({
   deviceSessions: {
     type: [{
       deviceId: { type: String, required: true },
+      fingerprint: { type: String },
+      deviceName: { type: String },
       refreshToken: { type: String, required: true },
       loginTime: { type: Date, required: true },
       userAgent: { type: String }

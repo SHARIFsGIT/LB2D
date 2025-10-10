@@ -151,7 +151,7 @@ class AuthService {
     };
   }
 
-  async login(userData: LoginUserData, userAgent?: string): Promise<AuthResponse> {
+  async login(userData: LoginUserData, userAgent?: string, deviceFingerprint?: string, deviceName?: string): Promise<AuthResponse> {
     const { email, password } = userData;
 
     // Find user and include password
@@ -178,24 +178,45 @@ class AuthService {
       throw new CustomError('Your account has been deactivated', 403);
     }
 
-    // Check device limit (maximum 2 devices)
-    if (user.deviceSessions && user.deviceSessions.length >= 2) {
-      throw new CustomError('Maximum device limit reached. Please logout from another device first.', 403);
-    }
-
     // Generate tokens
     const tokens = generateTokens(user);
 
-    // Generate unique device ID
-    const deviceId = tokens.refreshToken; // Using refresh token as unique device identifier
+    // Check if this device already has a session (using fingerprint)
+    let existingSessionIndex = -1;
+    if (deviceFingerprint) {
+      existingSessionIndex = user.deviceSessions.findIndex(
+        session => session.fingerprint === deviceFingerprint
+      );
+    }
 
-    // Add new device session
-    user.deviceSessions.push({
-      deviceId,
-      refreshToken: tokens.refreshToken,
-      loginTime: new Date(),
-      userAgent: userAgent || 'Unknown'
-    });
+    if (existingSessionIndex !== -1) {
+      // Update existing device session
+      user.deviceSessions[existingSessionIndex] = {
+        deviceId: tokens.refreshToken,
+        fingerprint: deviceFingerprint,
+        deviceName: deviceName || user.deviceSessions[existingSessionIndex].deviceName,
+        refreshToken: tokens.refreshToken,
+        loginTime: new Date(),
+        userAgent: userAgent || 'Unknown'
+      };
+      logger.info(`Updated existing device session for user: ${user.email}`);
+    } else {
+      // Check device limit for NEW devices only (maximum 2 unique devices)
+      if (user.deviceSessions && user.deviceSessions.length >= 2) {
+        throw new CustomError('Maximum device limit reached. Please logout from another device first.', 403);
+      }
+
+      // Add new device session
+      user.deviceSessions.push({
+        deviceId: tokens.refreshToken,
+        fingerprint: deviceFingerprint,
+        deviceName: deviceName,
+        refreshToken: tokens.refreshToken,
+        loginTime: new Date(),
+        userAgent: userAgent || 'Unknown'
+      });
+      logger.info(`Added new device session for user: ${user.email}`);
+    }
 
     // Update user's refresh token and last login (keep for backward compatibility)
     user.refreshToken = tokens.refreshToken;

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useNotification } from '../hooks/useNotification';
 import { useLoginMutation } from '../store/api/apiSlice';
 import { setCredentials } from '../store/slices/authSlice';
+import { getDeviceFingerprint } from '../utils/deviceFingerprint';
 
 const Login: React.FC = () => {
   const { showSuccess, showError } = useNotification();
@@ -11,7 +12,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [login, { isLoading }] = useLoginMutation();
@@ -19,9 +20,17 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(''); // Clear any previous errors
-    
+
     try {
-      const result = await login({ email, password }).unwrap();
+      // Get device fingerprint
+      const deviceInfo = getDeviceFingerprint();
+
+      const result = await login({
+        email,
+        password,
+        deviceFingerprint: deviceInfo.fingerprint,
+        deviceName: deviceInfo.deviceName
+      }).unwrap();
 
       if (result.success) {
 

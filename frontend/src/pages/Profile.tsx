@@ -323,41 +323,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  const getDeviceName = (userAgent: string): string => {
-    if (!userAgent || userAgent === 'Unknown Device') {
-      return 'Unknown Device';
-    }
-
-    const ua = userAgent.toLowerCase();
-
-    // Check for mobile devices
-    if (ua.includes('mobile') || ua.includes('android')) {
-      if (ua.includes('samsung')) return 'Samsung Mobile';
-      if (ua.includes('huawei')) return 'Huawei Mobile';
-      if (ua.includes('xiaomi')) return 'Xiaomi Mobile';
-      return 'Mobile Device';
-    }
-
-    // Check for iOS devices
-    if (ua.includes('iphone')) return 'iPhone';
-    if (ua.includes('ipad')) return 'iPad';
-
-    // Check for tablets
-    if (ua.includes('tablet')) return 'Tablet';
-
-    // Check for desktop browsers
-    if (ua.includes('windows')) return 'Windows PC';
-    if (ua.includes('macintosh') || ua.includes('mac os')) return 'Mac';
-    if (ua.includes('linux')) return 'Linux PC';
-
-    // Check for specific browsers
-    if (ua.includes('chrome')) return 'Desktop (Chrome)';
-    if (ua.includes('firefox')) return 'Desktop (Firefox)';
-    if (ua.includes('safari')) return 'Desktop (Safari)';
-    if (ua.includes('edge')) return 'Desktop (Edge)';
-
-    return 'Desktop Computer';
-  };
 
   if (!user) {
     return (
@@ -569,7 +534,7 @@ const Profile: React.FC = () => {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2 mb-2">
                               <h4 className="font-semibold text-gray-800 truncate">
-                                {getDeviceName(session.userAgent)}
+                                {session.deviceName || 'Unknown Device'}
                               </h4>
                               {session.isCurrent && (
                                 <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">
