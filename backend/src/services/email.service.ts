@@ -1,61 +1,54 @@
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 dotenv.config();
 
 class EmailService {
-  private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter | null = null;
+  private resend: Resend | null = null;
+  private useResend: boolean;
 
   constructor() {
-    // console.log('Initializing Email Service with:', {
-    //   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    //   port: Number(process.env.EMAIL_PORT) || 587,
-    //   user: process.env.EMAIL_USER,
-    //   passLength: process.env.EMAIL_PASS?.length
-    // });
+    // Check if Resend API key is available (preferred method)
+    if (process.env.RESEND_API_KEY) {
+      this.useResend = true;
+      this.resend = new Resend(process.env.RESEND_API_KEY);
+      console.log('✅ Email service initialized with Resend');
+    } else {
+      // Fallback to SMTP (nodemailer)
+      this.useResend = false;
+      console.log('⚠️ Using SMTP (nodemailer) - Resend is recommended for production');
 
-    this.transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: Number(process.env.EMAIL_PORT) || 587,
-      secure: false, // Use TLS
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      },
-      tls: {
-        rejectUnauthorized: false // Accept self-signed certificates
-      },
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,
-      socketTimeout: 10000
-    });
+      this.transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        port: Number(process.env.EMAIL_PORT) || 587,
+        secure: false, // Use TLS
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        },
+        tls: {
+          rejectUnauthorized: false // Accept self-signed certificates
+        },
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 10000,
+        socketTimeout: 10000
+      });
 
-    // Check if required environment variables are set
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error('❌ CRITICAL: Missing email configuration!');
-      console.error('Please set EMAIL_USER and EMAIL_PASS in your .env file');
-      console.error('Current config:', {
-        EMAIL_USER: process.env.EMAIL_USER ? '✅ Set' : '❌ Missing',
-        EMAIL_PASS: process.env.EMAIL_PASS ? '✅ Set' : '❌ Missing'
+      // Check if required environment variables are set
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error('❌ CRITICAL: Missing email configuration!');
+        console.error('Please set RESEND_API_KEY (recommended) or EMAIL_USER and EMAIL_PASS');
+      }
+
+      this.transporter.verify((error) => {
+        if (error) {
+          console.error('❌ SMTP service verification failed:', error);
+          console.error('💡 Consider using Resend instead: Set RESEND_API_KEY in .env');
+        }
       });
     }
-
-    this.transporter.verify((error) => {
-      if (error) {
-        console.error('❌ Email service verification failed:', error);
-        console.error('📧 Email config check:');
-        console.error({
-          service: 'gmail',
-          user: process.env.EMAIL_USER || 'NOT_SET',
-          passConfigured: process.env.EMAIL_PASS ? 'YES' : 'NO'
-        });
-        console.error('💡 Troubleshooting tips:');
-        console.error('1. Make sure EMAIL_USER and EMAIL_PASS are set in .env');
-        console.error('2. For Gmail, use an App Password (not your regular password)');
-        console.error('3. Enable 2-factor authentication and generate an App Password');
-      } else {
-      }
-    });
   }
 
   // Send verification email
@@ -153,47 +146,64 @@ class EmailService {
   async sendPasswordResetEmail(email: string, token: string, firstName: string) {
     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
 
-    const mailOptions = {
-      from: `"LEARN BANGLA TO DEUTSCH" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Password Reset Request - LEARN BANGLA TO DEUTSCH',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #667eea; padding: 20px; text-align: center;">
-            <h1 style="color: white; margin: 0;">LEARN BANGLA TO DEUTSCH</h1>
-          </div>
-          <div style="padding: 30px; background-color: #f7f7f7;">
-            <h2>Hello ${firstName}!</h2>
-            <p style="font-size: 16px; color: #333;">We received a request to reset your password. Click the button below to create a new password:</p>
-
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background-color: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
-                Reset Password
-              </a>
-            </div>
-
-            <p style="color: #666; font-size: 14px;">Or copy and paste this link in your browser:</p>
-            <p style="background-color: #fff; padding: 10px; border-radius: 5px; word-break: break-all; font-size: 12px;">
-              ${resetUrl}
-            </p>
-
-            <p style="color: #999; font-size: 12px; margin-top: 30px;">
-              This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
-            </p>
-          </div>
-          <div style="background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px;">
-            © 2025 LEARN BANGLA TO DEUTSCH. All rights reserved.
-          </div>
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #667eea; padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0;">LEARN BANGLA TO DEUTSCH</h1>
         </div>
-      `
-    };
+        <div style="padding: 30px; background-color: #f7f7f7;">
+          <h2>Hello ${firstName}!</h2>
+          <p style="font-size: 16px; color: #333;">We received a request to reset your password. Click the button below to create a new password:</p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
+              Reset Password
+            </a>
+          </div>
+
+          <p style="color: #666; font-size: 14px;">Or copy and paste this link in your browser:</p>
+          <p style="background-color: #fff; padding: 10px; border-radius: 5px; word-break: break-all; font-size: 12px;">
+            ${resetUrl}
+          </p>
+
+          <p style="color: #999; font-size: 12px; margin-top: 30px;">
+            This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
+          </p>
+        </div>
+        <div style="background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px;">
+          © 2025 LEARN BANGLA TO DEUTSCH. All rights reserved.
+        </div>
+      </div>
+    `;
 
     try {
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Password reset email sent successfully:', info.messageId);
-      return info;
+      if (this.useResend && this.resend) {
+        // Use Resend API
+        const result = await this.resend.emails.send({
+          from: 'LEARN BANGLA TO DEUTSCH <onboarding@resend.dev>',
+          to: email,
+          subject: 'Password Reset Request - LEARN BANGLA TO DEUTSCH',
+          html: htmlContent
+        });
+        console.log('✅ Password reset email sent successfully via Resend:', result.data?.id);
+        return result;
+      } else if (this.transporter) {
+        // Use SMTP
+        const mailOptions = {
+          from: `"LEARN BANGLA TO DEUTSCH" <${process.env.EMAIL_USER}>`,
+          to: email,
+          subject: 'Password Reset Request - LEARN BANGLA TO DEUTSCH',
+          html: htmlContent
+        };
+        const info = await this.transporter.sendMail(mailOptions);
+        console.log('✅ Password reset email sent successfully via SMTP:', info.messageId);
+        return info;
+      } else {
+        throw new Error('No email service configured');
+      }
     } catch (error: any) {
       console.error('❌ Failed to send password reset email:', {
+        method: this.useResend ? 'Resend' : 'SMTP',
         error: error.message,
         code: error.code,
         command: error.command,
