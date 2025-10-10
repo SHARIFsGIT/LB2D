@@ -5,6 +5,7 @@ import { useNotifications } from "../hooks/useNotifications";
 import { logout } from "../store/slices/authSlice";
 import { RootState } from "../store/store";
 import Button from "./common/Button";
+import { authApi } from "../utils/api";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -18,9 +19,22 @@ const Navbar: React.FC = () => {
   const { unreadCount, notifications, markAsRead, markAllAsRead, clearAll } =
     useNotifications();
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      // Get refresh token before clearing sessionStorage
+      const refreshToken = sessionStorage.getItem('refreshToken');
+
+      // Call backend to remove device session
+      if (refreshToken) {
+        await authApi.logout();
+      }
+    } catch (error) {
+      // Continue with logout even if API call fails
+    } finally {
+      // Clear frontend state and storage
+      dispatch(logout());
+      navigate("/login");
+    }
   };
 
   // Hide these pages for logged-in users
