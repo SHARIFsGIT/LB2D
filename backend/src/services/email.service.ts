@@ -1,23 +1,29 @@
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
+import sgMail from '@sendgrid/mail';
 
 dotenv.config();
 
 class EmailService {
   private transporter: nodemailer.Transporter | null = null;
   private resend: Resend | null = null;
-  private useResend: boolean;
+  private useSendGrid: boolean = false;
+  private useResend: boolean = false;
 
   constructor() {
-    // Check if Resend API key is available (preferred method)
-    if (process.env.RESEND_API_KEY) {
+    // Priority 1: SendGrid (preferred for production)
+    if (process.env.SENDGRID_API_KEY) {
+      this.useSendGrid = true;
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    }
+    // Priority 2: Resend
+    else if (process.env.RESEND_API_KEY) {
       this.useResend = true;
       this.resend = new Resend(process.env.RESEND_API_KEY);
-    } else {
-      // Fallback to SMTP (nodemailer)
-      this.useResend = false;
-
+    }
+    // Priority 3: Fallback to SMTP (nodemailer)
+    else {
       this.transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST || 'smtp.gmail.com',
         port: Number(process.env.EMAIL_PORT) || 587,
@@ -71,7 +77,16 @@ class EmailService {
     `;
 
     try {
-      if (this.useResend && this.resend) {
+      if (this.useSendGrid) {
+        const msg = {
+          to: email,
+          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@learnbangla2deutsch.com',
+          subject: 'Verify Your Email - LEARN BANGLA TO DEUTSCH',
+          html: htmlContent
+        };
+        const result = await sgMail.send(msg);
+        return result;
+      } else if (this.useResend && this.resend) {
         const result = await this.resend.emails.send({
           from: 'LEARN BANGLA TO DEUTSCH <onboarding@resend.dev>',
           to: email,
@@ -126,7 +141,16 @@ class EmailService {
     `;
 
     try {
-      if (this.useResend && this.resend) {
+      if (this.useSendGrid) {
+        const msg = {
+          to: email,
+          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@learnbangla2deutsch.com',
+          subject: 'Your OTP Code - LEARN BANGLA TO DEUTSCH',
+          html: htmlContent
+        };
+        const result = await sgMail.send(msg);
+        return result;
+      } else if (this.useResend && this.resend) {
         const result = await this.resend.emails.send({
           from: 'LEARN BANGLA TO DEUTSCH <onboarding@resend.dev>',
           to: email,
@@ -186,7 +210,16 @@ class EmailService {
     `;
 
     try {
-      if (this.useResend && this.resend) {
+      if (this.useSendGrid) {
+        const msg = {
+          to: email,
+          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@learnbangla2deutsch.com',
+          subject: 'Password Reset Request - LEARN BANGLA TO DEUTSCH',
+          html: htmlContent
+        };
+        const result = await sgMail.send(msg);
+        return result;
+      } else if (this.useResend && this.resend) {
         const result = await this.resend.emails.send({
           from: 'LEARN BANGLA TO DEUTSCH <onboarding@resend.dev>',
           to: email,
