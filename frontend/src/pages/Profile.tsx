@@ -297,16 +297,30 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleLogoutFromDevice = async (deviceId: string) => {
-    if (!window.confirm('Are you sure you want to logout from this device?')) {
+  const handleLogoutFromDevice = async (deviceId: string, isCurrent: boolean) => {
+    const message = isCurrent
+      ? 'Are you sure you want to logout from this device? You will be redirected to the login page.'
+      : 'Are you sure you want to logout from this device?';
+
+    if (!window.confirm(message)) {
       return;
     }
 
     try {
       const response = await authApi.logoutFromDevice(deviceId);
       if (response.success) {
-        showSuccess('Logged out from device successfully', 'Success');
-        loadDeviceSessions();
+        if (isCurrent) {
+          // Clear local storage and redirect to login
+          sessionStorage.clear();
+          localStorage.clear();
+          showSuccess('Logged out successfully', 'Success');
+          setTimeout(() => {
+            navigate('/login');
+          }, 1000);
+        } else {
+          showSuccess('Logged out from device successfully', 'Success');
+          loadDeviceSessions();
+        }
       }
     } catch (error: any) {
       showError(error.message || 'Failed to logout from device', 'Error');
@@ -536,14 +550,16 @@ const Profile: React.FC = () => {
                             Logged in: {new Date(session.loginTime).toLocaleString()}
                           </p>
                         </div>
-                        {!session.isCurrent && (
-                          <button
-                            onClick={() => handleLogoutFromDevice(session.deviceId)}
-                            className="ml-4 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
-                          >
-                            Logout
-                          </button>
-                        )}
+                        <button
+                          onClick={() => handleLogoutFromDevice(session.deviceId, session.isCurrent)}
+                          className={`ml-4 px-4 py-2 ${
+                            session.isCurrent
+                              ? 'bg-orange-500 hover:bg-orange-600'
+                              : 'bg-red-500 hover:bg-red-600'
+                          } text-white rounded-lg text-sm font-medium transition-colors`}
+                        >
+                          Logout
+                        </button>
                       </div>
                     </div>
                   ))}
