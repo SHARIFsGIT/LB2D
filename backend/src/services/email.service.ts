@@ -40,87 +40,113 @@ class EmailService {
   async sendVerificationEmail(email: string, token: string, firstName: string) {
     const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
-    const mailOptions = {
-      from: `"LEARN BANGLA TO DEUTSCH" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Verify Your Email - LEARN BANGLA TO DEUTSCH',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #667eea; padding: 20px; text-align: center;">
-            <h1 style="color: white; margin: 0;">LEARN BANGLA TO DEUTSCH</h1>
-          </div>
-          <div style="padding: 30px; background-color: #f7f7f7;">
-            <h2>Hello ${firstName}!</h2>
-            <p style="font-size: 16px; color: #333;">Thank you for registering with our platform. To complete your registration, please verify your email address.</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${verificationUrl}" style="background-color: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
-                Verify Email Address
-              </a>
-            </div>
-            
-            <p style="color: #666; font-size: 14px;">Or copy and paste this link in your browser:</p>
-            <p style="background-color: #fff; padding: 10px; border-radius: 5px; word-break: break-all; font-size: 12px;">
-              ${verificationUrl}
-            </p>
-            
-            <p style="color: #999; font-size: 12px; margin-top: 30px;">
-              This link will expire in 24 hours. If you didn't register for an account, you can safely ignore this email.
-            </p>
-          </div>
-          <div style="background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px;">
-            © 2025 LEARN BANGLA TO DEUTSCH. All rights reserved.
-          </div>
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #667eea; padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0;">LEARN BANGLA TO DEUTSCH</h1>
         </div>
-      `
-    };
+        <div style="padding: 30px; background-color: #f7f7f7;">
+          <h2>Hello ${firstName}!</h2>
+          <p style="font-size: 16px; color: #333;">Thank you for registering with our platform. To complete your registration, please verify your email address.</p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verificationUrl}" style="background-color: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
+              Verify Email Address
+            </a>
+          </div>
+
+          <p style="color: #666; font-size: 14px;">Or copy and paste this link in your browser:</p>
+          <p style="background-color: #fff; padding: 10px; border-radius: 5px; word-break: break-all; font-size: 12px;">
+            ${verificationUrl}
+          </p>
+
+          <p style="color: #999; font-size: 12px; margin-top: 30px;">
+            This link will expire in 24 hours. If you didn't register for an account, you can safely ignore this email.
+          </p>
+        </div>
+        <div style="background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px;">
+          © 2025 LEARN BANGLA TO DEUTSCH. All rights reserved.
+        </div>
+      </div>
+    `;
 
     try {
-      const info = await this.transporter.sendMail(mailOptions);
-      return info;
-    } catch (error) {
+      if (this.useResend && this.resend) {
+        const result = await this.resend.emails.send({
+          from: 'LEARN BANGLA TO DEUTSCH <onboarding@resend.dev>',
+          to: email,
+          subject: 'Verify Your Email - LEARN BANGLA TO DEUTSCH',
+          html: htmlContent
+        });
+        return result;
+      } else if (this.transporter) {
+        const mailOptions = {
+          from: `"LEARN BANGLA TO DEUTSCH" <${process.env.EMAIL_USER}>`,
+          to: email,
+          subject: 'Verify Your Email - LEARN BANGLA TO DEUTSCH',
+          html: htmlContent
+        };
+        const info = await this.transporter.sendMail(mailOptions);
+        return info;
+      } else {
+        throw new Error('No email service configured');
+      }
+    } catch (error: any) {
       throw error;
     }
   }
 
   // Send OTP email
   async sendOTPEmail(email: string, otp: string, firstName: string) {
-    const mailOptions = {
-      from: `"LEARN BANGLA TO DEUTSCH" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Your OTP Code - LEARN BANGLA TO DEUTSCH',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #667eea; padding: 20px; text-align: center;">
-            <h1 style="color: white; margin: 0;">LEARN BANGLA TO DEUTSCH</h1>
-          </div>
-          <div style="padding: 30px; background-color: #f7f7f7;">
-            <h2>Hello ${firstName}!</h2>
-            <p style="font-size: 16px; color: #333;">Your One-Time Password (OTP) for verification is:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <div style="background-color: #fff; border: 2px solid #667eea; border-radius: 10px; padding: 20px; display: inline-block;">
-                <h1 style="color: #667eea; font-size: 36px; letter-spacing: 8px; margin: 0;">${otp}</h1>
-              </div>
-            </div>
-            
-            <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes.</p>
-            
-            <p style="color: #999; font-size: 12px; margin-top: 30px;">
-              If you didn't request this code, please ignore this email.
-            </p>
-          </div>
-          <div style="background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px;">
-            © 2025 LEARN BANGLA TO DEUTSCH. All rights reserved.
-          </div>
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #667eea; padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0;">LEARN BANGLA TO DEUTSCH</h1>
         </div>
-      `
-    };
+        <div style="padding: 30px; background-color: #f7f7f7;">
+          <h2>Hello ${firstName}!</h2>
+          <p style="font-size: 16px; color: #333;">Your One-Time Password (OTP) for verification is:</p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="background-color: #fff; border: 2px solid #667eea; border-radius: 10px; padding: 20px; display: inline-block;">
+              <h1 style="color: #667eea; font-size: 36px; letter-spacing: 8px; margin: 0;">${otp}</h1>
+            </div>
+          </div>
+
+          <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes.</p>
+
+          <p style="color: #999; font-size: 12px; margin-top: 30px;">
+            If you didn't request this code, please ignore this email.
+          </p>
+        </div>
+        <div style="background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px;">
+          © 2025 LEARN BANGLA TO DEUTSCH. All rights reserved.
+        </div>
+      </div>
+    `;
 
     try {
-      const info = await this.transporter.sendMail(mailOptions);
-      return info;
-    } catch (error) {
+      if (this.useResend && this.resend) {
+        const result = await this.resend.emails.send({
+          from: 'LEARN BANGLA TO DEUTSCH <onboarding@resend.dev>',
+          to: email,
+          subject: 'Your OTP Code - LEARN BANGLA TO DEUTSCH',
+          html: htmlContent
+        });
+        return result;
+      } else if (this.transporter) {
+        const mailOptions = {
+          from: `"LEARN BANGLA TO DEUTSCH" <${process.env.EMAIL_USER}>`,
+          to: email,
+          subject: 'Your OTP Code - LEARN BANGLA TO DEUTSCH',
+          html: htmlContent
+        };
+        const info = await this.transporter.sendMail(mailOptions);
+        return info;
+      } else {
+        throw new Error('No email service configured');
+      }
+    } catch (error: any) {
       throw error;
     }
   }
