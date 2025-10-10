@@ -1,6 +1,13 @@
 import bcrypt from 'bcryptjs';
 import mongoose, { Document, Schema } from 'mongoose';
 
+export interface DeviceSession {
+  deviceId: string;
+  refreshToken: string;
+  loginTime: Date;
+  userAgent?: string;
+}
+
 export interface IUser extends Document {
   email: string;
   password: string;
@@ -19,6 +26,7 @@ export interface IUser extends Document {
   passwordResetToken?: string;
   passwordResetExpires?: Date;
   refreshToken?: string;
+  deviceSessions: DeviceSession[];
   otpCode?: string;
   otpExpires?: Date;
   lastLogin?: Date;
@@ -96,6 +104,15 @@ const userSchema = new Schema<IUser>({
   passwordResetToken: String,
   passwordResetExpires: Date,
   refreshToken: String,
+  deviceSessions: {
+    type: [{
+      deviceId: { type: String, required: true },
+      refreshToken: { type: String, required: true },
+      loginTime: { type: Date, required: true },
+      userAgent: { type: String }
+    }],
+    default: []
+  },
   otpCode: String,
   otpExpires: Date,
   lastLogin: Date,

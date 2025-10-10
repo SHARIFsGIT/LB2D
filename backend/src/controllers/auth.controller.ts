@@ -19,8 +19,9 @@ export const register = asyncHandler(async (req: Request, res: Response, _next: 
 
 // Login user
 export const login = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<any> => {
-  const result = await authService.login(req.body);
-  
+  const userAgent = req.get('user-agent') || 'Unknown';
+  const result = await authService.login(req.body, userAgent);
+
   return ResponseUtil.success(res, 'Login successful', result);
 });
 
@@ -43,6 +44,7 @@ export const requestOTP = asyncHandler(async (req: Request, res: Response, _next
 // Verify OTP
 export const verifyOTP = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<any> => {
   const { email, otp } = req.body;
+  const userAgent = req.get('user-agent') || 'Unknown';
 
   const user = await User.findOne({
     email,
@@ -57,13 +59,32 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response, _next:
     });
   }
 
+  // Check device limit
+  if (user.deviceSessions && user.deviceSessions.length >= 2) {
+    return res.status(403).json({
+      success: false,
+      message: 'Maximum device limit reached. Please logout from another device first.'
+    });
+  }
+
   // Clear OTP
   user.otpCode = undefined;
   user.otpExpires = undefined;
-  await user.save();
 
   // Generate tokens
   const { accessToken, refreshToken } = generateTokens(user);
+
+  // Add device session
+  user.deviceSessions.push({
+    deviceId: refreshToken,
+    refreshToken: refreshToken,
+    loginTime: new Date(),
+    userAgent: userAgent
+  });
+
+  // Update refresh token (for backward compatibility)
+  user.refreshToken = refreshToken;
+  await user.save();
 
   return res.status(200).json({
     success: true,
@@ -163,11 +184,16 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response, _ne
   try {
     // Verify refresh token
     const decoded = verifyRefreshToken(refreshToken);
-    
+
     // Find user
     const user = await User.findById(decoded.userId);
-    
-    if (!user || user.refreshToken !== refreshToken) {
+
+    // Check if refresh token exists in device sessions
+    const deviceSession = user?.deviceSessions.find(
+      session => session.refreshToken === refreshToken
+    );
+
+    if (!user || !deviceSession) {
       return res.status(401).json({
         success: false,
         message: 'Invalid refresh token'
@@ -176,8 +202,18 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response, _ne
 
     // Generate new tokens
     const tokens = generateTokens(user);
-    
-    // Update refresh token
+
+    // Update device session with new refresh token
+    const sessionIndex = user.deviceSessions.findIndex(
+      session => session.refreshToken === refreshToken
+    );
+
+    if (sessionIndex !== -1) {
+      user.deviceSessions[sessionIndex].refreshToken = tokens.refreshToken;
+      user.deviceSessions[sessionIndex].deviceId = tokens.refreshToken;
+    }
+
+    // Update refresh token (for backward compatibility)
     user.refreshToken = tokens.refreshToken;
     await user.save();
 
@@ -196,9 +232,21 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response, _ne
 // Logout
 export const logout = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<any> => {
   const userId = (req as any).userId; // We'll add this from auth middleware
-  
+  const { refreshToken } = req.body;
+
   const user = await User.findById(userId);
   if (user) {
+    // Remove the specific device session
+    if (refreshToken) {
+      user.deviceSessions = user.deviceSessions.filter(
+        session => session.refreshToken !== refreshToken
+      );
+    } else {
+      // If no refresh token provided, clear all sessions
+      user.deviceSessions = [];
+    }
+
+    // Clear refresh token (for backward compatibility)
     user.refreshToken = undefined;
     await user.save();
   }

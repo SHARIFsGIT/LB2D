@@ -130,7 +130,15 @@ class AuthService {
     // Generate tokens
     const tokens = generateTokens(user);
 
-    // Save refresh token
+    // Add device session for registration
+    user.deviceSessions.push({
+      deviceId: tokens.refreshToken,
+      refreshToken: tokens.refreshToken,
+      loginTime: new Date(),
+      userAgent: 'Registration'
+    });
+
+    // Save refresh token (for backward compatibility)
     user.refreshToken = tokens.refreshToken;
     await user.save();
 
@@ -143,19 +151,19 @@ class AuthService {
     };
   }
 
-  async login(userData: LoginUserData): Promise<AuthResponse> {
+  async login(userData: LoginUserData, userAgent?: string): Promise<AuthResponse> {
     const { email, password } = userData;
 
     // Find user and include password
     const user = await User.findOne({ email }).select('+password');
-    
+
     if (!user) {
       throw new CustomError('Invalid credentials', 401);
     }
 
     // Check password
     const isPasswordValid = await user.comparePassword(password);
-    
+
     if (!isPasswordValid) {
       throw new CustomError('Invalid credentials', 401);
     }
@@ -170,10 +178,26 @@ class AuthService {
       throw new CustomError('Your account has been deactivated', 403);
     }
 
+    // Check device limit (maximum 2 devices)
+    if (user.deviceSessions && user.deviceSessions.length >= 2) {
+      throw new CustomError('Maximum device limit reached. Please logout from another device first.', 403);
+    }
+
     // Generate tokens
     const tokens = generateTokens(user);
-    
-    // Update user's refresh token and last login
+
+    // Generate unique device ID
+    const deviceId = tokens.refreshToken; // Using refresh token as unique device identifier
+
+    // Add new device session
+    user.deviceSessions.push({
+      deviceId,
+      refreshToken: tokens.refreshToken,
+      loginTime: new Date(),
+      userAgent: userAgent || 'Unknown'
+    });
+
+    // Update user's refresh token and last login (keep for backward compatibility)
     user.refreshToken = tokens.refreshToken;
     user.lastLogin = new Date();
     await user.save();
