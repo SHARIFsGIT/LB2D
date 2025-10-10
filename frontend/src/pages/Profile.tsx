@@ -142,7 +142,6 @@ const Profile: React.FC = () => {
           }));
         }
       } catch (error) {
-        console.error('Image processing error:', error);
         showError('Failed to process image. Please try a different image.', 'Processing Error');
       }
     }
@@ -216,11 +215,9 @@ const Profile: React.FC = () => {
         }
       } else {
         const errorMessage = data.message || `Failed to update profile (${response.status})`;
-        console.error('Profile update failed:', errorMessage, data);
         showError(errorMessage, 'Error');
       }
     } catch (error) {
-      console.error('Profile update error:', error);
       showError('Network error. Please try again.', 'Error');
     } finally {
       setLoading(false);
@@ -280,7 +277,6 @@ const Profile: React.FC = () => {
         showError(data.message || 'Failed to send password reset email', 'Error');
       }
     } catch (error) {
-      console.error('Change password error:', error);
       showError('Network error. Please try again.', 'Error');
     } finally {
       setChangePasswordLoading(false);
@@ -295,7 +291,7 @@ const Profile: React.FC = () => {
         setDeviceSessions(response.data.sessions || []);
       }
     } catch (error: any) {
-      console.error('Failed to load device sessions:', error);
+      // Silent fail - no need to show error for background operations
     } finally {
       setSessionsLoading(false);
     }
@@ -310,22 +306,21 @@ const Profile: React.FC = () => {
       const response = await authApi.logoutFromDevice(deviceId);
       if (response.success) {
         showSuccess('Logged out from device successfully', 'Success');
-        loadDeviceSessions(); // Reload sessions
+        loadDeviceSessions();
       }
     } catch (error: any) {
-      console.error('Failed to logout from device:', error);
       showError(error.message || 'Failed to logout from device', 'Error');
     }
   };
 
-  const getDeviceIcon = (userAgent: string) => {
+  const getDeviceName = (userAgent: string) => {
     const ua = userAgent.toLowerCase();
     if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
-      return '📱';
+      return 'Mobile Device';
     } else if (ua.includes('tablet') || ua.includes('ipad')) {
-      return '📲';
+      return 'Tablet';
     } else {
-      return '💻';
+      return 'Desktop Computer';
     }
   };
 
@@ -501,7 +496,7 @@ const Profile: React.FC = () => {
                   disabled={sessionsLoading}
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium disabled:opacity-50"
                 >
-                  {sessionsLoading ? '🔄 Refreshing...' : '🔄 Refresh'}
+                  {sessionsLoading ? 'Refreshing...' : 'Refresh'}
                 </button>
               </div>
 
@@ -516,7 +511,7 @@ const Profile: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {deviceSessions.map((session, index) => (
+                  {deviceSessions.map((session) => (
                     <div
                       key={session.deviceId}
                       className={`bg-white rounded-lg p-4 shadow-sm border-2 ${
@@ -526,25 +521,23 @@ const Profile: React.FC = () => {
                       }`}
                     >
                       <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-3">
-                          <div className="text-3xl mt-1">
-                            {getDeviceIcon(session.userAgent)}
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h4 className="font-semibold text-gray-800">
+                              {getDeviceName(session.userAgent)}
+                            </h4>
+                            {session.isCurrent && (
+                              <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+                                Current Device
+                              </span>
+                            )}
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                              <h4 className="font-semibold text-gray-800">
-                                {session.userAgent || 'Unknown Device'}
-                              </h4>
-                              {session.isCurrent && (
-                                <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                                  Current Device
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-600 mt-1">
-                              Logged in: {new Date(session.loginTime).toLocaleString()}
-                            </p>
-                          </div>
+                          <p className="text-xs text-gray-500 mb-1">
+                            {session.userAgent || 'Unknown Device'}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Logged in: {new Date(session.loginTime).toLocaleString()}
+                          </p>
                         </div>
                         {!session.isCurrent && (
                           <button
@@ -561,7 +554,7 @@ const Profile: React.FC = () => {
               )}
 
               <div className="mt-4 text-xs text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                <p className="font-medium mb-1">ℹ️ Security Tip:</p>
+                <p className="font-medium mb-1">Security Tip:</p>
                 <p>You can login on maximum 2 devices simultaneously. If you see an unfamiliar device, logout from it immediately and change your password.</p>
               </div>
             </div>

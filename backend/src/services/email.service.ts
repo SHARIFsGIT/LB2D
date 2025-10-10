@@ -14,39 +14,24 @@ class EmailService {
     if (process.env.RESEND_API_KEY) {
       this.useResend = true;
       this.resend = new Resend(process.env.RESEND_API_KEY);
-      console.log('✅ Email service initialized with Resend');
     } else {
       // Fallback to SMTP (nodemailer)
       this.useResend = false;
-      console.log('⚠️ Using SMTP (nodemailer) - Resend is recommended for production');
 
       this.transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST || 'smtp.gmail.com',
         port: Number(process.env.EMAIL_PORT) || 587,
-        secure: false, // Use TLS
+        secure: false,
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS
         },
         tls: {
-          rejectUnauthorized: false // Accept self-signed certificates
+          rejectUnauthorized: false
         },
-        connectionTimeout: 10000, // 10 seconds
+        connectionTimeout: 10000,
         greetingTimeout: 10000,
         socketTimeout: 10000
-      });
-
-      // Check if required environment variables are set
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.error('❌ CRITICAL: Missing email configuration!');
-        console.error('Please set RESEND_API_KEY (recommended) or EMAIL_USER and EMAIL_PASS');
-      }
-
-      this.transporter.verify((error) => {
-        if (error) {
-          console.error('❌ SMTP service verification failed:', error);
-          console.error('💡 Consider using Resend instead: Set RESEND_API_KEY in .env');
-        }
       });
     }
   }
@@ -92,9 +77,8 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      // // return info;
+      return info;
     } catch (error) {
-      // console.error('Failed to send verification email:', error);
       throw error;
     }
   }
@@ -135,9 +119,8 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      // return info;
+      return info;
     } catch (error) {
-      // console.error('Failed to send OTP email:', error);
       throw error;
     }
   }
@@ -178,17 +161,14 @@ class EmailService {
 
     try {
       if (this.useResend && this.resend) {
-        // Use Resend API
         const result = await this.resend.emails.send({
           from: 'LEARN BANGLA TO DEUTSCH <onboarding@resend.dev>',
           to: email,
           subject: 'Password Reset Request - LEARN BANGLA TO DEUTSCH',
           html: htmlContent
         });
-        console.log('✅ Password reset email sent successfully via Resend:', result.data?.id);
         return result;
       } else if (this.transporter) {
-        // Use SMTP
         const mailOptions = {
           from: `"LEARN BANGLA TO DEUTSCH" <${process.env.EMAIL_USER}>`,
           to: email,
@@ -196,20 +176,11 @@ class EmailService {
           html: htmlContent
         };
         const info = await this.transporter.sendMail(mailOptions);
-        console.log('✅ Password reset email sent successfully via SMTP:', info.messageId);
         return info;
       } else {
         throw new Error('No email service configured');
       }
     } catch (error: any) {
-      console.error('❌ Failed to send password reset email:', {
-        method: this.useResend ? 'Resend' : 'SMTP',
-        error: error.message,
-        code: error.code,
-        command: error.command,
-        response: error.response,
-        responseCode: error.responseCode
-      });
       throw error;
     }
   }
@@ -268,7 +239,7 @@ class EmailService {
         mailOptions.to = admin.email;
         await this.transporter.sendMail(mailOptions);
       } catch (error) {
-        console.error(`Failed to send admin notification to ${admin.email}:`, error);
+        // Silent fail for individual admin notifications
       }
     }
   }
@@ -391,9 +362,8 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      // return info;
+      return info;
     } catch (error) {
-      // console.error('Failed to send test completion email:', error);
       throw error;
     }
   }
@@ -467,7 +437,6 @@ class EmailService {
       const info = await this.transporter.sendMail(mailOptions);
       return info;
     } catch (error) {
-      console.error('Failed to send contact form email:', error);
       throw error;
     }
   }
@@ -534,7 +503,6 @@ class EmailService {
       const info = await this.transporter.sendMail(mailOptions);
       return info;
     } catch (error) {
-      console.error('Failed to send video approval request email:', error);
       throw error;
     }
   }
@@ -606,7 +574,6 @@ class EmailService {
       const info = await this.transporter.sendMail(mailOptions);
       return info;
     } catch (error) {
-      console.error('Failed to send video approval notification email:', error);
       throw error;
     }
   }
@@ -674,7 +641,6 @@ class EmailService {
       const info = await this.transporter.sendMail(mailOptions);
       return info;
     } catch (error) {
-      console.error(`Failed to send role rejection notification email to ${email}:`, error);
       throw error;
     }
   }
@@ -791,7 +757,6 @@ class EmailService {
       const info = await this.transporter.sendMail(mailOptions);
       return info;
     } catch (error) {
-      console.error(`Failed to send role approval confirmation email to ${email}:`, error);
       throw error;
     }
   }
@@ -889,7 +854,6 @@ class EmailService {
       const info = await this.transporter.sendMail(mailOptions);
       return info;
     } catch (error) {
-      console.error(`Failed to send course assignment notification email to ${email}:`, error);
       throw error;
     }
   }
@@ -959,7 +923,6 @@ class EmailService {
       const info = await this.transporter.sendMail(mailOptions);
       return info;
     } catch (error) {
-      console.error(`Failed to send role change notification email to ${email}:`, error);
       throw error;
     }
   }
@@ -1069,7 +1032,6 @@ class EmailService {
       const info = await this.transporter.sendMail(mailOptions);
       return info;
     } catch (error) {
-      console.error(`Failed to send student enrollment notification to admin ${adminEmail}:`, error);
       throw error;
     }
   }

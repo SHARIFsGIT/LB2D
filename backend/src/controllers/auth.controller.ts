@@ -280,7 +280,6 @@ export const resendOTP = asyncHandler(async (req: Request, res: Response, _next:
   try {
     await emailService.sendOTPEmail(user.email, otp, user.firstName);
   } catch (error) {
-    console.error('Error sending OTP:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to send OTP'
@@ -343,8 +342,8 @@ export const getDeviceSessions = asyncHandler(async (req: Request, res: Response
     });
   }
 
-  // Get current refresh token from request to mark current device
-  const currentRefreshToken = req.body.refreshToken || sessionStorage.getItem('refreshToken');
+  // Get current refresh token from request
+  const currentRefreshToken = req.body.refreshToken;
 
   // Format device sessions for frontend
   const formattedSessions = user.deviceSessions.map(session => ({
