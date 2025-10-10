@@ -37,5 +37,13 @@
         }
       ]
     }
-  ]
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://lb2d-backend.onrender.com/api",
+    "REACT_APP_WS_URL": "wss://lb2d-backend.onrender.com",
+    "REACT_APP_STRIPE_PUBLISHABLE_KEY": "pk_test_51Rxt4NLynRw7uvmjtBQBj7WANYIUX2A9SaQcsvWJZgG9XPYP8GolyCqBFlDni42JrdI023tUROqk76x4pC3XPDnx00HIs7R2Lk",
+    "REACT_APP_ENABLE_ANALYTICS": "true",
+    "REACT_APP_ENABLE_WEBSOCKET": "true",
+    "REACT_APP_DEBUG_MODE": "false"
+  }
 }

@@ -210,6 +210,41 @@ export const createCourse = async (req: AuthenticatedRequest, res: Response) => 
     } catch (error) {
       console.error('Failed to send student course notifications:', error);
     }
+
+    // Send email notifications to all students about new course
+    try {
+      const students = await User.find({
+        role: 'Student',
+        isEmailVerified: true,
+        isActive: true
+      });
+
+      // Send emails to all students in parallel
+      const emailPromises = students.map(student =>
+        emailService.sendNewCourseNotificationEmail(
+          student.email,
+          student.firstName,
+          {
+            courseTitle: course.title,
+            courseLevel: course.level,
+            startDate: course.startDate.toISOString(),
+            endDate: course.endDate.toISOString(),
+            instructor: course.instructor,
+            maxStudents: course.maxStudents,
+            courseId: (course._id as any).toString()
+          }
+        ).catch(error => {
+          // Log individual email failures but don't stop the entire process
+          console.error(`Failed to send course email to ${student.email}:`, error);
+        })
+      );
+
+      await Promise.all(emailPromises);
+      console.log(`Course notification emails sent to ${students.length} students`);
+    } catch (error) {
+      console.error('Failed to send course notification emails to students:', error);
+      // Don't fail the entire operation if emails fail
+    }
     
     return res.status(201).json({
       success: true,

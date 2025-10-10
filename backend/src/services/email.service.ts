@@ -986,10 +986,133 @@ class EmailService {
     }
   }
 
+  // Send new course notification email to students
+  async sendNewCourseNotificationEmail(email: string, firstName: string, courseInfo: {
+    courseTitle: string;
+    courseLevel: string;
+    startDate: string;
+    endDate: string;
+    instructor: string;
+    maxStudents: number;
+    courseId: string;
+  }) {
+    const mailOptions = {
+      from: `"LEARN BANGLA TO DEUTSCH" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: `New ${courseInfo.courseLevel} Course Available - ${courseInfo.courseTitle}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">🎓 New Course Available!</h1>
+            <p style="color: #e0e7ff; margin: 10px 0 0 0; font-size: 16px;">Expand your German language skills</p>
+          </div>
+
+          <div style="background-color: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px;">
+            <div style="background-color: white; border-radius: 10px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <h2 style="color: #1e293b; margin-top: 0; margin-bottom: 20px; font-size: 20px;">Hello ${firstName}!</h2>
+              <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
+                Great news! A new German language course is now available for enrollment. This is an excellent opportunity to advance your language learning journey.
+              </p>
+
+              <div style="background-color: #dbeafe; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+                <h3 style="color: #1d4ed8; margin-top: 0; font-size: 16px;">📚 Course Details</h3>
+                <div style="background-color: white; border-radius: 6px; padding: 15px; margin: 10px 0;">
+                  <p style="margin: 5px 0; color: #374151;"><strong>Course Title:</strong> ${courseInfo.courseTitle}</p>
+                  <p style="margin: 5px 0; color: #374151;"><strong>Level:</strong> <span style="background-color: #3b82f6; color: white; padding: 2px 8px; border-radius: 5px; font-size: 12px;">${courseInfo.courseLevel}</span></p>
+                  <p style="margin: 5px 0; color: #374151;"><strong>Instructor:</strong> ${courseInfo.instructor}</p>
+                  <p style="margin: 5px 0; color: #374151;"><strong>Start Date:</strong> ${new Date(courseInfo.startDate).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}</p>
+                  <p style="margin: 5px 0; color: #374151;"><strong>End Date:</strong> ${new Date(courseInfo.endDate).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}</p>
+                  <p style="margin: 5px 0; color: #374151;"><strong>Available Seats:</strong> ${courseInfo.maxStudents} students</p>
+                </div>
+              </div>
+
+              <div style="background-color: #ecfdf5; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #10b981;">
+                <h3 style="color: #059669; margin-top: 0; font-size: 16px;">✨ Why Enroll?</h3>
+                <ul style="color: #374151; margin: 10px 0; padding-left: 20px; line-height: 1.8;">
+                  <li>Learn from experienced instructors</li>
+                  <li>Interactive lessons and engaging content</li>
+                  <li>Flexible schedule designed for your success</li>
+                  <li>Certificate upon course completion</li>
+                  <li>Join a community of German language learners</li>
+                </ul>
+              </div>
+
+              <div style="background-color: #fef3c7; border-radius: 8px; padding: 15px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                <h4 style="color: #92400e; margin-top: 0; font-size: 14px;">⏰ Limited Seats Available</h4>
+                <p style="color: #92400e; margin: 5px 0; font-size: 13px;">
+                  This course has limited enrollment capacity. Secure your spot early to avoid missing out on this opportunity!
+                </p>
+              </div>
+
+              <div style="text-align: center; margin: 25px 0;">
+                <a href="${process.env.CLIENT_URL}/courses/${courseInfo.courseId}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 16px; margin-right: 10px;">
+                  View Course Details
+                </a>
+                <a href="${process.env.CLIENT_URL}/courses" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 16px;">
+                  Browse All Courses
+                </a>
+              </div>
+            </div>
+
+            <div style="background-color: white; border-radius: 10px; padding: 20px; text-align: center; border: 2px dashed #e2e8f0;">
+              <h4 style="color: #64748b; margin-top: 0; font-size: 14px;">💡 Questions?</h4>
+              <p style="color: #64748b; margin: 5px 0; font-size: 13px;">Need more information about this course?</p>
+              <p style="color: #64748b; margin: 5px 0; font-size: 13px;">
+                📧 Email: learnbangla2deutsch@gmail.com<br>
+                📱 WhatsApp: +49 (177) 879-7486
+              </p>
+            </div>
+          </div>
+
+          <div style="background-color: #1e293b; color: #94a3b8; padding: 20px; text-align: center; font-size: 12px; border-radius: 0 0 10px 10px;">
+            <p style="margin: 0;">© 2025 LEARN BANGLA TO DEUTSCH. All rights reserved.</p>
+            <p style="margin: 5px 0 0 0;">Your journey to German fluency starts here! 🇩🇪</p>
+          </div>
+        </div>
+      `
+    };
+
+    try {
+      if (this.useSendGrid) {
+        const msg = {
+          to: email,
+          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@learnbangla2deutsch.com',
+          subject: mailOptions.subject,
+          html: mailOptions.html
+        };
+        const result = await sgMail.send(msg);
+        return result;
+      } else if (this.useResend && this.resend) {
+        const result = await this.resend.emails.send({
+          from: 'LEARN BANGLA TO DEUTSCH <onboarding@resend.dev>',
+          to: email,
+          subject: mailOptions.subject,
+          html: mailOptions.html
+        });
+        return result;
+      } else if (this.transporter) {
+        const info = await this.transporter.sendMail(mailOptions);
+        return info;
+      } else {
+        throw new Error('No email service configured');
+      }
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
   // Send admin notification when student enrolls
   async sendStudentEnrollmentNotification(
-    adminEmail: string, 
-    adminFirstName: string, 
+    adminEmail: string,
+    adminFirstName: string,
     adminLastName: string,
     enrollmentData: {
       firstName: string;
