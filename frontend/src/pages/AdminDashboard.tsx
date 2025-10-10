@@ -559,6 +559,9 @@ const EditModal: React.FC<EditModalProps> = ({ user, onClose, onSave }) => {
   // Check if this user was rejected and has a requested role that can be approved
   const canApproveRejection = user.requestedRole && user.rejectionReason && user.role !== user.requestedRole;
 
+  // Check if user is Admin role (hide Active and Email Verified checkboxes for admins)
+  const isAdminRole = user.role === 'Admin';
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -595,28 +598,34 @@ const EditModal: React.FC<EditModalProps> = ({ user, onClose, onSave }) => {
               className="w-full px-3 py-2 border rounded-md"
             />
           </div>
-          <div className="mb-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="mr-2"
-              />
-              <span className="text-sm font-medium text-gray-700">Active</span>
-            </label>
-          </div>
-          <div className="mb-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.isEmailVerified}
-                onChange={(e) => setFormData({ ...formData, isEmailVerified: e.target.checked })}
-                className="mr-2"
-              />
-              <span className="text-sm font-medium text-gray-700">Email Verified</span>
-            </label>
-          </div>
+
+          {/* Show Active and Email Verified checkboxes only for non-Admin users */}
+          {!isAdminRole && (
+            <>
+              <div className="mb-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="mr-2"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Active</span>
+                </label>
+              </div>
+              <div className="mb-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.isEmailVerified}
+                    onChange={(e) => setFormData({ ...formData, isEmailVerified: e.target.checked })}
+                    className="mr-2"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Email Verified</span>
+                </label>
+              </div>
+            </>
+          )}
 
           {/* Show rejection information if user was rejected */}
           {canApproveRejection && (

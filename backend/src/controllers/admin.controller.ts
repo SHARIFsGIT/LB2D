@@ -114,8 +114,8 @@ export const updateUser = asyncHandler(async (req: Request, res: Response): Prom
     });
   }
 
-  // Silently prevent changing isActive or isEmailVerified for System Administrator
-  const isSystemAdmin = user.firstName === 'System' && user.lastName === 'Administrator';
+  // Silently prevent changing isActive or isEmailVerified for Admin role users
+  const isAdminRole = user.role === 'Admin';
   
   // Check if this is a role approval (role is changing from current to requestedRole)
   const isRoleApproval = role !== undefined && 
@@ -156,9 +156,9 @@ export const updateUser = asyncHandler(async (req: Request, res: Response): Prom
   // Only update requestedRole if it's not a rejection (preserve original requested role for rejected users)
   if (requestedRole !== undefined && !isRoleRejection) user.requestedRole = requestedRole;
   if (phone !== undefined) user.phone = phone;
-  // Silently skip isActive and isEmailVerified changes for System Administrator
-  if (isActive !== undefined && !isSystemAdmin) user.isActive = isActive;
-  if (isEmailVerified !== undefined && !isSystemAdmin) user.isEmailVerified = isEmailVerified;
+  // Silently skip isActive and isEmailVerified changes for Admin role users
+  if (isActive !== undefined && !isAdminRole) user.isActive = isActive;
+  if (isEmailVerified !== undefined && !isAdminRole) user.isEmailVerified = isEmailVerified;
   
   // Store rejection information when rejecting a role
   if (isRoleRejection) {

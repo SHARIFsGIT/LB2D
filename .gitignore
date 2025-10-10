@@ -121,3 +121,4 @@ local/
 
 # Application specific
 backend/src/server.old.ts
+.vercel

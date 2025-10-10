@@ -209,8 +209,10 @@ export const authApi = {
   register: (userData: any) => 
     apiClient.post('/auth/register', userData),
   
-  logout: () => 
-    apiClient.post('/auth/logout'),
+  logout: () => {
+    const refreshToken = sessionStorage.getItem('refreshToken');
+    return apiClient.post('/auth/logout', { refreshToken });
+  },
   
   refreshToken: (refreshToken: string) => 
     apiClient.post('/auth/refresh-token', { refreshToken }),
