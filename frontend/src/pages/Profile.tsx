@@ -305,40 +305,21 @@ const Profile: React.FC = () => {
   };
 
   const handleLogoutFromDevice = async (deviceId: string, isCurrent: boolean) => {
-    const message = isCurrent
-      ? 'Are you sure you want to logout from this device? You will be redirected to the login page.'
-      : 'Are you sure you want to logout from this device?';
+    const message = 'Are you sure you want to logout from this device? You will be redirected to the login page.';
 
     if (!window.confirm(message)) {
       return;
     }
 
     try {
-      const response = await authApi.logoutFromDevice(deviceId);
-      if (response.success) {
-        if (isCurrent) {
-          sessionStorage.clear();
-          localStorage.clear();
-          showSuccess('Logged out successfully', 'Success');
-          setTimeout(() => {
-            navigate('/login');
-          }, 800);
-        } else {
-          showSuccess('Device logged out successfully', 'Success');
-          await loadDeviceSessions();
-        }
-      } else {
-        showError('Failed to logout from device', 'Error');
-      }
+      await authApi.logoutFromDevice(deviceId);
+      sessionStorage.clear();
+      localStorage.clear();
+      navigate('/login');
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to logout from device';
-      showError(errorMessage, 'Error');
-
-      if (error.status === 401) {
-        sessionStorage.clear();
-        localStorage.clear();
-        setTimeout(() => navigate('/login'), 1000);
-      }
+      sessionStorage.clear();
+      localStorage.clear();
+      navigate('/login');
     }
   };
 
