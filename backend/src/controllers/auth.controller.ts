@@ -342,15 +342,20 @@ export const getDeviceSessions = asyncHandler(async (req: Request, res: Response
     });
   }
 
-  // Get current refresh token from request
-  const currentRefreshToken = req.body.refreshToken;
+  // Get current refresh token from query parameter
+  const currentRefreshToken = req.query.refreshToken as string;
+
+  // Sort sessions by login time (most recent first)
+  const sortedSessions = [...user.deviceSessions].sort(
+    (a, b) => new Date(b.loginTime).getTime() - new Date(a.loginTime).getTime()
+  );
 
   // Format device sessions for frontend
-  const formattedSessions = user.deviceSessions.map(session => ({
+  const formattedSessions = sortedSessions.map((session, index) => ({
     deviceId: session.deviceId,
     loginTime: session.loginTime,
     userAgent: session.userAgent || 'Unknown Device',
-    isCurrent: session.refreshToken === currentRefreshToken
+    isCurrent: currentRefreshToken ? session.refreshToken === currentRefreshToken : index === 0
   }));
 
   return res.status(200).json({

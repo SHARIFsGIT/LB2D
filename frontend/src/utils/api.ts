@@ -226,8 +226,11 @@ export const authApi = {
   verifyEmail: (token: string) =>
     apiClient.get(`/auth/verify-email?token=${token}`),
 
-  getDeviceSessions: () =>
-    apiClient.get('/auth/sessions'),
+  getDeviceSessions: () => {
+    const refreshToken = sessionStorage.getItem('refreshToken');
+    const params = refreshToken ? { refreshToken } : {};
+    return apiClient.get('/auth/sessions', { params });
+  },
 
   logoutFromDevice: (deviceId: string) =>
     apiClient.delete(`/auth/sessions/${deviceId}`),

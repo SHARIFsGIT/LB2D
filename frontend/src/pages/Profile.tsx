@@ -284,14 +284,21 @@ const Profile: React.FC = () => {
   };
 
   const loadDeviceSessions = async () => {
+    if (!user) return;
+
     setSessionsLoading(true);
     try {
       const response = await authApi.getDeviceSessions();
-      if (response.success && response.data) {
-        setDeviceSessions(response.data.sessions || []);
+      if (response.success && response.data?.sessions) {
+        setDeviceSessions(response.data.sessions);
+      } else {
+        setDeviceSessions([]);
       }
     } catch (error: any) {
-      // Silent fail - no need to show error for background operations
+      setDeviceSessions([]);
+      if (error.status === 401) {
+        navigate('/login');
+      }
     } finally {
       setSessionsLoading(false);
     }
@@ -310,32 +317,65 @@ const Profile: React.FC = () => {
       const response = await authApi.logoutFromDevice(deviceId);
       if (response.success) {
         if (isCurrent) {
-          // Clear local storage and redirect to login
           sessionStorage.clear();
           localStorage.clear();
           showSuccess('Logged out successfully', 'Success');
           setTimeout(() => {
             navigate('/login');
-          }, 1000);
+          }, 800);
         } else {
-          showSuccess('Logged out from device successfully', 'Success');
-          loadDeviceSessions();
+          showSuccess('Device logged out successfully', 'Success');
+          await loadDeviceSessions();
         }
+      } else {
+        showError('Failed to logout from device', 'Error');
       }
     } catch (error: any) {
-      showError(error.message || 'Failed to logout from device', 'Error');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to logout from device';
+      showError(errorMessage, 'Error');
+
+      if (error.status === 401) {
+        sessionStorage.clear();
+        localStorage.clear();
+        setTimeout(() => navigate('/login'), 1000);
+      }
     }
   };
 
-  const getDeviceName = (userAgent: string) => {
-    const ua = userAgent.toLowerCase();
-    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
-      return 'Mobile Device';
-    } else if (ua.includes('tablet') || ua.includes('ipad')) {
-      return 'Tablet';
-    } else {
-      return 'Desktop Computer';
+  const getDeviceName = (userAgent: string): string => {
+    if (!userAgent || userAgent === 'Unknown Device') {
+      return 'Unknown Device';
     }
+
+    const ua = userAgent.toLowerCase();
+
+    // Check for mobile devices
+    if (ua.includes('mobile') || ua.includes('android')) {
+      if (ua.includes('samsung')) return 'Samsung Mobile';
+      if (ua.includes('huawei')) return 'Huawei Mobile';
+      if (ua.includes('xiaomi')) return 'Xiaomi Mobile';
+      return 'Mobile Device';
+    }
+
+    // Check for iOS devices
+    if (ua.includes('iphone')) return 'iPhone';
+    if (ua.includes('ipad')) return 'iPad';
+
+    // Check for tablets
+    if (ua.includes('tablet')) return 'Tablet';
+
+    // Check for desktop browsers
+    if (ua.includes('windows')) return 'Windows PC';
+    if (ua.includes('macintosh') || ua.includes('mac os')) return 'Mac';
+    if (ua.includes('linux')) return 'Linux PC';
+
+    // Check for specific browsers
+    if (ua.includes('chrome')) return 'Desktop (Chrome)';
+    if (ua.includes('firefox')) return 'Desktop (Firefox)';
+    if (ua.includes('safari')) return 'Desktop (Safari)';
+    if (ua.includes('edge')) return 'Desktop (Edge)';
+
+    return 'Desktop Computer';
   };
 
   if (!user) {
@@ -504,11 +544,14 @@ const Profile: React.FC = () => {
             {/* Active Devices Section */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mt-8 border border-blue-100">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Active Devices</h3>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">Active Devices</h3>
+                  <p className="text-xs text-gray-600 mt-1">Manage your logged-in devices (Maximum 2)</p>
+                </div>
                 <button
                   onClick={loadDeviceSessions}
                   disabled={sessionsLoading}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium disabled:opacity-50"
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium disabled:opacity-50 transition-colors"
                 >
                   {sessionsLoading ? 'Refreshing...' : 'Refresh'}
                 </button>
@@ -522,48 +565,73 @@ const Profile: React.FC = () => {
               ) : deviceSessions.length === 0 ? (
                 <div className="text-center py-8 text-gray-600">
                   <p>No active devices found</p>
+                  <button
+                    onClick={loadDeviceSessions}
+                    className="mt-2 text-blue-600 hover:text-blue-700 text-sm"
+                  >
+                    Try again
+                  </button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {deviceSessions.map((session) => (
-                    <div
-                      key={session.deviceId}
-                      className={`bg-white rounded-lg p-4 shadow-sm border-2 ${
-                        session.isCurrent
-                          ? 'border-green-300 bg-green-50'
-                          : 'border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h4 className="font-semibold text-gray-800">
-                              {getDeviceName(session.userAgent)}
-                            </h4>
-                            {session.isCurrent && (
-                              <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                                Current Device
-                              </span>
-                            )}
+                <>
+                  <div className="space-y-3">
+                    {deviceSessions.map((session) => (
+                      <div
+                        key={session.deviceId}
+                        className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
+                          session.isCurrent
+                            ? 'border-green-400 bg-green-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <h4 className="font-semibold text-gray-800 truncate">
+                                {getDeviceName(session.userAgent)}
+                              </h4>
+                              {session.isCurrent && (
+                                <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">
+                                  Current
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              {new Date(session.loginTime).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
                           </div>
-                          <p className="text-sm text-gray-600">
-                            Logged in: {new Date(session.loginTime).toLocaleString()}
-                          </p>
+                          <button
+                            onClick={() => handleLogoutFromDevice(session.deviceId, session.isCurrent)}
+                            className={`ml-4 px-4 py-2 ${
+                              session.isCurrent
+                                ? 'bg-orange-500 hover:bg-orange-600'
+                                : 'bg-red-500 hover:bg-red-600'
+                            } text-white rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md flex-shrink-0`}
+                            title={session.isCurrent ? 'Logout from this device' : 'Logout from this device'}
+                          >
+                            Logout
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleLogoutFromDevice(session.deviceId, session.isCurrent)}
-                          className={`ml-4 px-4 py-2 ${
-                            session.isCurrent
-                              ? 'bg-orange-500 hover:bg-orange-600'
-                              : 'bg-red-500 hover:bg-red-600'
-                          } text-white rounded-lg text-sm font-medium transition-colors`}
-                        >
-                          Logout
-                        </button>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 text-xs text-gray-600 flex items-center justify-between bg-blue-50 p-3 rounded-lg">
+                    <span>
+                      {deviceSessions.length} of 2 devices active
+                    </span>
+                    {deviceSessions.length >= 2 && (
+                      <span className="text-orange-600 font-medium">
+                        Device limit reached
+                      </span>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 
