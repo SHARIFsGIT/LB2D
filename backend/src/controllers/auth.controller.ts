@@ -155,13 +155,7 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response, _n
     });
   }
 
-  if (!phoneDigits) {
-    return res.status(400).json({
-      success: false,
-      message: 'Phone verification is required'
-    });
-  }
-
+  // phoneDigits is now optional - only used for users with phone numbers
   const result = await authService.resetPassword(token as string, password, phoneDigits);
 
   return res.status(200).json({

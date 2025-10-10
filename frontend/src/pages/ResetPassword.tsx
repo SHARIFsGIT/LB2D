@@ -82,11 +82,20 @@ const ResetPassword: React.FC = () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/get-masked-phone?token=${token}`);
       const data = await response.json();
-      if (data.success && data.maskedPhone) {
-        setMaskedPhone(data.maskedPhone);
+      if (data.success) {
+        if (data.maskedPhone) {
+          setMaskedPhone(data.maskedPhone);
+        } else {
+          // No phone number - auto-verify
+          setMaskedPhone('');
+          setPhoneVerified(true);
+        }
       }
     } catch (err) {
       // Silent fail - phone display is not critical
+      // If fetch fails, allow password reset without phone verification
+      setMaskedPhone('');
+      setPhoneVerified(true);
     }
   };
 
@@ -173,7 +182,8 @@ const ResetPassword: React.FC = () => {
       return false;
     }
 
-    if (!phoneVerified) {
+    // Only check phone verification if phone number exists
+    if (maskedPhone && !phoneVerified) {
       setError('Please verify your phone number by entering the 6 hidden digits');
       return false;
     }
@@ -201,27 +211,33 @@ const ResetPassword: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
+      // Prepare request body - only include phoneDigits if user has a phone number
+      const requestBody: any = {
+        password: formData.password
+      };
+
+      if (maskedPhone) {
+        requestBody.phoneDigits = phoneDigits.join('');
+      }
+
       const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/reset-password?token=${token}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          password: formData.password,
-          phoneDigits: phoneDigits.join('')
-        })
+        body: JSON.stringify(requestBody)
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         setSuccess(true);
         // Redirect to login after 3 seconds
@@ -302,56 +318,59 @@ const ResetPassword: React.FC = () => {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Show masked phone number */}
+            {/* Show masked phone number and verification if user has a phone */}
             {maskedPhone && (
-              <div className="text-center mb-4 p-4 bg-blue-50 bg-opacity-80 backdrop-blur-sm rounded-xl border border-blue-200">
-                <p className="text-sm text-gray-700 mb-1">Your Phone Number:</p>
-                <p className="text-xl font-bold text-gray-900 tracking-wider">{maskedPhone}</p>
-              </div>
+              <>
+                <div className="text-center mb-4 p-4 bg-blue-50 bg-opacity-80 backdrop-blur-sm rounded-xl border border-blue-200">
+                  <p className="text-sm text-gray-700 mb-1">Your Phone Number:</p>
+                  <p className="text-xl font-bold text-gray-900 tracking-wider">{maskedPhone}</p>
+                </div>
+
+                <div className="text-center">
+                  <label className="block text-gray-700 text-sm font-semibold mb-2">
+                    Enter the 6 Hidden Digits
+                  </label>
+                  <div className="flex gap-2 justify-center items-center mb-3">
+                    {phoneDigits.map((digit, index) => (
+                      <div key={index} className="relative">
+                        <input
+                          id={`phone-digit-${index}`}
+                          type="text"
+                          value={digit}
+                          onChange={(e) => handleDigitChange(index, e.target.value)}
+                          onKeyDown={(e) => handleDigitKeyDown(index, e)}
+                          onPaste={handleDigitPaste}
+                          disabled={phoneVerified}
+                          className={`w-12 h-14 text-center text-2xl font-bold border-2 rounded-xl focus:outline-none focus:ring-2 bg-white bg-opacity-90 backdrop-blur-sm shadow-md transition-all duration-200 ${
+                            phoneVerified
+                              ? 'border-green-400 bg-green-50 text-green-700'
+                              : 'border-gray-300 focus:ring-blue-400 focus:border-blue-500 hover:border-gray-400'
+                          }`}
+                          maxLength={1}
+                          pattern="\d"
+                          required
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Verification Status Messages with Smooth Transition */}
+                  <div className="relative h-8 overflow-hidden">
+                    {phoneVerified && (
+                      <div className="absolute inset-0 flex items-center justify-center gap-2 text-green-600 text-sm font-semibold animate-fadeIn">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Phone Verified Successfully!
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
             )}
 
-            <div className="text-center">
-              <label className="block text-gray-700 text-sm font-semibold mb-2">
-                Enter the 6 Hidden Digits
-              </label>
-              <div className="flex gap-2 justify-center items-center mb-3">
-                {phoneDigits.map((digit, index) => (
-                  <div key={index} className="relative">
-                    <input
-                      id={`phone-digit-${index}`}
-                      type="text"
-                      value={digit}
-                      onChange={(e) => handleDigitChange(index, e.target.value)}
-                      onKeyDown={(e) => handleDigitKeyDown(index, e)}
-                      onPaste={handleDigitPaste}
-                      disabled={phoneVerified}
-                      className={`w-12 h-14 text-center text-2xl font-bold border-2 rounded-xl focus:outline-none focus:ring-2 bg-white bg-opacity-90 backdrop-blur-sm shadow-md transition-all duration-200 ${
-                        phoneVerified
-                          ? 'border-green-400 bg-green-50 text-green-700'
-                          : 'border-gray-300 focus:ring-blue-400 focus:border-blue-500 hover:border-gray-400'
-                      }`}
-                      maxLength={1}
-                      pattern="\d"
-                      required
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Verification Status Messages with Smooth Transition */}
-              <div className="relative h-8 overflow-hidden">
-                {phoneVerified && (
-                  <div className="absolute inset-0 flex items-center justify-center gap-2 text-green-600 text-sm font-semibold animate-fadeIn">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Phone Verified Successfully!
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {phoneVerified && (
+            {/* Show password fields if no phone number OR phone is verified */}
+            {(!maskedPhone || phoneVerified) && (
               <div className="space-y-4 mt-6 animate-slideDown"
 >
 

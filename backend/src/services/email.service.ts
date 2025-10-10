@@ -182,9 +182,16 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      // return info;
-    } catch (error) {
-      // console.error('Failed to send password reset email:', error);
+      console.log('✅ Password reset email sent successfully:', info.messageId);
+      return info;
+    } catch (error: any) {
+      console.error('❌ Failed to send password reset email:', {
+        error: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode
+      });
       throw error;
     }
   }

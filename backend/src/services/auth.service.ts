@@ -285,10 +285,6 @@ class AuthService {
       throw new CustomError('User not found', 404);
     }
 
-    if (!user.phone) {
-      throw new CustomError('No phone number associated with this account. Please contact support.', 400);
-    }
-
     // Generate reset token (no OTP needed)
     const resetToken = user.createPasswordResetToken();
     await user.save();
@@ -297,31 +293,37 @@ class AuthService {
     try {
       await emailService.sendPasswordResetEmail(user.email, resetToken, user.firstName);
       logger.info(`Password reset email sent to ${user.email}`);
-    } catch (error) {
+    } catch (error: any) {
+      logger.error('Error sending password reset email:', error);
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
       await user.save();
 
-      throw new CustomError('Failed to send reset email', 500);
+      throw new CustomError(`Failed to send reset email: ${error.message || error}`, 500);
     }
 
     return { message: 'Password reset link sent to your email' };
   }
 
-  async getMaskedPhone(token: string): Promise<{ maskedPhone: string }> {
+  async getMaskedPhone(token: string): Promise<{ maskedPhone: string | null }> {
     const user = await User.findOne({
       passwordResetToken: token,
       passwordResetExpires: { $gt: Date.now() }
     });
 
-    if (!user || !user.phone) {
+    if (!user) {
       throw new CustomError('Invalid or expired reset token', 400);
+    }
+
+    // Return null if no phone number (phone verification is now optional)
+    if (!user.phone) {
+      return { maskedPhone: null };
     }
 
     // Mask the middle 6 digits of the phone number
     const phone = user.phone;
     if (phone.length < 10) {
-      throw new CustomError('Phone number format is invalid', 400);
+      return { maskedPhone: null };
     }
 
     // Calculate where to hide the 6 digits (from the middle)
@@ -343,14 +345,19 @@ class AuthService {
       passwordResetExpires: { $gt: Date.now() }
     });
 
-    if (!user || !user.phone) {
+    if (!user) {
       throw new CustomError('Invalid or expired reset token', 400);
+    }
+
+    // If no phone, skip verification (phone verification is now optional)
+    if (!user.phone) {
+      return { verified: true };
     }
 
     // Extract the middle 6 digits from the actual phone number
     const phone = user.phone;
     if (phone.length < 10) {
-      throw new CustomError('Phone number format is invalid', 400);
+      return { verified: true };
     }
 
     const totalLength = phone.length;
@@ -365,9 +372,9 @@ class AuthService {
     return { verified: true };
   }
 
-  async resetPassword(token: string, password: string, phoneDigits: string): Promise<{ message: string }> {
-    if (!token || !password || !phoneDigits) {
-      throw new CustomError('Token, new password, and phone verification are required', 400);
+  async resetPassword(token: string, password: string, phoneDigits?: string): Promise<{ message: string }> {
+    if (!token || !password) {
+      throw new CustomError('Token and new password are required', 400);
     }
 
     const user = await User.findOne({
@@ -379,23 +386,19 @@ class AuthService {
       throw new CustomError('Invalid or expired reset token', 400);
     }
 
-    // Verify phone digits one final time
-    if (!user.phone) {
-      throw new CustomError('No phone number associated with this account', 400);
-    }
+    // Verify phone digits only if user has a phone number and phoneDigits provided
+    if (user.phone && phoneDigits) {
+      const phone = user.phone;
+      if (phone.length >= 10) {
+        const totalLength = phone.length;
+        const startHidden = Math.floor((totalLength - 6) / 2);
+        const endHidden = startHidden + 6;
+        const actualDigits = phone.substring(startHidden, endHidden);
 
-    const phone = user.phone;
-    if (phone.length < 10) {
-      throw new CustomError('Phone number format is invalid', 400);
-    }
-
-    const totalLength = phone.length;
-    const startHidden = Math.floor((totalLength - 6) / 2);
-    const endHidden = startHidden + 6;
-    const actualDigits = phone.substring(startHidden, endHidden);
-
-    if (actualDigits !== phoneDigits) {
-      throw new CustomError('Phone number verification failed', 400);
+        if (actualDigits !== phoneDigits) {
+          throw new CustomError('Phone number verification failed', 400);
+        }
+      }
     }
 
     // Update password
