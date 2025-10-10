@@ -12,7 +12,9 @@ import {
   validateToken,
   resendOTP,
   getMaskedPhone,
-  verifyPhoneDigits
+  verifyPhoneDigits,
+  getDeviceSessions,
+  logoutFromDevice
 } from '../controllers/auth.controller';
 import { authMiddleware } from '../middleware/auth.middleware';
 import {
@@ -62,6 +64,8 @@ router.get('/validate-token', authMiddleware, validateToken);
 
 // Protected routes
 router.post('/logout', authMiddleware, logout);
+router.get('/sessions', authMiddleware, getDeviceSessions);
+router.delete('/sessions/:deviceId', authMiddleware, logoutFromDevice);
 
 // Development only - Clear rate limits
 if (process.env.NODE_ENV === 'development') {

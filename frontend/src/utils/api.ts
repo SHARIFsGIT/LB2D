@@ -203,28 +203,34 @@ export const apiClient = new ApiClient();
 
 // Convenience methods for different API endpoints
 export const authApi = {
-  login: (credentials: { email: string; password: string }) => 
+  login: (credentials: { email: string; password: string }) =>
     apiClient.post('/auth/login', credentials),
-  
-  register: (userData: any) => 
+
+  register: (userData: any) =>
     apiClient.post('/auth/register', userData),
-  
+
   logout: () => {
     const refreshToken = sessionStorage.getItem('refreshToken');
     return apiClient.post('/auth/logout', { refreshToken });
   },
-  
-  refreshToken: (refreshToken: string) => 
+
+  refreshToken: (refreshToken: string) =>
     apiClient.post('/auth/refresh-token', { refreshToken }),
-  
-  forgotPassword: (email: string) => 
+
+  forgotPassword: (email: string) =>
     apiClient.post('/auth/forgot-password', { email }),
-  
-  resetPassword: (token: string, password: string) => 
+
+  resetPassword: (token: string, password: string) =>
     apiClient.post(`/auth/reset-password?token=${token}`, { password }),
-  
-  verifyEmail: (token: string) => 
+
+  verifyEmail: (token: string) =>
     apiClient.get(`/auth/verify-email?token=${token}`),
+
+  getDeviceSessions: () =>
+    apiClient.get('/auth/sessions'),
+
+  logoutFromDevice: (deviceId: string) =>
+    apiClient.delete(`/auth/sessions/${deviceId}`),
 };
 
 export const userApi = {

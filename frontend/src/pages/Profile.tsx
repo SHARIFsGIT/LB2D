@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../hooks/useNotification';
 import { updateUser } from '../store/slices/authSlice';
 import { RootState } from '../store/store';
+import { authApi } from '../utils/api';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -27,6 +28,10 @@ const Profile: React.FC = () => {
     return stored ? parseInt(stored, 10) : 0;
   });
 
+  // Device sessions state
+  const [deviceSessions, setDeviceSessions] = useState<any[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -36,6 +41,7 @@ const Profile: React.FC = () => {
         profilePhoto: user.profilePhoto || ''
       });
       setProfilePhotoPreview(user.profilePhoto || null);
+      loadDeviceSessions(); // Load device sessions when component mounts
     }
   }, [user]);
 
@@ -230,7 +236,7 @@ const Profile: React.FC = () => {
     // Check if user is trying to request too frequently (5 minutes cooldown, matching backend rate limit window)
     const now = Date.now();
     const cooldownPeriod = 5 * 60 * 1000; // 5 minutes in milliseconds
-    
+
     if (lastPasswordResetTime && (now - lastPasswordResetTime) < cooldownPeriod) {
       const remainingTime = Math.ceil((cooldownPeriod - (now - lastPasswordResetTime)) / 1000);
       showError(
@@ -278,6 +284,48 @@ const Profile: React.FC = () => {
       showError('Network error. Please try again.', 'Error');
     } finally {
       setChangePasswordLoading(false);
+    }
+  };
+
+  const loadDeviceSessions = async () => {
+    setSessionsLoading(true);
+    try {
+      const response = await authApi.getDeviceSessions();
+      if (response.success && response.data) {
+        setDeviceSessions(response.data.sessions || []);
+      }
+    } catch (error: any) {
+      console.error('Failed to load device sessions:', error);
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  const handleLogoutFromDevice = async (deviceId: string) => {
+    if (!confirm('Are you sure you want to logout from this device?')) {
+      return;
+    }
+
+    try {
+      const response = await authApi.logoutFromDevice(deviceId);
+      if (response.success) {
+        showSuccess('Logged out from device successfully', 'Success');
+        loadDeviceSessions(); // Reload sessions
+      }
+    } catch (error: any) {
+      console.error('Failed to logout from device:', error);
+      showError(error.message || 'Failed to logout from device', 'Error');
+    }
+  };
+
+  const getDeviceIcon = (userAgent: string) => {
+    const ua = userAgent.toLowerCase();
+    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+      return '📱';
+    } else if (ua.includes('tablet') || ua.includes('ipad')) {
+      return '📲';
+    } else {
+      return '💻';
     }
   };
 
@@ -414,8 +462,8 @@ const Profile: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Email Status</label>
                   <div className={`px-3 py-2 rounded-lg text-sm font-medium inline-block ${
-                    user.isEmailVerified 
-                      ? 'bg-green-100 text-green-800' 
+                    user.isEmailVerified
+                      ? 'bg-green-100 text-green-800'
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
                     {user.isEmailVerified ? 'Verified' : 'Unverified'}
@@ -433,14 +481,88 @@ const Profile: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-600 mb-1">Account Status</label>
                     <div className={`px-3 py-2 rounded-lg text-sm font-medium inline-block ${
-                      user.isActive 
-                        ? 'bg-green-100 text-green-800' 
+                      user.isActive
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
                       {user.isActive ? 'Active' : 'Inactive'}
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Active Devices Section */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mt-8 border border-blue-100">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Active Devices</h3>
+                <button
+                  onClick={loadDeviceSessions}
+                  disabled={sessionsLoading}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium disabled:opacity-50"
+                >
+                  {sessionsLoading ? '🔄 Refreshing...' : '🔄 Refresh'}
+                </button>
+              </div>
+
+              {sessionsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Loading devices...</p>
+                </div>
+              ) : deviceSessions.length === 0 ? (
+                <div className="text-center py-8 text-gray-600">
+                  <p>No active devices found</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {deviceSessions.map((session, index) => (
+                    <div
+                      key={session.deviceId}
+                      className={`bg-white rounded-lg p-4 shadow-sm border-2 ${
+                        session.isCurrent
+                          ? 'border-green-300 bg-green-50'
+                          : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-3">
+                          <div className="text-3xl mt-1">
+                            {getDeviceIcon(session.userAgent)}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <h4 className="font-semibold text-gray-800">
+                                {session.userAgent || 'Unknown Device'}
+                              </h4>
+                              {session.isCurrent && (
+                                <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+                                  Current Device
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Logged in: {new Date(session.loginTime).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        {!session.isCurrent && (
+                          <button
+                            onClick={() => handleLogoutFromDevice(session.deviceId)}
+                            className="ml-4 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
+                          >
+                            Logout
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-4 text-xs text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                <p className="font-medium mb-1">ℹ️ Security Tip:</p>
+                <p>You can login on maximum 2 devices simultaneously. If you see an unfamiliar device, logout from it immediately and change your password.</p>
               </div>
             </div>
 

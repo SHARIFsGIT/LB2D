@@ -297,17 +297,17 @@ export const resendOTP = asyncHandler(async (req: Request, res: Response, _next:
 export const validateToken = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<any> => {
   // If this endpoint is reached, the token is valid (protected by auth middleware)
   const userId = (req as any).userId;
-  
+
   const user = await User.findById(userId)
     .select('-password -refreshToken -emailVerificationToken -passwordResetToken -otpCode');
-  
+
   if (!user) {
     return res.status(404).json({
       success: false,
       message: 'User not found'
     });
   }
-  
+
   return res.status(200).json({
     success: true,
     data: {
@@ -327,5 +327,75 @@ export const validateToken = asyncHandler(async (req: Request, res: Response, _n
         createdAt: user.createdAt
       }
     }
+  });
+});
+
+// Get user's active device sessions
+export const getDeviceSessions = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<any> => {
+  const userId = (req as any).userId;
+
+  const user = await User.findById(userId).select('deviceSessions');
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+
+  // Get current refresh token from request to mark current device
+  const currentRefreshToken = req.body.refreshToken || sessionStorage.getItem('refreshToken');
+
+  // Format device sessions for frontend
+  const formattedSessions = user.deviceSessions.map(session => ({
+    deviceId: session.deviceId,
+    loginTime: session.loginTime,
+    userAgent: session.userAgent || 'Unknown Device',
+    isCurrent: session.refreshToken === currentRefreshToken
+  }));
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      sessions: formattedSessions,
+      totalSessions: formattedSessions.length,
+      maxSessions: 2
+    }
+  });
+});
+
+// Logout from a specific device
+export const logoutFromDevice = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<any> => {
+  const userId = (req as any).userId;
+  const { deviceId } = req.params;
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+
+  // Find the device session
+  const sessionIndex = user.deviceSessions.findIndex(
+    session => session.deviceId === deviceId
+  );
+
+  if (sessionIndex === -1) {
+    return res.status(404).json({
+      success: false,
+      message: 'Device session not found'
+    });
+  }
+
+  // Remove the device session
+  user.deviceSessions.splice(sessionIndex, 1);
+  await user.save();
+
+  return res.status(200).json({
+    success: true,
+    message: 'Logged out from device successfully'
   });
 });
