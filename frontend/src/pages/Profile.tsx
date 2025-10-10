@@ -522,7 +522,7 @@ const Profile: React.FC = () => {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
+                          <div className="flex items-center space-x-2 mb-2">
                             <h4 className="font-semibold text-gray-800">
                               {getDeviceName(session.userAgent)}
                             </h4>
@@ -532,9 +532,6 @@ const Profile: React.FC = () => {
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 mb-1">
-                            {session.userAgent || 'Unknown Device'}
-                          </p>
                           <p className="text-sm text-gray-600">
                             Logged in: {new Date(session.loginTime).toLocaleString()}
                           </p>
@@ -552,11 +549,6 @@ const Profile: React.FC = () => {
                   ))}
                 </div>
               )}
-
-              <div className="mt-4 text-xs text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                <p className="font-medium mb-1">Security Tip:</p>
-                <p>You can login on maximum 2 devices simultaneously. If you see an unfamiliar device, logout from it immediately and change your password.</p>
-              </div>
             </div>
 
 {/* Action Buttons */}
