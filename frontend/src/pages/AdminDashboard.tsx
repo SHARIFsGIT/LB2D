@@ -291,7 +291,7 @@ const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ video, onClose, o
                 allowFullScreen
                 title={video.title}
                 onError={() => {
-                  console.error('❌ Google Drive iframe failed to load');
+                  console.error('Google Drive iframe failed to load');
                 }}
               />
             ) : (
@@ -316,9 +316,9 @@ const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ video, onClose, o
                 onLoadedData={() => {
                 }}
                 onError={(e) => {
-                  console.error('❌ Video load error:', e);
+                  console.error('Video load error:', e);
                   console.error('🔗 Original URL:', video.videoUrl);
-                  console.error('🔄 Processed URL:', processedVideoUrl);
+                  console.error('Processed URL:', processedVideoUrl);
                   console.error('📄 Video format:', video.videoFormat);
                   console.error('🎯 Error event:', e.currentTarget.error);
                   
@@ -328,7 +328,6 @@ const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ video, onClose, o
                     parent.innerHTML = `
                       <div class="flex items-center justify-center h-full text-white bg-gray-800">
                         <div class="text-center max-w-md">
-                          <div class="text-6xl mb-4">⚠️</div>
                           <p class="text-xl mb-2 font-semibold">Video Unavailable</p>
                           <p class="text-sm text-gray-300 mb-4">Unable to load video content</p>
                           <div class="mt-4 p-4 bg-gray-700 rounded text-xs text-left">
@@ -346,7 +345,7 @@ const VideoPreviewModal: React.FC<VideoPreviewModalProps> = ({ video, onClose, o
                   }
                 }}
                 onStalled={() => {
-                  console.warn('⏸️ Video stalled:', processedVideoUrl);
+                  console.warn('Video stalled:', processedVideoUrl);
                 }}
                 onSuspend={() => {
                 }}
@@ -1908,7 +1907,7 @@ const AdminDashboard: React.FC = () => {
 
   const clearUserManagementData = async () => {
     const isConfirmed = window.confirm(
-      '⚠️ WARNING: This will permanently delete ALL user management data.\n\n' +
+      'WARNING: This will permanently delete ALL user management data.\n\n' +
       'This includes user activity logs, session data, and management records.\n\n' +
       'This action cannot be undone. Are you absolutely sure you want to proceed?'
     );
@@ -1925,21 +1924,21 @@ const AdminDashboard: React.FC = () => {
       });
       
       if (response.ok) {
-        alert('✅ User management data cleared successfully!');
+        alert('User management data cleared successfully!');
         fetchUsers();
         fetchStats();
       } else {
-        alert('❌ Failed to clear user management data');
+        alert('Failed to clear user management data');
       }
     } catch (error) {
       console.error('Error clearing user management data:', error);
-      alert('❌ Error clearing user management data');
+      alert('Error clearing user management data');
     }
   };
 
   const clearVideoManagementData = async () => {
     const isConfirmed = window.confirm(
-      '⚠️ WARNING: This will permanently delete ALL video management data.\n\n' +
+      'WARNING: This will permanently delete ALL video management data.\n\n' +
       'This includes video metadata, upload history, and management records.\n\n' +
       'This action cannot be undone. Are you absolutely sure you want to proceed?'
     );
@@ -1956,21 +1955,21 @@ const AdminDashboard: React.FC = () => {
       });
       
       if (response.ok) {
-        alert('✅ Video management data cleared successfully!');
+        alert('Video management data cleared successfully!');
         fetchAllVideos();
         fetchVideoCount();
       } else {
-        alert('❌ Failed to clear video management data');
+        alert('Failed to clear video management data');
       }
     } catch (error) {
       console.error('Error clearing video management data:', error);
-      alert('❌ Error clearing video management data');
+      alert('Error clearing video management data');
     }
   };
 
   const clearQuizManagementData = async () => {
     const isConfirmed = window.confirm(
-      '⚠️ WARNING: This will permanently delete ALL quiz management data.\n\n' +
+      'WARNING: This will permanently delete ALL quiz management data.\n\n' +
       'This includes quiz metadata, questions, attempts, and management records.\n\n' +
       'This action cannot be undone. Are you absolutely sure you want to proceed?'
     );
@@ -1987,21 +1986,21 @@ const AdminDashboard: React.FC = () => {
       });
       
       if (response.ok) {
-        alert('✅ Quiz management data cleared successfully!');
+        alert('Quiz management data cleared successfully!');
         fetchAllQuizzes();
         fetchQuizCount();
       } else {
-        alert('❌ Failed to clear quiz management data');
+        alert('Failed to clear quiz management data');
       }
     } catch (error) {
       console.error('Error clearing quiz management data:', error);
-      alert('❌ Error clearing quiz management data');
+      alert('Error clearing quiz management data');
     }
   };
 
   const clearResourceManagementData = async () => {
     const isConfirmed = window.confirm(
-      '⚠️ WARNING: This will permanently delete ALL resource management data.\n\n' +
+      'WARNING: This will permanently delete ALL resource management data.\n\n' +
       'This includes document metadata, upload history, and management records.\n\n' +
       'This action cannot be undone. Are you absolutely sure you want to proceed?'
     );
@@ -2018,15 +2017,15 @@ const AdminDashboard: React.FC = () => {
       });
       
       if (response.ok) {
-        alert('✅ Resource management data cleared successfully!');
+        alert('Resource management data cleared successfully!');
         fetchAllResources();
         fetchResourceCount();
       } else {
-        alert('❌ Failed to clear resource management data');
+        alert('Failed to clear resource management data');
       }
     } catch (error) {
       console.error('Error clearing resource management data:', error);
-      alert('❌ Error clearing resource management data');
+      alert('Error clearing resource management data');
     }
   };
 
@@ -2054,7 +2053,6 @@ const AdminDashboard: React.FC = () => {
                   <h3 className="text-sm font-medium text-gray-700 mb-2">Total Users</h3>
                   <p className="text-3xl font-bold text-green-600">{stats.total}</p>
                 </div>
-                <div className="text-4xl">👥</div>
               </div>
             </div>
           </div>
@@ -2066,7 +2064,6 @@ const AdminDashboard: React.FC = () => {
                   <h3 className="text-sm font-medium text-gray-700 mb-2">Students</h3>
                   <p className="text-3xl font-bold text-yellow-600">{stats.students}</p>
                 </div>
-                <div className="text-4xl">🎓</div>
               </div>
             </div>
           </div>
@@ -2102,7 +2099,6 @@ const AdminDashboard: React.FC = () => {
                   <h3 className="text-sm font-medium text-gray-700 mb-2">Verified</h3>
                   <p className="text-3xl font-bold text-green-600">{stats.verified}</p>
                 </div>
-                <div className="text-4xl">✅</div>
               </div>
             </div>
           </div>
@@ -2120,7 +2116,6 @@ const AdminDashboard: React.FC = () => {
                     : 'border-transparent text-gray-500'
                 }`}
               >
-                <span>👥</span>
                 <span>User Management</span>
                 <span className="bg-gray-100 text-gray-600 rounded-full px-2 py-1 text-xs">
                   {stats.total}
@@ -2134,7 +2129,6 @@ const AdminDashboard: React.FC = () => {
                     : 'border-transparent text-gray-500'
                 }`}
               >
-                <span>⏳</span>
                 <span>Role Approvals</span>
                 <span className="bg-red-100 text-red-600 rounded-full px-2 py-1 text-xs">
                   {users.filter(u => u.requestedRole && u.requestedRole !== u.role && !u.rejectionReason).length}
@@ -2148,7 +2142,6 @@ const AdminDashboard: React.FC = () => {
                     : 'border-transparent text-gray-500'
                 }`}
               >
-                <span>🎥</span>
                 <span>Content Management</span>
                 <div className="flex space-x-1">
                   <span className="bg-blue-100 text-blue-600 rounded-full px-2 py-1 text-xs">
@@ -2426,7 +2419,6 @@ const AdminDashboard: React.FC = () => {
               </div>
             ) : allVideos.length === 0 ? (
               <div className="text-center py-10">
-                <div className="text-6xl mb-4">🎬</div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">No Videos</h3>
                 <p className="text-gray-600">No videos have been uploaded yet!</p>
               </div>
@@ -2443,7 +2435,6 @@ const AdminDashboard: React.FC = () => {
                     }`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                          <span className="text-2xl">🎬</span>
                           <span className="text-sm font-medium bg-white bg-opacity-20 px-2 py-1 rounded">
                             Video
                           </span>
@@ -2613,7 +2604,6 @@ const AdminDashboard: React.FC = () => {
                 </div>
               ) : [...allQuizzes, ...quizzesPendingDeletion].length === 0 ? (
                 <div className="text-center py-10">
-                  <div className="text-6xl mb-4">📝</div>
                   <h3 className="text-xl font-bold text-gray-800 mb-2">No Quizzes for Review</h3>
                   <p className="text-gray-600">No pending, rejected, or approved quizzes to display!</p>
                 </div>
@@ -2625,7 +2615,6 @@ const AdminDashboard: React.FC = () => {
                       <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 text-white">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
-                            <span className="text-2xl">📝</span>
                             <span className="text-sm font-medium bg-white bg-opacity-20 px-2 py-1 rounded">
                               {quiz.type.charAt(0).toUpperCase() + quiz.type.slice(1)}
                             </span>
@@ -2822,7 +2811,7 @@ const AdminDashboard: React.FC = () => {
                             <span className="text-2xl">
                               {resource.type === 'document' ? '📄' : 
                                resource.type === 'audio' ? '🎵' :
-                               resource.type === 'image' ? '🖼️' : '📎'}
+                               resource.type === 'image' ? 'Image' : 'File'}
                             </span>
                             <span className="text-sm font-medium bg-white bg-opacity-20 px-2 py-1 rounded">
                               {resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}
@@ -2995,7 +2984,6 @@ const AdminDashboard: React.FC = () => {
               </div>
             ) : users.filter(u => u.requestedRole && u.requestedRole !== u.role && !u.rejectionReason).length === 0 ? (
               <div className="text-center py-10">
-                <div className="text-6xl mb-4">✅</div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">No Pending Requests</h3>
                 <p className="text-gray-600">All role requests have been processed!</p>
               </div>

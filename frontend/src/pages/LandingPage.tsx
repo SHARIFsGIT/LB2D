@@ -258,7 +258,7 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              🎯 Choose Your German Level
+              Choose Your German Level
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               From complete beginner to advanced proficiency - we have the perfect course for your German learning journey
@@ -352,7 +352,6 @@ const LandingPage: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">📚</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">No Courses Available</h3>
               <p className="text-gray-600 mb-6">We're working on adding new courses for you. Check back soon!</p>
               <Button 
@@ -382,7 +381,7 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              🌟 Why Learn Bangla to Deutsch?
+              Why Learn Bangla to Deutsch?
             </h2>
             <p className="text-xl text-gray-600">
               The only platform designed specifically for Bengali speakers learning German
@@ -391,7 +390,6 @@ const LandingPage: React.FC = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="text-center p-8 hover:shadow-xl transition-all bg-gradient-to-br from-blue-25 to-blue-50">
-              <div className="text-6xl mb-4">👥</div>
               <h3 className="text-2xl font-bold text-blue-700 mb-4">Bengali Teachers</h3>
               <p className="text-blue-600">
                 Learn from native Bengali speakers who mastered German. They understand your challenges!
@@ -399,7 +397,6 @@ const LandingPage: React.FC = () => {
             </Card>
 
             <Card className="text-center p-8 hover:shadow-xl transition-all bg-gradient-to-br from-green-25 to-green-50">
-              <div className="text-6xl mb-4">🏆</div>
               <h3 className="text-2xl font-bold text-green-700 mb-4">Proven Method</h3>
               <p className="text-green-600">
                 Our unique teaching method combines German grammar with Bengali explanations for faster learning.
@@ -407,7 +404,6 @@ const LandingPage: React.FC = () => {
             </Card>
 
             <Card className="text-center p-8 hover:shadow-xl transition-all bg-gradient-to-br from-purple-25 to-purple-50">
-              <div className="text-6xl mb-4">📜</div>
               <h3 className="text-2xl font-bold text-purple-700 mb-4">Official Certificates</h3>
               <p className="text-purple-600">
                 Get internationally recognized CEFR certificates for your German proficiency level.
@@ -415,7 +411,6 @@ const LandingPage: React.FC = () => {
             </Card>
 
             <Card className="text-center p-8 hover:shadow-xl transition-all bg-gradient-to-br from-orange-25 to-orange-50">
-              <div className="text-6xl mb-4">💼</div>
               <h3 className="text-2xl font-bold text-orange-700 mb-4">Career Support</h3>
               <p className="text-orange-600">
                 Get guidance on German job applications, visa processes, and university admissions.
@@ -423,7 +418,6 @@ const LandingPage: React.FC = () => {
             </Card>
 
             <Card className="text-center p-8 hover:shadow-xl transition-all bg-gradient-to-br from-teal-25 to-teal-50">
-              <div className="text-6xl mb-4">🔄</div>
               <h3 className="text-2xl font-bold text-teal-700 mb-4">Flexible Schedule</h3>
               <p className="text-teal-600">
                 Morning, evening, and weekend classes to fit your busy schedule in Bangladesh.
@@ -431,7 +425,6 @@ const LandingPage: React.FC = () => {
             </Card>
 
             <Card className="text-center p-8 hover:shadow-xl transition-all bg-gradient-to-br from-red-25 to-red-50">
-              <div className="text-6xl mb-4">🌍</div>
               <h3 className="text-2xl font-bold text-red-700 mb-4">Global Community</h3>
               <p className="text-red-600">
                 Join thousands of Bangladeshi students who are now living and working in Germany.
@@ -445,7 +438,7 @@ const LandingPage: React.FC = () => {
       <section className="py-12 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3">💬 Student Success Stories</h2>
+            <h2 className="text-3xl font-bold mb-3">Student Success Stories</h2>
             <p className="text-lg">Real stories from Bangladeshi students who achieved their German dreams</p>
           </div>
 
@@ -525,25 +518,21 @@ const LandingPage: React.FC = () => {
             <div>
               <h4 className="font-bold mb-4">Support</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>📧 learnbangla2deutsch@gmail.com</li>
-                <li>📱 +49-176-31397772</li>
-                <li>🌐 www.learnbangla2deutsch.com</li>
-                <li>💬 Join our WhatsApp Group</li>
+                <li>learnbangla2deutsch@gmail.com</li>
+                <li>+49-176-31397772</li>
+                <li>www.learnbangla2deutsch.com</li>
+                <li>Join our WhatsApp Group</li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4">Follow Us</h4>
               <div className="flex space-x-4">
-                <div className="text-2xl cursor-pointer text-gray-400">📘</div>
-                <div className="text-2xl cursor-pointer text-gray-400">📷</div>
-                <div className="text-2xl cursor-pointer text-gray-400">🐦</div>
-                <div className="text-2xl cursor-pointer text-gray-400">💼</div>
               </div>
             </div>
           </div>
           
           <div className="border-t border-gray-800 pt-8 mt-8 text-center text-gray-400">
-            <p>&copy; 2024 Learn Bangla to Deutsch. All rights reserved. Made with ❤️ for Bengali German learners.</p>
+            <p>&copy; 2024 Learn Bangla to Deutsch. All rights reserved. Made for Bengali German learners.</p>
           </div>
         </div>
       </footer>

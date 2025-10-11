@@ -103,10 +103,10 @@ const CourseCatalog: React.FC = () => {
         });
         setEnrollments(enrollmentMap);
       } else {
-        console.warn('⚠️ Enrollment fetch failed:', data.message);
+        console.warn('Enrollment fetch failed:', data.message);
       }
     } catch (error) {
-      console.error("❌ Failed to fetch enrollments:", error);
+      console.error("Failed to fetch enrollments:", error);
     }
   };
 
@@ -206,7 +206,7 @@ const CourseCatalog: React.FC = () => {
         {/* Level Filter */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            🎯 Choose Your German Level
+            Choose Your German Level
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             <button
@@ -412,7 +412,6 @@ const CourseCatalog: React.FC = () => {
                         disabled
                         className="w-full py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold border-2 border-gray-200 cursor-not-allowed"
                       >
-                        <span className="mr-2">😔</span>
                         Course Full
                       </button>
                     ) : (
@@ -433,7 +432,6 @@ const CourseCatalog: React.FC = () => {
         {courses.length === 0 && (
           <div className="text-center py-16">
             <div className="bg-white rounded-3xl shadow-xl p-12 border border-gray-100">
-              <div className="text-6xl mb-6">😔</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
                 No courses available
               </h3>
@@ -468,7 +466,6 @@ const CourseCatalog: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="text-5xl mb-4">🎓</div>
                 <h4 className="text-xl font-bold text-white mb-3">
                   Certified Teachers
                 </h4>
@@ -478,7 +475,6 @@ const CourseCatalog: React.FC = () => {
                 </p>
               </div>
               <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="text-5xl mb-4">📊</div>
                 <h4 className="text-xl font-bold text-white mb-3">
                   CEFR Aligned
                 </h4>
@@ -488,7 +484,6 @@ const CourseCatalog: React.FC = () => {
                 </p>
               </div>
               <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="text-5xl mb-4">🏆</div>
                 <h4 className="text-xl font-bold text-white mb-3">
                   Get Certified
                 </h4>

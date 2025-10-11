@@ -357,7 +357,7 @@ const Assessment: React.FC = () => {
           throw new Error('Failed to fetch quiz');
         }
       } catch (error) {
-        console.error('❌ Error fetching quiz:', error);
+        console.error('Error fetching quiz:', error);
         showError('Failed to load quiz. Please try again.', 'Error');
         setLoading(false);
         navigate('/dashboard');
@@ -517,10 +517,10 @@ const Assessment: React.FC = () => {
             <div className="mb-6 p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl">
               <h3 className="font-semibold mb-2 text-gray-700">{quizId ? 'Quiz Summary:' : 'Assessment Summary:'}</h3>
               <ul className="text-sm space-y-1 text-gray-600">
-                <li>✅ Total Questions Attempted: {Object.keys(answers).length}</li>
-                {!quizId && <li>✅ Final Step Reached: Step {currentStep}</li>}
-                <li>✅ Time Taken: {formatTimeSpent(totalTimeSpent)}</li>
-                {quizId && quiz && <li>✅ {quiz.type.charAt(0).toUpperCase() + quiz.type.slice(1)} Completed</li>}
+                <li>Total Questions Attempted: {Object.keys(answers).length}</li>
+                {!quizId && <li>Final Step Reached: Step {currentStep}</li>}
+                <li>Time Taken: {formatTimeSpent(totalTimeSpent)}</li>
+                {quizId && quiz && <li>{quiz.type.charAt(0).toUpperCase() + quiz.type.slice(1)} Completed</li>}
               </ul>
             </div>
           )}
@@ -544,7 +544,7 @@ const Assessment: React.FC = () => {
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                          {isCorrect ? 'Correct' : 'Incorrect'}
                         </span>
                       </div>
                       
@@ -646,7 +646,7 @@ const Assessment: React.FC = () => {
                 ? 'bg-red-50 text-red-600 animate-pulse border-2 border-red-200' 
                 : 'bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200'
             }`}>
-              ⏱️ {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+              Time: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
             </div>
           </div>
 

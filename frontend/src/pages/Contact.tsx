@@ -20,77 +20,67 @@ const Contact: React.FC = () => {
     {
       id: 1,
       category: 'enrollment',
-      icon: '📚',
       question: 'How do I enroll in a course?',
       answer: 'Simply browse our courses, select your level, and click "Enroll". You\'ll need to create an account and complete the payment process. Our enrollment is available 24/7 and you can start immediately after payment.'
     },
     {
       id: 2,
       category: 'certificates',
-      icon: '🏆',
       question: 'Are the certificates internationally recognized?',
       answer: 'Yes, our certificates follow CEFR standards and are recognized by German institutions, universities, and employers worldwide. They comply with Common European Framework of Reference for Languages.'
     },
     {
       id: 3,
       category: 'payment',
-      icon: '💰',
       question: 'Can I get a refund if I\'m not satisfied?',
       answer: 'We offer a 30-day money-back guarantee. If you\'re not satisfied with your course, contact us within 30 days for a full refund. No questions asked!'
     },
     {
       id: 4,
       category: 'assessment',
-      icon: '📝',
       question: 'Do you offer placement tests?',
       answer: 'Yes, we provide free placement tests to help you determine your current German level and choose the right course. The test takes about 15 minutes and covers all skills.'
     },
     {
       id: 5,
       category: 'classes',
-      icon: '🎥',
       question: 'Are classes live or recorded?',
       answer: 'We offer both live interactive classes and recorded sessions, allowing you to learn at your own pace while still getting live instruction. Live classes include Q&A sessions with native speakers.'
     },
     {
       id: 6,
       category: 'technical',
-      icon: '💻',
       question: 'What technical requirements do I need?',
       answer: 'You need a stable internet connection, a computer or mobile device, and a modern web browser. For live classes, we recommend having a microphone and camera for better interaction.'
     },
     {
       id: 7,
       category: 'classes',
-      icon: '👥',
       question: 'What is the class size?',
       answer: 'Our live classes are limited to 8-12 students to ensure personalized attention. This allows our instructors to focus on each student\'s progress and provide individual feedback.'
     },
     {
       id: 8,
       category: 'support',
-      icon: '🤝',
       question: 'Do you provide career counseling?',
       answer: 'Yes, we offer career guidance sessions to help you understand how German language skills can advance your career. We also provide guidance on studying and working in Germany.'
     },
     {
       id: 9,
       category: 'materials',
-      icon: '📖',
       question: 'Are course materials included?',
       answer: 'Yes, all digital course materials, exercises, and resources are included in your enrollment. You\'ll also receive downloadable PDFs and audio files for offline study.'
     },
     {
       id: 10,
       category: 'assessment',
-      icon: '⭐',
       question: 'How is progress assessed?',
       answer: 'We use continuous assessment through quizzes, assignments, speaking exercises, and regular feedback. You\'ll receive detailed progress reports and personalized recommendations.'
     }
   ];
 
   const categories = [
-    { value: 'all', label: 'All Questions', icon: '❓' },
+    { value: 'all', label: 'All Questions' },
     { value: 'enrollment', label: 'Enrollment', icon: '📚' },
     { value: 'classes', label: 'Classes', icon: '🎥' },
     { value: 'certificates', label: 'Certificates', icon: '🏆' },
@@ -240,7 +230,6 @@ const Contact: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             <Card className="text-center p-8">
-              <div className="text-5xl mb-4">📧</div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Email Us</h3>
               <p className="text-gray-600 mb-3">
                 Send us an email and we'll respond within 24 hours
@@ -251,7 +240,6 @@ const Contact: React.FC = () => {
             </Card>
 
             <Card className="text-center p-8">
-              <div className="text-5xl mb-4">📱</div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Call Us</h3>
               <p className="text-gray-600 mb-3">
                 Speak with our advisors during business hours
@@ -261,7 +249,6 @@ const Contact: React.FC = () => {
             </Card>
 
             <Card className="text-center p-8">
-              <div className="text-5xl mb-4">💬</div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">WhatsApp</h3>
               <p className="text-gray-600 mb-3">
                 Join our community group for instant support
@@ -368,7 +355,6 @@ const Contact: React.FC = () => {
                 {/* Search Bar */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-400">🔍</span>
                   </div>
                   <input
                     type="text"
@@ -401,7 +387,6 @@ const Contact: React.FC = () => {
               <div className="space-y-2">
                 {filteredFaqs.length === 0 ? (
                   <Card className="p-6 text-center">
-                    <div className="text-4xl mb-3">🤔</div>
                     <p className="text-gray-600">No questions found matching your search.</p>
                     <Button 
                       onClick={() => {

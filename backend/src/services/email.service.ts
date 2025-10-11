@@ -261,7 +261,7 @@ class EmailService {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background-color: #f59e0b; padding: 20px; text-align: center;">
-            <h1 style="color: white; margin: 0;">⚠️ Admin Attention Required</h1>
+            <h1 style="color: white; margin: 0;">Admin Attention Required</h1>
           </div>
           <div style="padding: 30px; background-color: #f7f7f7;">
             <h2>New ${requestedRole} Registration</h2>
@@ -333,7 +333,7 @@ class EmailService {
               <p><strong>Transaction ID:</strong> ${paymentInfo.transactionId}</p>
               <p><strong>Amount:</strong> ${paymentInfo.currency} ${paymentInfo.amount}</p>
               <p><strong>Payment Method:</strong> ${paymentInfo.paymentMethod}</p>
-              <p><strong>Status:</strong> ✅ Completed</p>
+              <p><strong>Status:</strong> Completed</p>
             </div>
 
             <div style="background-color: #eff6ff; border-radius: 10px; padding: 20px; margin: 20px 0;">
@@ -581,7 +581,7 @@ class EmailService {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background-color: ${isApproved ? '#10b981' : '#ef4444'}; padding: 20px; text-align: center;">
-            <h1 style="color: white; margin: 0;">${isApproved ? '✅' : '❌'} Video ${isApproved ? 'Approved' : 'Rejected'}</h1>
+            <h1 style="color: white; margin: 0;">Video ${isApproved ? 'Approved' : 'Rejected'}</h1>
             <p style="color: ${isApproved ? '#d1fae5' : '#fecaca'}; margin: 5px 0 0 0; font-size: 14px;">Learn Bangla to Deutsch</p>
           </div>
           <div style="padding: 30px; background-color: #f7f7f7;">
@@ -886,13 +886,13 @@ class EmailService {
             </div>
 
             <div style="background-color: white; border-radius: 10px; padding: 20px; text-align: center; border: 2px dashed #e2e8f0;">
-              <h4 style="color: #64748b; margin-top: 0; font-size: 14px;">💡 Need Help?</h4>
+              <h4 style="color: #64748b; margin-top: 0; font-size: 14px;">Need Help?</h4>
               <p style="color: #64748b; margin: 5px 0; font-size: 13px;">If you have any questions about your course assignment or need assistance</p>
               <a href="${process.env.CLIENT_URL}/contact" style="color: #3b82f6; text-decoration: none; font-weight: bold; font-size: 13px;">contact our support team</a>
             </div>
 
             <div style="background-color: #fef3c7; border-radius: 8px; padding: 15px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-              <h4 style="color: #92400e; margin-top: 0; font-size: 14px;">⚠️ Important Notes</h4>
+              <h4 style="color: #92400e; margin-top: 0; font-size: 14px;">Important Notes</h4>
               <ul style="color: #92400e; margin: 5px 0; padding-left: 20px; font-size: 13px; line-height: 1.6;">
                 <li>All course materials must be uploaded before the start date</li>
                 <li>Videos require admin approval before becoming visible to students</li>
@@ -1003,7 +1003,7 @@ class EmailService {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">🎓 New Course Available!</h1>
+            <h1 style="color: white; margin: 0; font-size: 28px;">New Course Available!</h1>
             <p style="color: #e0e7ff; margin: 10px 0 0 0; font-size: 16px;">Expand your German language skills</p>
           </div>
 
@@ -1015,7 +1015,7 @@ class EmailService {
               </p>
 
               <div style="background-color: #dbeafe; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-                <h3 style="color: #1d4ed8; margin-top: 0; font-size: 16px;">📚 Course Details</h3>
+                <h3 style="color: #1d4ed8; margin-top: 0; font-size: 16px;">Course Details</h3>
                 <div style="background-color: white; border-radius: 6px; padding: 15px; margin: 10px 0;">
                   <p style="margin: 5px 0; color: #374151;"><strong>Course Title:</strong> ${courseInfo.courseTitle}</p>
                   <p style="margin: 5px 0; color: #374151;"><strong>Level:</strong> <span style="background-color: #3b82f6; color: white; padding: 2px 8px; border-radius: 5px; font-size: 12px;">${courseInfo.courseLevel}</span></p>
@@ -1035,7 +1035,7 @@ class EmailService {
               </div>
 
               <div style="background-color: #ecfdf5; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #10b981;">
-                <h3 style="color: #059669; margin-top: 0; font-size: 16px;">✨ Why Enroll?</h3>
+                <h3 style="color: #059669; margin-top: 0; font-size: 16px;">Why Enroll?</h3>
                 <ul style="color: #374151; margin: 10px 0; padding-left: 20px; line-height: 1.8;">
                   <li>Learn from experienced instructors</li>
                   <li>Interactive lessons and engaging content</li>
@@ -1046,7 +1046,7 @@ class EmailService {
               </div>
 
               <div style="background-color: #fef3c7; border-radius: 8px; padding: 15px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-                <h4 style="color: #92400e; margin-top: 0; font-size: 14px;">⏰ Limited Seats Available</h4>
+                <h4 style="color: #92400e; margin-top: 0; font-size: 14px;">Limited Seats Available</h4>
                 <p style="color: #92400e; margin: 5px 0; font-size: 13px;">
                   This course has limited enrollment capacity. Secure your spot early to avoid missing out on this opportunity!
                 </p>
@@ -1063,18 +1063,18 @@ class EmailService {
             </div>
 
             <div style="background-color: white; border-radius: 10px; padding: 20px; text-align: center; border: 2px dashed #e2e8f0;">
-              <h4 style="color: #64748b; margin-top: 0; font-size: 14px;">💡 Questions?</h4>
+              <h4 style="color: #64748b; margin-top: 0; font-size: 14px;">Questions?</h4>
               <p style="color: #64748b; margin: 5px 0; font-size: 13px;">Need more information about this course?</p>
               <p style="color: #64748b; margin: 5px 0; font-size: 13px;">
-                📧 Email: learnbangla2deutsch@gmail.com<br>
-                📱 WhatsApp: +49 (177) 879-7486
+                Email: learnbangla2deutsch@gmail.com<br>
+                WhatsApp: +49 (177) 879-7486
               </p>
             </div>
           </div>
 
           <div style="background-color: #1e293b; color: #94a3b8; padding: 20px; text-align: center; font-size: 12px; border-radius: 0 0 10px 10px;">
             <p style="margin: 0;">© 2025 LEARN BANGLA TO DEUTSCH. All rights reserved.</p>
-            <p style="margin: 5px 0 0 0;">Your journey to German fluency starts here! 🇩🇪</p>
+            <p style="margin: 5px 0 0 0;">Your journey to German fluency starts here!</p>
           </div>
         </div>
       `

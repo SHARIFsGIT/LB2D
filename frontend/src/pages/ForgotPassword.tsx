@@ -54,7 +54,6 @@ const ForgotPassword: React.FC = () => {
         {message && (
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-6 backdrop-blur-sm">
             <div className="flex items-center">
-              <span className="mr-2">✅</span>
               {message}
             </div>
           </div>
@@ -63,7 +62,6 @@ const ForgotPassword: React.FC = () => {
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 backdrop-blur-sm">
             <div className="flex items-center">
-              <span className="mr-2">⚠️</span>
               {error}
             </div>
           </div>

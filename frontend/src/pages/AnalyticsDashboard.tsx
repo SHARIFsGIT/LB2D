@@ -389,7 +389,7 @@ const AnalyticsDashboard: React.FC = () => {
         const testData = await testsResponse.json();
         combinedData.tests = testData.data?.tests || [];
       } else {
-        console.error('❌ Failed to fetch tests:', testsResponse.statusText);
+        console.error('Failed to fetch tests:', testsResponse.statusText);
       }
 
       // Process quiz attempts data
@@ -397,7 +397,7 @@ const AnalyticsDashboard: React.FC = () => {
         const quizData = await quizAttemptsResponse.json();
         combinedData.quizzes = quizData.data || [];
       } else {
-        console.error('❌ Failed to fetch quiz attempts:', quizAttemptsResponse.statusText);
+        console.error('Failed to fetch quiz attempts:', quizAttemptsResponse.statusText);
       }
 
       // Process enrollments data
@@ -405,12 +405,12 @@ const AnalyticsDashboard: React.FC = () => {
         const enrollmentsData = await enrollmentsResponse.json();
         combinedData.enrollments = enrollmentsData.data || [];
       } else {
-        console.error('❌ Failed to fetch enrollments:', enrollmentsResponse.statusText);
+        console.error('Failed to fetch enrollments:', enrollmentsResponse.statusText);
       }
 
       setAssessmentReports(combinedData);
     } catch (error) {
-      console.error("❌ Failed to fetch assessment and quiz reports:", error);
+      console.error("Failed to fetch assessment and quiz reports:", error);
       setAssessmentReports({ tests: [], quizzes: [], enrollments: [] });
     }
   }, []);
@@ -804,7 +804,7 @@ Generated on: ${new Date().toLocaleString()}
 
   const clearPaymentData = async () => {
     const isConfirmed = window.confirm(
-      "⚠️ WARNING: This will permanently delete ALL payment and revenue data.\n\n" +
+      "WARNING: This will permanently delete ALL payment and revenue data.\n\n" +
         "This action cannot be undone. Are you absolutely sure you want to proceed?"
     );
 
@@ -835,7 +835,7 @@ Generated on: ${new Date().toLocaleString()}
       if (response.ok) {
         const data = await response.json();
         alert(
-          `✅ Success! Cleared ${data.data.deletedPayments} payment records.`
+          `Success! Cleared ${data.data.deletedPayments} payment records.`
         );
 
         // Refresh the analytics data
@@ -845,18 +845,18 @@ Generated on: ${new Date().toLocaleString()}
       } else {
         const errorData = await response.json();
         alert(
-          `❌ Error: ${errorData.message || "Failed to clear payment data"}`
+          `Error: ${errorData.message || "Failed to clear payment data"}`
         );
       }
     } catch (error) {
       console.error("Error clearing payment data:", error);
-      alert("❌ Network error occurred while clearing data. Please try again.");
+      alert("Network error occurred while clearing data. Please try again.");
     }
   };
 
   const clearTestData = async () => {
     const isConfirmed = window.confirm(
-      "⚠️ WARNING: This will permanently delete ALL test and assessment data.\n\n" +
+      "WARNING: This will permanently delete ALL test and assessment data.\n\n" +
         "This includes all student exam results, scores, and certificates.\n\n" +
         "This action cannot be undone. Are you absolutely sure you want to proceed?"
     );
@@ -887,7 +887,7 @@ Generated on: ${new Date().toLocaleString()}
 
       if (response.ok) {
         const data = await response.json();
-        alert(`✅ Success! Cleared ${data.data.deletedTests} test records.`);
+        alert(`Success! Cleared ${data.data.deletedTests} test records.`);
 
         // Refresh the analytics data
         fetchAssessmentReports();
@@ -896,11 +896,11 @@ Generated on: ${new Date().toLocaleString()}
         }
       } else {
         const errorData = await response.json();
-        alert(`❌ Error: ${errorData.message || "Failed to clear test data"}`);
+        alert(`Error: ${errorData.message || "Failed to clear test data"}`);
       }
     } catch (error) {
       console.error("Error clearing test data:", error);
-      alert("❌ Network error occurred while clearing data. Please try again.");
+      alert("Network error occurred while clearing data. Please try again.");
     }
   };
 
@@ -929,7 +929,7 @@ Generated on: ${new Date().toLocaleString()}
       if (response.ok) {
         const data = await response.json();
         alert(
-          `✅ Success! Initialized salary records.\n\nCreated: ${data.data.created} new records\nExisting: ${data.data.existing} records\nTotal: ${data.data.totalProcessed} supervisors processed`
+          `Success! Initialized salary records.\n\nCreated: ${data.data.created} new records\nExisting: ${data.data.existing} records\nTotal: ${data.data.totalProcessed} supervisors processed`
         );
 
         // Refresh the analytics data
@@ -947,19 +947,19 @@ Generated on: ${new Date().toLocaleString()}
           errorMessage = `Server responded with status ${response.status}`;
         }
         console.error("Initialize error:", response.status, errorMessage);
-        alert(`❌ ${errorMessage}`);
+        alert(`${errorMessage}`);
       }
     } catch (error) {
       console.error("Error initializing supervisor salaries:", error);
       alert(
-        "❌ Network error occurred while initializing salary records. Please try again."
+        "Network error occurred while initializing salary records. Please try again."
       );
     }
   };
 
   const clearSupervisorSalaryData = async () => {
     const isConfirmed = window.confirm(
-      "⚠️ WARNING: This will permanently delete ALL supervisor salary and compensation data.\n\n" +
+      "WARNING: This will permanently delete ALL supervisor salary and compensation data.\n\n" +
         "This action cannot be undone. Are you absolutely sure you want to proceed?"
     );
 
@@ -980,7 +980,7 @@ Generated on: ${new Date().toLocaleString()}
 
       if (response.ok) {
         const data = await response.json();
-        alert(`✅ Success! Cleared supervisor salary data.`);
+        alert(`Success! Cleared supervisor salary data.`);
 
         // Refresh the analytics data
         if (activeTab === "supervisors") {
@@ -988,17 +988,17 @@ Generated on: ${new Date().toLocaleString()}
         }
       } else {
         const error = await response.json();
-        alert(`❌ Failed to clear supervisor salary data: ${error.message}`);
+        alert(`Failed to clear supervisor salary data: ${error.message}`);
       }
     } catch (error) {
       console.error("Error clearing supervisor salary data:", error);
-      alert("❌ Network error occurred while clearing data. Please try again.");
+      alert("Network error occurred while clearing data. Please try again.");
     }
   };
 
   const handleEditSupervisor = (supervisor: any) => {
     const newSalary = prompt(
-      `💼 Edit Monthly Salary\n\nSupervisor: ${
+      `Edit Monthly Salary\n\nSupervisor: ${
         supervisor.name
       }\nCurrent Salary: €${
         supervisor.monthlySalary?.toLocaleString() || 0
@@ -1009,7 +1009,7 @@ Generated on: ${new Date().toLocaleString()}
     if (newSalary && !isNaN(Number(newSalary)) && Number(newSalary) >= 0) {
       const amount = Number(newSalary);
       const confirmed = window.confirm(
-        `✅ Confirm Salary Update\n\nSupervisor: ${
+        `Confirm Salary Update\n\nSupervisor: ${
           supervisor.name
         }\nOld Salary: €${
           supervisor.monthlySalary?.toLocaleString() || 0
@@ -1020,7 +1020,7 @@ Generated on: ${new Date().toLocaleString()}
         updateSupervisorSalary(supervisor.supervisorId, amount);
       }
     } else if (newSalary !== null && newSalary !== "") {
-      alert("❌ Please enter a valid positive number for the salary amount.");
+      alert("Please enter a valid positive number for the salary amount.");
     }
   };
 
@@ -1047,7 +1047,7 @@ Generated on: ${new Date().toLocaleString()}
 
       if (response.ok) {
         alert(
-          "✅ Salary Updated Successfully!\n\nThe supervisor salary has been updated and will be reflected in future payments."
+          "Salary Updated Successfully!\n\nThe supervisor salary has been updated and will be reflected in future payments."
         );
         fetchSupervisorAnalytics();
       } else {
@@ -1061,12 +1061,12 @@ Generated on: ${new Date().toLocaleString()}
           errorMessage = `Server responded with status ${response.status}`;
         }
         console.error("Salary update error:", response.status, errorMessage);
-        alert(`❌ ${errorMessage}`);
+        alert(`${errorMessage}`);
       }
     } catch (error) {
       console.error("Error updating salary:", error);
       alert(
-        "❌ Network error occurred while updating salary. Please try again."
+        "Network error occurred while updating salary. Please try again."
       );
     }
   };
@@ -1079,7 +1079,7 @@ Generated on: ${new Date().toLocaleString()}
     // Validate required data
     if (!supervisor.supervisorId) {
       alert(
-        "❌ Error: Supervisor ID is missing. Please refresh the page and try again."
+        "Error: Supervisor ID is missing. Please refresh the page and try again."
       );
       return;
     }
@@ -1100,7 +1100,7 @@ Generated on: ${new Date().toLocaleString()}
     };
 
     const methodChoice = prompt(
-      `💰 Select Payment Method\n\n` +
+      `Select Payment Method\n\n` +
         `Supervisor: ${supervisor.name}\n` +
         `Month: ${currentDate.toLocaleDateString("en-US", {
           month: "long",
@@ -1124,7 +1124,7 @@ Generated on: ${new Date().toLocaleString()}
       Number(methodChoice) > 5
     ) {
       if (methodChoice !== null) {
-        alert("❌ Please enter a valid number between 1-5.");
+        alert("Please enter a valid number between 1-5.");
       }
       return;
     }
@@ -1134,7 +1134,7 @@ Generated on: ${new Date().toLocaleString()}
       paymentMethodLabels[selectedMethod as keyof typeof paymentMethodLabels];
 
     const confirmed = window.confirm(
-      `✅ Confirm Payment\n\n` +
+      `Confirm Payment\n\n` +
         `Supervisor: ${supervisor.name}\n` +
         `Email: ${supervisor.email}\n` +
         `Month: ${currentDate.toLocaleDateString("en-US", {
@@ -1169,7 +1169,7 @@ Generated on: ${new Date().toLocaleString()}
         if (response.ok) {
           const data = await response.json();
           alert(
-            "✅ Payment Processed Successfully!\n\nThe salary payment has been marked as completed for the current month."
+            "Payment Processed Successfully!\n\nThe salary payment has been marked as completed for the current month."
           );
           fetchSupervisorAnalytics();
         } else {
@@ -1197,7 +1197,7 @@ Generated on: ${new Date().toLocaleString()}
               errorMessage.includes("Supervisor salary record not found")
             ) {
               errorMessage +=
-                '\n\n💡 Tip: Click the "Initialize" button first to create salary records for all supervisors.';
+                '\n\nTip: Click the "Initialize" button first to create salary records for all supervisors.';
             }
           } catch (parseError) {
             errorMessage = `Server responded with status ${response.status}. Check console for details.`;
@@ -1208,12 +1208,12 @@ Generated on: ${new Date().toLocaleString()}
             response.status,
             errorMessage
           );
-          alert(`❌ ${errorMessage}`);
+          alert(`${errorMessage}`);
         }
       } catch (error) {
         console.error("Error marking payment:", error);
         alert(
-          "❌ Network error occurred while marking payment. Please try again."
+          "Network error occurred while marking payment. Please try again."
         );
       }
     }
@@ -1254,19 +1254,19 @@ Generated on: ${new Date().toLocaleString()}
           errorMessage = `Server responded with status ${response.status}`;
         }
         console.error("Payment toggle error:", response.status, errorMessage);
-        alert(`❌ ${errorMessage}`);
+        alert(`${errorMessage}`);
       }
     } catch (error) {
       console.error("Error updating salary payment:", error);
       alert(
-        "❌ Network error occurred while updating payment status. Please try again."
+        "Network error occurred while updating payment status. Please try again."
       );
     }
   };
 
   const clearVideoAnalyticsData = async () => {
     const isConfirmed = window.confirm(
-      "⚠️ WARNING: This will permanently delete ALL course video analytics data.\n\n" +
+      "WARNING: This will permanently delete ALL course video analytics data.\n\n" +
         "This includes video views, completion rates, and engagement metrics.\n\n" +
         "This action cannot be undone. Are you absolutely sure you want to proceed?"
     );
@@ -1288,7 +1288,7 @@ Generated on: ${new Date().toLocaleString()}
 
       if (response.ok) {
         const data = await response.json();
-        alert(`✅ Success! Cleared video analytics data.`);
+        alert(`Success! Cleared video analytics data.`);
 
         // Refresh the analytics data
         if (activeTab === "supervisors") {
@@ -1296,11 +1296,11 @@ Generated on: ${new Date().toLocaleString()}
         }
       } else {
         const error = await response.json();
-        alert(`❌ Failed to clear video analytics data: ${error.message}`);
+        alert(`Failed to clear video analytics data: ${error.message}`);
       }
     } catch (error) {
       console.error("Error clearing video analytics data:", error);
-      alert("❌ Network error occurred while clearing data. Please try again.");
+      alert("Network error occurred while clearing data. Please try again.");
     }
   };
 
@@ -1329,7 +1329,6 @@ Generated on: ${new Date().toLocaleString()}
                     : "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border border-gray-200"
                 }`}
               >
-                <span className="text-lg">🎓</span>
                 <span className="font-bold">Student Analysis</span>
               </button>
               <button
@@ -2339,7 +2338,7 @@ Generated on: ${new Date().toLocaleString()}
                                             : "bg-white border-gray-300 text-gray-400 hover:border-gray-400"
                                         }`}
                                         title={`${
-                                          isPaid ? "✅ Paid" : "⏳ Pending"
+                                          isPaid ? "Paid" : "Pending"
                                         } - ${new Date(
                                           2024,
                                           monthIndex
@@ -2673,11 +2672,11 @@ Generated on: ${new Date().toLocaleString()}
                                             %
                                             {(supervisor.approvalRate || 0) >=
                                             80
-                                              ? "🏆"
+                                              ? "High"
                                               : (supervisor.approvalRate ||
                                                   0) >= 60
-                                              ? "👍"
-                                              : "⚠️"}
+                                              ? "Good"
+                                              : "Low"}
                                           </div>
                                         </div>
                                       </td>
@@ -2795,11 +2794,6 @@ Generated on: ${new Date().toLocaleString()}
                                               : "bg-red-100 text-red-800"
                                           }`}
                                         >
-                                          {video.status === "approved"
-                                            ? "✅"
-                                            : video.status === "pending"
-                                            ? "⏳"
-                                            : "❌"}
                                           {video.status
                                             .charAt(0)
                                             .toUpperCase() +

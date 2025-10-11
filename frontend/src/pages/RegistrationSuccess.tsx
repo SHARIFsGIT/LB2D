@@ -54,7 +54,7 @@ const RegistrationSuccess: React.FC = () => {
           </div>
           <div className="bg-yellow-50 bg-opacity-80 backdrop-blur-sm p-3 rounded-xl border border-yellow-200 mb-4">
             <p className="text-yellow-800 text-xs">
-              ⚠️ Don't forget to check your spam folder if you don't see the email in your inbox.
+              Note: Don't forget to check your spam folder if you don't see the email in your inbox.
             </p>
           </div>
         </div>

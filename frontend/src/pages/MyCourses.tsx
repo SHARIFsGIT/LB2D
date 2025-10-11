@@ -85,10 +85,10 @@ const MyCourses: React.FC = () => {
         });
         setEnrolledCourses(validEnrollments);
       } else {
-        console.error('❌ Failed to fetch enrolled courses:', data.message);
+        console.error('Failed to fetch enrolled courses:', data.message);
       }
     } catch (error) {
-      console.error('❌ Error fetching enrolled courses:', error);
+      console.error('Error fetching enrolled courses:', error);
     }
     setLoading(false);
   };
@@ -96,7 +96,7 @@ const MyCourses: React.FC = () => {
   const filteredCourses = enrolledCourses.filter(course => {
     // Additional safety check: ensure course data is valid
     if (!course.courseId || !course.courseId._id || !course.courseId.title) {
-      console.warn('⚠️ Invalid course data found, filtering out:', course);
+      console.warn('Invalid course data found, filtering out:', course);
       return false;
     }
 
@@ -317,7 +317,7 @@ const MyCourses: React.FC = () => {
                             onClick={() => handleDownloadCertificate(enrollment.courseId._id)}
                             className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
                           >
-                            🏆 Download Certificate
+                            Download Certificate
                           </button>
                         )}
                       </div>
@@ -340,8 +340,8 @@ const MyCourses: React.FC = () => {
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 text-center py-12 px-8">
-            <div className="text-6xl mb-4">
-              {activeTab === 'active' ? '📚' : activeTab === 'completed' ? '🎯' : '📖'}
+            <div className="text-6xl mb-4 font-bold text-gray-400">
+              {activeTab === 'active' ? 'ACTIVE' : activeTab === 'completed' ? 'DONE' : 'ALL'}
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">
               {activeTab === 'active' ? 'No Active Courses' : 

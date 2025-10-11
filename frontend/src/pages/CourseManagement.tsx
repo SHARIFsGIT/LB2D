@@ -427,7 +427,7 @@ const CourseManagement: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <div className="text-4xl">📊</div>
+              <div className="text-4xl font-bold text-blue-600">STATS</div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-700">{courses.length} Total Courses</h3>
                 <p className="text-sm text-gray-500">Active courses</p>

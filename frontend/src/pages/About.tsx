@@ -121,7 +121,6 @@ const About: React.FC = () => {
           
           <div className="grid md:grid-cols-2 gap-8">
             <Card className="p-8 text-center">
-              <div className="text-6xl mb-4">🎯</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h3>
               <p className="text-gray-600">
                 To make German language learning accessible, effective, and culturally relevant for Bengali speakers, 
@@ -130,7 +129,6 @@ const About: React.FC = () => {
             </Card>
             
             <Card className="p-8 text-center">
-              <div className="text-6xl mb-4">🔭</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Vision</h3>
               <p className="text-gray-600">
                 To become the leading platform for Bengali speakers learning German, creating a bridge between 
@@ -153,7 +151,6 @@ const About: React.FC = () => {
           
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="p-6 text-center">
-              <div className="text-5xl mb-4">🗣️</div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Native Bengali Instructors</h3>
               <p className="text-gray-600">
                 Learn from teachers who understand your mother tongue and can explain German concepts in Bengali
@@ -161,7 +158,6 @@ const About: React.FC = () => {
             </Card>
             
             <Card className="p-6 text-center">
-              <div className="text-5xl mb-4">📖</div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Structured CEFR Curriculum</h3>
               <p className="text-gray-600">
                 Complete A1 to C1 courses following European standards with Bengali explanations
@@ -169,7 +165,6 @@ const About: React.FC = () => {
             </Card>
             
             <Card className="p-6 text-center">
-              <div className="text-5xl mb-4">🏆</div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Proven Success Rate</h3>
               <p className="text-gray-600">
                 96% of our students pass their German proficiency exams and achieve their goals
@@ -177,7 +172,6 @@ const About: React.FC = () => {
             </Card>
             
             <Card className="p-6 text-center">
-              <div className="text-5xl mb-4">💼</div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Career Guidance</h3>
               <p className="text-gray-600">
                 Get support with university applications, visa processes, and job applications in Germany
@@ -185,7 +179,6 @@ const About: React.FC = () => {
             </Card>
             
             <Card className="p-6 text-center">
-              <div className="text-5xl mb-4">🌐</div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Cultural Integration</h3>
               <p className="text-gray-600">
                 Learn not just the language, but also German culture, customs, and professional etiquette
@@ -193,7 +186,6 @@ const About: React.FC = () => {
             </Card>
             
             <Card className="p-6 text-center">
-              <div className="text-5xl mb-4">⏰</div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Flexible Learning</h3>
               <p className="text-gray-600">
                 Study at your own pace with live classes, recorded sessions, and interactive exercises

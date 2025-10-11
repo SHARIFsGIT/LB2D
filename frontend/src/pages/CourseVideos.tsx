@@ -181,10 +181,10 @@ const CourseVideos: React.FC = () => {
           }
         }
       } else {
-        console.error('❌ Failed to fetch enrollment status:', response.status);
+        console.error('Failed to fetch enrollment status:', response.status);
       }
     } catch (error) {
-      console.error('❌ Error fetching enrollment status:', error);
+      console.error('Error fetching enrollment status:', error);
     }
   };
 
@@ -204,7 +204,7 @@ const CourseVideos: React.FC = () => {
           setCourse(courseData.data);
         }
       } else {
-        console.error('❌ Failed to fetch course:', courseResponse.status, courseResponse.statusText);
+        console.error('Failed to fetch course:', courseResponse.status, courseResponse.statusText);
       }
 
       // Fetch videos
@@ -244,13 +244,13 @@ const CourseVideos: React.FC = () => {
               }
             }
           } catch (error) {
-            console.error('❌ Error fetching video progress:', error);
+            console.error('Error fetching video progress:', error);
           }
         }
       } else {
-        console.error('❌ Failed to fetch videos:', videosResponse.status, videosResponse.statusText);
+        console.error('Failed to fetch videos:', videosResponse.status, videosResponse.statusText);
         const errorData = await videosResponse.json().catch(() => ({}));
-        console.error('❌ Video fetch error details:', errorData);
+        console.error('Video fetch error details:', errorData);
       }
     } catch (error) {
       console.error('Failed to fetch course and videos:', error);
@@ -273,7 +273,7 @@ const CourseVideos: React.FC = () => {
           setQuizzes(data.data || []);
         }
       } else {
-        console.error('❌ Failed to fetch quizzes:', response.status);
+        console.error('Failed to fetch quizzes:', response.status);
       }
     } catch (error) {
       console.error('Failed to fetch quizzes:', error);
@@ -295,7 +295,7 @@ const CourseVideos: React.FC = () => {
           setResources(data.data || []);
         }
       } else {
-        console.error('❌ Failed to fetch resources:', response.status);
+        console.error('Failed to fetch resources:', response.status);
       }
     } catch (error) {
       console.error('Failed to fetch resources:', error);
@@ -605,11 +605,11 @@ const CourseVideos: React.FC = () => {
 
   const handleVideoError = (event: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget;
-    console.error('❌ Video failed to load:', video.error);
-    console.error('❌ Original Video URL:', currentVideo?.videoUrl);
-    console.error('❌ Processed Video URL:', currentVideo ? getVideoUrl(currentVideo.videoUrl) : 'N/A');
-    console.error('❌ Video src attribute:', video.currentSrc);
-    console.error('❌ Error details:', {
+    console.error('Video failed to load:', video.error);
+    console.error('Original Video URL:', currentVideo?.videoUrl);
+    console.error('Processed Video URL:', currentVideo ? getVideoUrl(currentVideo.videoUrl) : 'N/A');
+    console.error('Video src attribute:', video.currentSrc);
+    console.error('Error details:', {
       code: video.error?.code,
       message: video.error?.message
     });
@@ -706,7 +706,7 @@ const CourseVideos: React.FC = () => {
       if (response.ok) {
       }
     } catch (error) {
-      console.error('❌ Error saving progress:', error);
+      console.error('Error saving progress:', error);
     }
   };
 
@@ -802,7 +802,7 @@ const CourseVideos: React.FC = () => {
         const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
         return directUrl;
       } else {
-        console.warn('⚠️ Could not extract Google Drive file ID from URL:', url);
+        console.warn('Could not extract Google Drive file ID from URL:', url);
       }
     }
     
@@ -1088,7 +1088,7 @@ const CourseVideos: React.FC = () => {
                                   ? 'bg-green-100 text-green-600'
                                   : 'bg-purple-100 text-purple-600'
                               }`}>
-                                {item.type === 'video' ? '🎥' : item.type === 'quiz' ? '📝' : '📄'}
+                                {item.type === 'video' ? 'V' : item.type === 'quiz' ? 'Q' : 'R'}
                               </div>
                               
                               {/* Content Info */}
@@ -1114,14 +1114,14 @@ const CourseVideos: React.FC = () => {
                             {/* Lock/Progress/Complete Status */}
                             <div className="flex items-center space-x-2">
                               {isLocked ? (
-                                <div className="text-gray-400 text-xs">🔒</div>
+                                <div className="text-gray-400 text-xs">Locked</div>
                               ) : isCompletedCourse ? (
-                                // Show tick mark for all content when course is completed
-                                <div className="text-green-500 text-xs">✅</div>
+                                // Show checkmark for all content when course is completed
+                                <div className="text-green-500 text-xs">Done</div>
                               ) : item.type === 'video' && watchedVideos.has(item.id) ? (
-                                <div className="text-green-500 text-xs">✅</div>
+                                <div className="text-green-500 text-xs">Done</div>
                               ) : item.type === 'quiz' && completedQuizzes.has(item.id) ? (
-                                <div className="text-green-500 text-xs">✅</div>
+                                <div className="text-green-500 text-xs">Done</div>
                               ) : item.type === 'video' && videoProgress[item.id] ? (
                                 <div className="text-blue-500 text-xs">
                                   {Math.round(videoProgress[item.id])}%
@@ -1161,11 +1161,11 @@ const CourseVideos: React.FC = () => {
             <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <span className="text-2xl">
-                    {selectedResource.type === 'document' ? '📄' : 
-                     selectedResource.type === 'audio' ? '🎵' :
-                     selectedResource.type === 'image' ? '🖼️' : 
-                     selectedResource.type === 'video' ? '🎬' : '📎'}
+                  <span className="text-2xl font-bold">
+                    {selectedResource.type === 'document' ? 'DOC' :
+                     selectedResource.type === 'audio' ? 'AUD' :
+                     selectedResource.type === 'image' ? 'IMG' :
+                     selectedResource.type === 'video' ? 'VID' : 'FILE'}
                   </span>
                   <div>
                     <h3 className="text-xl font-bold">{selectedResource.title}</h3>
@@ -1204,8 +1204,7 @@ const CourseVideos: React.FC = () => {
                 {selectedResource.type === 'audio' && (
                   <div className="bg-gray-50 rounded-lg p-8">
                     <div className="text-center mb-4">
-                      <span className="text-6xl">🎵</span>
-                      <h4 className="text-lg font-semibold mt-2">{selectedResource.title}</h4>
+                      <h4 className="text-lg font-semibold">{selectedResource.title}</h4>
                     </div>
                     <audio
                       controls
@@ -1252,7 +1251,6 @@ const CourseVideos: React.FC = () => {
                 {/* Fallback for non-viewable resources */}
                 {!selectedResource.isViewableInline && (
                   <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <span className="text-6xl mb-4 block">📄</span>
                     <h4 className="text-lg font-semibold mb-2">Preview not available</h4>
                     <p className="text-gray-600 mb-4">This file type cannot be previewed inline.</p>
                     <p className="text-sm text-gray-500">Use the download button below to view the file.</p>
