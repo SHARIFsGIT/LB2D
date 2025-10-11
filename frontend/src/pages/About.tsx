@@ -112,33 +112,6 @@ const About: React.FC = () => {
         </div>
       </section>
 
-      {/* Our Mission */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Mission & Vision</h2>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-8">
-            <Card className="p-8 text-center">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h3>
-              <p className="text-gray-600">
-                To make German language learning accessible, effective, and culturally relevant for Bengali speakers, 
-                enabling them to achieve their educational, professional, and personal goals in German-speaking countries.
-              </p>
-            </Card>
-            
-            <Card className="p-8 text-center">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Vision</h3>
-              <p className="text-gray-600">
-                To become the leading platform for Bengali speakers learning German, creating a bridge between 
-                Bangladesh and Germany through language education and cultural exchange.
-              </p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* Key Features */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4">
@@ -168,27 +141,6 @@ const About: React.FC = () => {
               <h3 className="text-xl font-bold text-gray-900 mb-3">Proven Success Rate</h3>
               <p className="text-gray-600">
                 96% of our students pass their German proficiency exams and achieve their goals
-              </p>
-            </Card>
-            
-            <Card className="p-6 text-center">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Career Guidance</h3>
-              <p className="text-gray-600">
-                Get support with university applications, visa processes, and job applications in Germany
-              </p>
-            </Card>
-            
-            <Card className="p-6 text-center">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Cultural Integration</h3>
-              <p className="text-gray-600">
-                Learn not just the language, but also German culture, customs, and professional etiquette
-              </p>
-            </Card>
-            
-            <Card className="p-6 text-center">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Flexible Learning</h3>
-              <p className="text-gray-600">
-                Study at your own pace with live classes, recorded sessions, and interactive exercises
               </p>
             </Card>
           </div>
