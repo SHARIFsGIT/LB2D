@@ -672,9 +672,9 @@ const UploadModal: React.FC<UploadModalProps> = ({
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8 px-6">
             {[
-              { key: "quizzes", label: "Quizzes & Exams", icon: "📝" },
+              { key: "quizzes", label: "Quizzes & Exams", icon: "" },
               { key: "resources", label: "Documents & Audio", icon: "📁" },
-              { key: "videos", label: "Videos", icon: "🎬" },
+              { key: "videos", label: "Videos", icon: "" },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -712,14 +712,12 @@ const UploadModal: React.FC<UploadModalProps> = ({
                       }}
                       className="bg-gradient-to-bl from-cyan-800 via-sky-600 to-gray-400 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
                     >
-                      <span>📝</span>
                       <span>Create Quiz/Exam</span>
                     </button>
                   </div>
 
                   {quizzes.length === 0 ? (
                     <div className="text-center py-12 bg-gray-50 rounded-xl">
-                      <div className="text-4xl mb-4">📝</div>
                       <h4 className="text-lg font-medium text-gray-800 mb-2">
                         No Quizzes Yet
                       </h4>
@@ -853,7 +851,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
                                   : "Delete quiz"
                               }
                             >
-                              🗑️
+                              Delete
                             </button>
                           </div>
                         </div>
@@ -1011,7 +1009,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
                                   : "Delete resource"
                               }
                             >
-                              🗑️
+                              Delete
                             </button>
                           </div>
                         </div>
@@ -1036,8 +1034,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
 
                   {videos.length === 0 ? (
                     <div className="text-center py-12 bg-gray-50 rounded-xl">
-                      <div className="text-4xl mb-4">🎬</div>
-                      <h4 className="text-lg font-medium text-gray-800 mb-2">
+                            <h4 className="text-lg font-medium text-gray-800 mb-2">
                         No Videos Yet
                       </h4>
                       <p className="text-gray-600">
@@ -1159,7 +1156,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
                                   : "Delete video"
                               }
                             >
-                              🗑️
+                              Delete
                             </button>
                           </div>
                         </div>
@@ -2155,11 +2152,11 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           disabled={editingResource?.isViewOnly}
         >
-          <option value="lesson">📚 Lesson Material</option>
-          <option value="homework">📝 Homework</option>
-          <option value="reference">📖 Reference</option>
-          <option value="exercise">🎯 Exercise</option>
-          <option value="other">📎 Other</option>
+          <option value="lesson">Lesson Material</option>
+          <option value="homework">Homework</option>
+          <option value="reference">Reference</option>
+          <option value="exercise">Exercise</option>
+          <option value="other">Other</option>
         </select>
       </div>
 
@@ -2224,7 +2221,7 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
                     {file.type.startsWith("audio/")
                       ? "🎵"
                       : file.type.startsWith("image/")
-                      ? "🖼️"
+                      ? "Image"
                       : "📄"}
                   </div>
                   <div className="flex-1">
@@ -3658,10 +3655,10 @@ const SupervisorDashboard: React.FC = () => {
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
               {[
-                { key: "courses", label: "My Classes", icon: "🎓" },
-                { key: "students", label: "Students", icon: "👥" },
-                { key: "videos", label: "My Videos", icon: "🎥" },
-                { key: "salary", label: "My Salary", icon: "💰" },
+                { key: "courses", label: "My Classes", icon: "" },
+                { key: "students", label: "Students", icon: "" },
+                { key: "videos", label: "My Videos", icon: "" },
+                { key: "salary", label: "My Salary", icon: "" },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -3911,7 +3908,6 @@ const SupervisorDashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-16">
-                  <div className="text-6xl mb-4">🎓</div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">
                     No Courses Assigned
                   </h3>
@@ -3953,14 +3949,13 @@ const SupervisorDashboard: React.FC = () => {
                     className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
                   />
                   <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    🔍
+                    Search
                   </div>
                 </div>
               </div>
 
               {students.length === 0 ? (
                 <div className="text-center py-16">
-                  <div className="text-8xl mb-6">👥</div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-4">
                     No Students Found
                   </h3>
@@ -4271,7 +4266,6 @@ const SupervisorDashboard: React.FC = () => {
                           </p>
                         </div>
                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                          <span className="text-2xl">💰</span>
                         </div>
                       </div>
                     </div>
