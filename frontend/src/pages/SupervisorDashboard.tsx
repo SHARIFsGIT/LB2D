@@ -672,9 +672,9 @@ const UploadModal: React.FC<UploadModalProps> = ({
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8 px-6">
             {[
-              { key: "quizzes", label: "Quizzes & Exams", icon: "" },
-              { key: "resources", label: "Documents & Audio", icon: "📁" },
-              { key: "videos", label: "Videos", icon: "" },
+              { key: "quizzes", label: "Quizzes & Exams" },
+              { key: "resources", label: "Documents & Audio" },
+              { key: "videos", label: "Videos" },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -685,7 +685,6 @@ const UploadModal: React.FC<UploadModalProps> = ({
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
-                <span>{tab.icon}</span>
                 <span>{tab.label}</span>
               </button>
             ))}
@@ -870,14 +869,12 @@ const UploadModal: React.FC<UploadModalProps> = ({
                       onClick={() => setShowResourceForm(true)}
                       className="bg-gradient-to-bl from-cyan-800 via-sky-600 to-gray-400 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
                     >
-                      <span>📄</span>
                       <span>Upload Resource</span>
                     </button>
                   </div>
 
                   {resources.length === 0 ? (
                     <div className="text-center py-12 bg-gray-50 rounded-xl">
-                      <div className="text-4xl mb-4">📄</div>
                       <h4 className="text-lg font-medium text-gray-800 mb-2">
                         No Resources Yet
                       </h4>
@@ -1356,7 +1353,6 @@ Submitted: ${new Date(attempt.submittedAt).toLocaleString()}
               </div>
             ) : quizAttempts.length === 0 ? (
               <div className="text-center py-12 bg-gray-50 rounded-xl">
-                <div className="text-4xl mb-4">📝</div>
                 <h4 className="text-lg font-medium text-gray-800 mb-2">
                   No Submissions Yet
                 </h4>
@@ -1794,7 +1790,6 @@ const QuizForm: React.FC<QuizFormProps> = ({
             onClick={addQuestion}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
           >
-            <span>➕</span>
             <span>Add Question</span>
           </button>
         </div>
@@ -1831,7 +1826,7 @@ const QuizForm: React.FC<QuizFormProps> = ({
                       className="text-red-500 hover:text-red-700 transition-colors"
                       title="Remove question"
                     >
-                      🗑️
+                      Delete
                     </button>
                   )}
                 </div>
@@ -2176,7 +2171,6 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
             }`}
           >
             <div className="flex items-center justify-center space-x-2">
-              <span>📄</span>
               <span className="font-medium">Document</span>
             </div>
           </button>
@@ -2190,7 +2184,6 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
             }`}
           >
             <div className="flex items-center justify-center space-x-2">
-              <span>🎵</span>
               <span className="font-medium">Audio File</span>
             </div>
           </button>
@@ -2217,13 +2210,6 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
             {file && (
               <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <div className="text-2xl">
-                    {file.type.startsWith("audio/")
-                      ? "🎵"
-                      : file.type.startsWith("image/")
-                      ? "Image"
-                      : "📄"}
-                  </div>
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">{file.name}</div>
                     <div className="text-sm text-gray-500">
@@ -2963,7 +2949,6 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-center space-x-2">
-                  <span>🔗</span>
                   <span className="font-medium">URL Link</span>
                 </div>
               </button>
@@ -2977,7 +2962,6 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-center space-x-2">
-                  <span>📁</span>
                   <span className="font-medium">Local File</span>
                 </div>
               </button>
@@ -3043,12 +3027,9 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
                   <span>Uploading...</span>
                 </>
               ) : (
-                <>
-                  <span>{uploadType === "file" ? "📁" : "🔗"}</span>
-                  <span>
-                    {uploadType === "file" ? "Upload File" : "Upload Video"}
-                  </span>
-                </>
+                <span>
+                  {uploadType === "file" ? "Upload File" : "Upload Video"}
+                </span>
               )}
             </button>
           </div>
@@ -3609,7 +3590,6 @@ const SupervisorDashboard: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md">
-          <div className="text-6xl mb-4">🚫</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             Access Denied
           </h2>
@@ -3653,32 +3633,35 @@ const SupervisorDashboard: React.FC = () => {
         {/* Tab Navigation */}
         <div className="mb-8">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+            <nav className="-mb-px flex space-x-4">
               {[
-                { key: "courses", label: "My Classes", icon: "" },
-                { key: "students", label: "Students", icon: "" },
-                { key: "videos", label: "My Videos", icon: "" },
-                { key: "salary", label: "My Salary", icon: "" },
+                { key: "courses", label: "My Classes", color: "purple" },
+                { key: "students", label: "Students", color: "blue" },
+                { key: "videos", label: "My Videos", color: "pink" },
+                { key: "salary", label: "My Salary", color: "green" },
               ].map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as any)}
-                  className={`flex flex-col items-center py-4 px-6 border-b-2 font-medium text-sm transition-all duration-200 ${
+                  className={`py-3 px-6 rounded-t-xl font-semibold text-sm transition-all duration-300 ${
                     activeTab === tab.key
-                      ? "border-purple-500 text-purple-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? tab.color === "purple"
+                        ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg"
+                        : tab.color === "blue"
+                        ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg"
+                        : tab.color === "pink"
+                        ? "bg-gradient-to-br from-pink-500 to-pink-600 text-white shadow-lg"
+                        : "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg"
+                      : tab.color === "purple"
+                      ? "bg-purple-50 text-purple-600 hover:bg-purple-100"
+                      : tab.color === "blue"
+                      ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                      : tab.color === "pink"
+                      ? "bg-pink-50 text-pink-600 hover:bg-pink-100"
+                      : "bg-green-50 text-green-600 hover:bg-green-100"
                   }`}
                 >
-                  <span
-                    className={`text-2xl mb-2 p-2 rounded-full transition-all duration-200 ${
-                      activeTab === tab.key
-                        ? "bg-purple-100 shadow-md"
-                        : "bg-gray-100 hover:bg-gray-200"
-                    }`}
-                  >
-                    {tab.icon}
-                  </span>
-                  <span className="font-semibold">{tab.label}</span>
+                  {tab.label}
                 </button>
               ))}
             </nav>
@@ -3833,9 +3816,6 @@ const SupervisorDashboard: React.FC = () => {
                                       key={index}
                                       className="flex items-start text-sm text-gray-700"
                                     >
-                                      <span className="text-green-500 mr-2 mt-0.5 flex-shrink-0">
-                                        ✓
-                                      </span>
                                       <span>{feature}</span>
                                     </li>
                                   ))}
@@ -3940,18 +3920,13 @@ const SupervisorDashboard: React.FC = () => {
             <div className="p-6">
               {/* Search Bar */}
               <div className="mb-6">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search students by name or email..."
-                    value={studentSearchTerm}
-                    onChange={(e) => setStudentSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
-                  />
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    Search
-                  </div>
-                </div>
+                <input
+                  type="text"
+                  placeholder="Search students by name or email..."
+                  value={studentSearchTerm}
+                  onChange={(e) => setStudentSearchTerm(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
+                />
               </div>
 
               {students.length === 0 ? (
@@ -4085,11 +4060,6 @@ const SupervisorDashboard: React.FC = () => {
             <div className="p-6 bg-gray-50">
               {myVideos.length === 0 ? (
                 <div className="text-center py-20 rounded-xl">
-                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-3">
                     No Videos Yet
                   </h3>
@@ -4265,8 +4235,6 @@ const SupervisorDashboard: React.FC = () => {
                             €{salaryData.monthlySalary?.toLocaleString() || 0}
                           </p>
                         </div>
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        </div>
                       </div>
                     </div>
 
@@ -4281,9 +4249,6 @@ const SupervisorDashboard: React.FC = () => {
                             {salaryData.totalPaidThisYear?.toLocaleString() ||
                               0}
                           </p>
-                        </div>
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-2xl">📈</span>
                         </div>
                       </div>
                     </div>
@@ -4300,9 +4265,6 @@ const SupervisorDashboard: React.FC = () => {
                             ).length || 0}
                             /12
                           </p>
-                        </div>
-                        <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                          <span className="text-2xl">✅</span>
                         </div>
                       </div>
                     </div>
@@ -4324,21 +4286,19 @@ const SupervisorDashboard: React.FC = () => {
                           return (
                             <div
                               key={index}
-                              className={`p-4 rounded-lg text-center border-2 ${
+                              className={`p-4 rounded-lg text-center border-2 relative ${
                                 payment.paid
                                   ? "bg-green-50 border-green-200"
                                   : "bg-gray-50 border-gray-200"
                               }`}
                             >
-                              <div
-                                className={`text-2xl mb-2 ${
-                                  payment.paid
-                                    ? "text-green-600"
-                                    : "text-gray-400"
-                                }`}
-                              >
-                                {payment.paid ? "✅" : "⏳"}
-                              </div>
+                              {payment.paid && (
+                                <div className="absolute top-2 right-2">
+                                  <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
                               <div className="text-sm font-medium text-gray-700">
                                 {monthName}
                               </div>
@@ -4406,7 +4366,6 @@ const SupervisorDashboard: React.FC = () => {
                                       Level: {course.level}
                                     </p>
                                   </div>
-                                  <div className="text-2xl">🎓</div>
                                 </div>
                               </div>
                             )
@@ -4417,7 +4376,6 @@ const SupervisorDashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <div className="text-6xl mb-4">💳</div>
                   <h3 className="text-xl font-bold text-gray-800 mb-2">
                     No Salary Data Available
                   </h3>

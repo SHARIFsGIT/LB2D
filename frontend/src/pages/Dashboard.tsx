@@ -134,12 +134,7 @@ const Dashboard: React.FC = () => {
         {user.rejectionReason && user.rejectionDate && (
           <div className="mb-8 bg-red-50 border border-red-200 rounded-xl p-6 shadow-lg">
             <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.764 0L3.052 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <div className="ml-3 flex-1">
+              <div className="flex-1">
                 <h3 className="text-lg font-semibold text-red-800 mb-2">
                   Role Request Update
                 </h3>
@@ -192,7 +187,6 @@ const Dashboard: React.FC = () => {
           <div className="bg-white/30 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 overflow-hidden">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4">
               <h3 className="text-xl font-bold text-white flex items-center">
-                <span className="mr-2">👆</span>
                 Quick Actions
               </h3>
             </div>
@@ -240,7 +234,6 @@ const Dashboard: React.FC = () => {
           <div className="bg-white/30 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 overflow-hidden">
             <div className="bg-gradient-to-r from-orange-600 to-red-600 p-4">
               <h3 className="text-xl font-bold text-white flex items-center">
-                <span className="mr-2">🏆</span>
                 Performance Rankings
               </h3>
             </div>
@@ -250,7 +243,6 @@ const Dashboard: React.FC = () => {
                 <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center space-x-2">
-                      <span className="text-blue-600 text-lg">📝</span>
                       <span className="text-sm font-semibold text-blue-800">Assessment Score</span>
                     </div>
                     <div className="text-xs text-blue-600">Live Rank</div>
@@ -301,7 +293,6 @@ const Dashboard: React.FC = () => {
                 <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center space-x-2">
-                      <span className="text-purple-600 text-lg">🧩</span>
                       <span className="text-sm font-semibold text-purple-800">Quiz Score</span>
                     </div>
                     <div className="text-xs text-purple-600">Live Rank</div>
