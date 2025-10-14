@@ -1,9 +1,31 @@
 import jsPDF from "jspdf";
 import React, { useCallback, useEffect, useState } from "react";
+import ConfirmModal from "../components/common/ConfirmModal";
+import PromptModal from "../components/common/PromptModal";
 import { useCurrency } from "../hooks/useCurrency";
+import { useNotification } from "../hooks/useNotification";
 import { NotificationData, useWebSocket } from "../hooks/useWebSocket";
 
 const AnalyticsDashboard: React.FC = () => {
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
+
+  // Modal states
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'danger' | 'warning' | 'info';
+  } | null>(null);
+  const [showPromptModal, setShowPromptModal] = useState(false);
+  const [promptConfig, setPromptConfig] = useState<{
+    title: string;
+    message: string;
+    onSubmit: (value: string) => void;
+    defaultValue?: string;
+    placeholder?: string;
+  } | null>(null);
+
   const [activeTab, setActiveTab] = useState<"students" | "supervisors">(
     "students"
   );
@@ -497,7 +519,7 @@ const AnalyticsDashboard: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to download test report:", error);
-      alert("Failed to download test report");
+      showError("Failed to download test report", "Error");
     }
   };
 
@@ -803,20 +825,30 @@ Generated on: ${new Date().toLocaleString()}
   };
 
   const clearPaymentData = async () => {
-    const isConfirmed = window.confirm(
-      "WARNING: This will permanently delete ALL payment and revenue data.\n\n" +
-        "This action cannot be undone. Are you absolutely sure you want to proceed?"
-    );
+    setConfirmConfig({
+      title: 'Clear Payment Data',
+      message: 'WARNING: This will permanently delete ALL payment and revenue data.\n\nThis action cannot be undone. Are you absolutely sure you want to proceed?',
+      onConfirm: () => {
+        setShowConfirmModal(false);
+        // Second confirmation
+        setConfirmConfig({
+          title: 'FINAL CONFIRMATION',
+          message: 'You are about to delete all payment records.\n\nThis will remove all revenue analytics, payment history, and transaction data.\n\nConfirm to proceed.',
+          onConfirm: () => {
+            setShowConfirmModal(false);
+            executeClearPaymentData();
+          },
+          type: 'danger'
+        });
+        setShowConfirmModal(true);
+      },
+      type: 'danger'
+    });
+    setShowConfirmModal(true);
+    return;
+  };
 
-    if (!isConfirmed) return;
-
-    const doubleConfirm = window.confirm(
-      "🚨 FINAL CONFIRMATION: You are about to delete all payment records.\n\n" +
-        "This will remove all revenue analytics, payment history, and transaction data.\n\n" +
-        "Type YES to confirm or Cancel to abort."
-    );
-
-    if (!doubleConfirm) return;
+  const executeClearPaymentData = async () => {
 
     try {
       const token = sessionStorage.getItem("accessToken");
@@ -834,8 +866,9 @@ Generated on: ${new Date().toLocaleString()}
 
       if (response.ok) {
         const data = await response.json();
-        alert(
-          `Success! Cleared ${data.data.deletedPayments} payment records.`
+        showSuccess(
+          `Cleared ${data.data.deletedPayments} payment records.`,
+          "Success"
         );
 
         // Refresh the analytics data
@@ -844,32 +877,42 @@ Generated on: ${new Date().toLocaleString()}
         }
       } else {
         const errorData = await response.json();
-        alert(
-          `Error: ${errorData.message || "Failed to clear payment data"}`
+        showError(
+          errorData.message || "Failed to clear payment data",
+          "Error"
         );
       }
     } catch (error) {
       console.error("Error clearing payment data:", error);
-      alert("Network error occurred while clearing data. Please try again.");
+      showError("Network error occurred while clearing data. Please try again.", "Error");
     }
   };
 
   const clearTestData = async () => {
-    const isConfirmed = window.confirm(
-      "WARNING: This will permanently delete ALL test and assessment data.\n\n" +
-        "This includes all student exam results, scores, and certificates.\n\n" +
-        "This action cannot be undone. Are you absolutely sure you want to proceed?"
-    );
+    setConfirmConfig({
+      title: 'Clear Test Data',
+      message: 'WARNING: This will permanently delete ALL test and assessment data.\n\nThis includes all student exam results, scores, and certificates.\n\nThis action cannot be undone. Are you absolutely sure you want to proceed?',
+      onConfirm: () => {
+        setShowConfirmModal(false);
+        // Second confirmation
+        setConfirmConfig({
+          title: 'FINAL CONFIRMATION',
+          message: 'You are about to delete all test records.\n\nThis will remove all student results, assessment analytics, and examination data.\n\nThis action is IRREVERSIBLE. Confirm to proceed.',
+          onConfirm: () => {
+            setShowConfirmModal(false);
+            executeClearTestData();
+          },
+          type: 'danger'
+        });
+        setShowConfirmModal(true);
+      },
+      type: 'danger'
+    });
+    setShowConfirmModal(true);
+    return;
+  };
 
-    if (!isConfirmed) return;
-
-    const doubleConfirm = window.confirm(
-      "🚨 FINAL CONFIRMATION: You are about to delete all test records.\n\n" +
-        "This will remove all student results, assessment analytics, and examination data.\n\n" +
-        "This action is IRREVERSIBLE. Confirm to proceed."
-    );
-
-    if (!doubleConfirm) return;
+  const executeClearTestData = async () => {
 
     try {
       const token = sessionStorage.getItem("accessToken");
@@ -887,7 +930,7 @@ Generated on: ${new Date().toLocaleString()}
 
       if (response.ok) {
         const data = await response.json();
-        alert(`Success! Cleared ${data.data.deletedTests} test records.`);
+        showSuccess(`Cleared ${data.data.deletedTests} test records.`, "Success");
 
         // Refresh the analytics data
         fetchAssessmentReports();
@@ -896,22 +939,29 @@ Generated on: ${new Date().toLocaleString()}
         }
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.message || "Failed to clear test data"}`);
+        showError(errorData.message || "Failed to clear test data", "Error");
       }
     } catch (error) {
       console.error("Error clearing test data:", error);
-      alert("Network error occurred while clearing data. Please try again.");
+      showError("Network error occurred while clearing data. Please try again.", "Error");
     }
   };
 
   const initializeSupervisorSalaries = async () => {
-    const isConfirmed = window.confirm(
-      "📋 Initialize supervisor salary records for all existing supervisors?\n\n" +
-        "This will create salary tracking records for supervisors who don't have them yet.\n\n" +
-        "Existing salary records will not be modified."
-    );
+    setConfirmConfig({
+      title: 'Initialize Supervisor Salaries',
+      message: 'Initialize supervisor salary records for all existing supervisors?\n\nThis will create salary tracking records for supervisors who don\'t have them yet.\n\nExisting salary records will not be modified.',
+      onConfirm: () => {
+        setShowConfirmModal(false);
+        executeInitializeSupervisorSalaries();
+      },
+      type: 'info'
+    });
+    setShowConfirmModal(true);
+    return;
+  };
 
-    if (!isConfirmed) return;
+  const executeInitializeSupervisorSalaries = async () => {
 
     try {
       const token = sessionStorage.getItem("accessToken");
@@ -928,8 +978,9 @@ Generated on: ${new Date().toLocaleString()}
 
       if (response.ok) {
         const data = await response.json();
-        alert(
-          `Success! Initialized salary records.\n\nCreated: ${data.data.created} new records\nExisting: ${data.data.existing} records\nTotal: ${data.data.totalProcessed} supervisors processed`
+        showSuccess(
+          `Initialized salary records.\n\nCreated: ${data.data.created} new records\nExisting: ${data.data.existing} records\nTotal: ${data.data.totalProcessed} supervisors processed`,
+          "Success"
         );
 
         // Refresh the analytics data
@@ -947,23 +998,32 @@ Generated on: ${new Date().toLocaleString()}
           errorMessage = `Server responded with status ${response.status}`;
         }
         console.error("Initialize error:", response.status, errorMessage);
-        alert(`${errorMessage}`);
+        showError(errorMessage, "Error");
       }
     } catch (error) {
       console.error("Error initializing supervisor salaries:", error);
-      alert(
-        "Network error occurred while initializing salary records. Please try again."
+      showError(
+        "Network error occurred while initializing salary records. Please try again.",
+        "Error"
       );
     }
   };
 
   const clearSupervisorSalaryData = async () => {
-    const isConfirmed = window.confirm(
-      "WARNING: This will permanently delete ALL supervisor salary and compensation data.\n\n" +
-        "This action cannot be undone. Are you absolutely sure you want to proceed?"
-    );
+    setConfirmConfig({
+      title: 'Clear Supervisor Salary Data',
+      message: 'WARNING: This will permanently delete ALL supervisor salary and compensation data.\n\nThis action cannot be undone. Are you absolutely sure you want to proceed?',
+      onConfirm: () => {
+        setShowConfirmModal(false);
+        executeClearSupervisorSalaryData();
+      },
+      type: 'danger'
+    });
+    setShowConfirmModal(true);
+    return;
+  };
 
-    if (!isConfirmed) return;
+  const executeClearSupervisorSalaryData = async () => {
 
     try {
       const token = sessionStorage.getItem("accessToken");
@@ -980,7 +1040,7 @@ Generated on: ${new Date().toLocaleString()}
 
       if (response.ok) {
         const data = await response.json();
-        alert(`Success! Cleared supervisor salary data.`);
+        showSuccess("Cleared supervisor salary data.", "Success");
 
         // Refresh the analytics data
         if (activeTab === "supervisors") {
@@ -988,40 +1048,41 @@ Generated on: ${new Date().toLocaleString()}
         }
       } else {
         const error = await response.json();
-        alert(`Failed to clear supervisor salary data: ${error.message}`);
+        showError(`Failed to clear supervisor salary data: ${error.message}`, "Error");
       }
     } catch (error) {
       console.error("Error clearing supervisor salary data:", error);
-      alert("Network error occurred while clearing data. Please try again.");
+      showError("Network error occurred while clearing data. Please try again.", "Error");
     }
   };
 
   const handleEditSupervisor = (supervisor: any) => {
-    const newSalary = prompt(
-      `Edit Monthly Salary\n\nSupervisor: ${
-        supervisor.name
-      }\nCurrent Salary: €${
-        supervisor.monthlySalary?.toLocaleString() || 0
-      }\n\nEnter new monthly salary amount:`,
-      supervisor.monthlySalary?.toString() || "0"
-    );
+    setPromptConfig({
+      title: 'Edit Monthly Salary',
+      message: `Supervisor: ${supervisor.name}\nCurrent Salary: €${supervisor.monthlySalary?.toLocaleString() || 0}\n\nEnter new monthly salary amount:`,
+      defaultValue: supervisor.monthlySalary?.toString() || "0",
+      placeholder: "Enter salary amount",
+      onSubmit: (newSalary: string) => {
+        setShowPromptModal(false);
 
-    if (newSalary && !isNaN(Number(newSalary)) && Number(newSalary) >= 0) {
-      const amount = Number(newSalary);
-      const confirmed = window.confirm(
-        `Confirm Salary Update\n\nSupervisor: ${
-          supervisor.name
-        }\nOld Salary: €${
-          supervisor.monthlySalary?.toLocaleString() || 0
-        }\nNew Salary: €${amount.toLocaleString()}\n\nProceed with update?`
-      );
-
-      if (confirmed) {
-        updateSupervisorSalary(supervisor.supervisorId, amount);
+        if (newSalary && !isNaN(Number(newSalary)) && Number(newSalary) >= 0) {
+          const amount = Number(newSalary);
+          setConfirmConfig({
+            title: 'Confirm Salary Update',
+            message: `Supervisor: ${supervisor.name}\nOld Salary: €${supervisor.monthlySalary?.toLocaleString() || 0}\nNew Salary: €${amount.toLocaleString()}\n\nProceed with update?`,
+            onConfirm: () => {
+              setShowConfirmModal(false);
+              updateSupervisorSalary(supervisor.supervisorId, amount);
+            },
+            type: 'info'
+          });
+          setShowConfirmModal(true);
+        } else if (newSalary !== null && newSalary !== "") {
+          showWarning("Please enter a valid positive number for the salary amount.", "Warning");
+        }
       }
-    } else if (newSalary !== null && newSalary !== "") {
-      alert("Please enter a valid positive number for the salary amount.");
-    }
+    });
+    setShowPromptModal(true);
   };
 
   const updateSupervisorSalary = async (
@@ -1046,8 +1107,9 @@ Generated on: ${new Date().toLocaleString()}
       );
 
       if (response.ok) {
-        alert(
-          "Salary Updated Successfully!\n\nThe supervisor salary has been updated and will be reflected in future payments."
+        showSuccess(
+          "The supervisor salary has been updated and will be reflected in future payments.",
+          "Salary Updated Successfully"
         );
         fetchSupervisorAnalytics();
       } else {
@@ -1061,12 +1123,13 @@ Generated on: ${new Date().toLocaleString()}
           errorMessage = `Server responded with status ${response.status}`;
         }
         console.error("Salary update error:", response.status, errorMessage);
-        alert(`${errorMessage}`);
+        showError(errorMessage, "Error");
       }
     } catch (error) {
       console.error("Error updating salary:", error);
-      alert(
-        "Network error occurred while updating salary. Please try again."
+      showError(
+        "Network error occurred while updating salary. Please try again.",
+        "Error"
       );
     }
   };
@@ -1078,8 +1141,9 @@ Generated on: ${new Date().toLocaleString()}
 
     // Validate required data
     if (!supervisor.supervisorId) {
-      alert(
-        "Error: Supervisor ID is missing. Please refresh the page and try again."
+      showError(
+        "Supervisor ID is missing. Please refresh the page and try again.",
+        "Error"
       );
       return;
     }
@@ -1099,54 +1163,52 @@ Generated on: ${new Date().toLocaleString()}
       check: "Check",
     };
 
-    const methodChoice = prompt(
-      `Select Payment Method\n\n` +
-        `Supervisor: ${supervisor.name}\n` +
-        `Month: ${currentDate.toLocaleDateString("en-US", {
-          month: "long",
-          year: "numeric",
-        })}\n` +
-        `Amount: €${supervisor.monthlySalary?.toLocaleString() || 0}\n\n` +
-        `Available payment methods:\n` +
-        `1 - Bank Transfer\n` +
-        `2 - PayPal\n` +
-        `3 - Stripe\n` +
-        `4 - Cash\n` +
-        `5 - Check\n\n` +
-        `Enter number (1-5):`,
-      "1"
-    );
+    setPromptConfig({
+      title: 'Select Payment Method',
+      message: `Supervisor: ${supervisor.name}\nMonth: ${currentDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      })}\nAmount: €${supervisor.monthlySalary?.toLocaleString() || 0}\n\nAvailable payment methods:\n1 - Bank Transfer\n2 - PayPal\n3 - Stripe\n4 - Cash\n5 - Check\n\nEnter number (1-5):`,
+      defaultValue: "1",
+      placeholder: "Enter 1-5",
+      onSubmit: (methodChoice: string) => {
+        setShowPromptModal(false);
 
-    if (
-      !methodChoice ||
-      isNaN(Number(methodChoice)) ||
-      Number(methodChoice) < 1 ||
-      Number(methodChoice) > 5
-    ) {
-      if (methodChoice !== null) {
-        alert("Please enter a valid number between 1-5.");
+        if (
+          !methodChoice ||
+          isNaN(Number(methodChoice)) ||
+          Number(methodChoice) < 1 ||
+          Number(methodChoice) > 5
+        ) {
+          if (methodChoice !== null) {
+            showWarning("Please enter a valid number between 1-5.", "Warning");
+          }
+          return;
+        }
+
+        const selectedMethod = paymentMethods[Number(methodChoice) - 1];
+        const methodLabel =
+          paymentMethodLabels[selectedMethod as keyof typeof paymentMethodLabels];
+
+        setConfirmConfig({
+          title: 'Confirm Payment',
+          message: `Supervisor: ${supervisor.name}\nEmail: ${supervisor.email}\nMonth: ${currentDate.toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric",
+          })}\nAmount: €${supervisor.monthlySalary?.toLocaleString() || 0}\nPayment Method: ${methodLabel}\n\nMark this payment as completed?`,
+          onConfirm: () => {
+            setShowConfirmModal(false);
+            executePaySupervisor(supervisor, currentMonth, currentYear, selectedMethod);
+          },
+          type: 'info'
+        });
+        setShowConfirmModal(true);
       }
-      return;
-    }
+    });
+    setShowPromptModal(true);
+  };
 
-    const selectedMethod = paymentMethods[Number(methodChoice) - 1];
-    const methodLabel =
-      paymentMethodLabels[selectedMethod as keyof typeof paymentMethodLabels];
-
-    const confirmed = window.confirm(
-      `Confirm Payment\n\n` +
-        `Supervisor: ${supervisor.name}\n` +
-        `Email: ${supervisor.email}\n` +
-        `Month: ${currentDate.toLocaleDateString("en-US", {
-          month: "long",
-          year: "numeric",
-        })}\n` +
-        `Amount: €${supervisor.monthlySalary?.toLocaleString() || 0}\n` +
-        `Payment Method: ${methodLabel}\n\n` +
-        `Mark this payment as completed?`
-    );
-
-    if (confirmed) {
+  const executePaySupervisor = async (supervisor: any, currentMonth: number, currentYear: number, selectedMethod: string) => {
       try {
         const token = sessionStorage.getItem("accessToken");
         const requestBody = {
@@ -1168,8 +1230,9 @@ Generated on: ${new Date().toLocaleString()}
         );
         if (response.ok) {
           const data = await response.json();
-          alert(
-            "Payment Processed Successfully!\n\nThe salary payment has been marked as completed for the current month."
+          showSuccess(
+            "The salary payment has been marked as completed for the current month.",
+            "Payment Processed Successfully"
           );
           fetchSupervisorAnalytics();
         } else {
@@ -1208,15 +1271,15 @@ Generated on: ${new Date().toLocaleString()}
             response.status,
             errorMessage
           );
-          alert(`${errorMessage}`);
+          showError(errorMessage, "Error");
         }
       } catch (error) {
         console.error("Error marking payment:", error);
-        alert(
-          "Network error occurred while marking payment. Please try again."
+        showError(
+          "Network error occurred while marking payment. Please try again.",
+          "Error"
         );
       }
-    }
   };
 
   const handleSalaryPaymentToggle = async (
@@ -1254,24 +1317,32 @@ Generated on: ${new Date().toLocaleString()}
           errorMessage = `Server responded with status ${response.status}`;
         }
         console.error("Payment toggle error:", response.status, errorMessage);
-        alert(`${errorMessage}`);
+        showError(errorMessage, "Error");
       }
     } catch (error) {
       console.error("Error updating salary payment:", error);
-      alert(
-        "Network error occurred while updating payment status. Please try again."
+      showError(
+        "Network error occurred while updating payment status. Please try again.",
+        "Error"
       );
     }
   };
 
   const clearVideoAnalyticsData = async () => {
-    const isConfirmed = window.confirm(
-      "WARNING: This will permanently delete ALL course video analytics data.\n\n" +
-        "This includes video views, completion rates, and engagement metrics.\n\n" +
-        "This action cannot be undone. Are you absolutely sure you want to proceed?"
-    );
+    setConfirmConfig({
+      title: 'Clear Video Analytics Data',
+      message: 'WARNING: This will permanently delete ALL course video analytics data.\n\nThis includes video views, completion rates, and engagement metrics.\n\nThis action cannot be undone. Are you absolutely sure you want to proceed?',
+      onConfirm: () => {
+        setShowConfirmModal(false);
+        executeClearVideoAnalyticsData();
+      },
+      type: 'danger'
+    });
+    setShowConfirmModal(true);
+    return;
+  };
 
-    if (!isConfirmed) return;
+  const executeClearVideoAnalyticsData = async () => {
 
     try {
       const token = sessionStorage.getItem("accessToken");
@@ -1288,7 +1359,7 @@ Generated on: ${new Date().toLocaleString()}
 
       if (response.ok) {
         const data = await response.json();
-        alert(`Success! Cleared video analytics data.`);
+        showSuccess("Cleared video analytics data.", "Success");
 
         // Refresh the analytics data
         if (activeTab === "supervisors") {
@@ -1296,11 +1367,11 @@ Generated on: ${new Date().toLocaleString()}
         }
       } else {
         const error = await response.json();
-        alert(`Failed to clear video analytics data: ${error.message}`);
+        showError(`Failed to clear video analytics data: ${error.message}`, "Error");
       }
     } catch (error) {
       console.error("Error clearing video analytics data:", error);
-      alert("Network error occurred while clearing data. Please try again.");
+      showError("Network error occurred while clearing data. Please try again.", "Error");
     }
   };
 
@@ -1339,7 +1410,6 @@ Generated on: ${new Date().toLocaleString()}
                     : "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border border-gray-200"
                 }`}
               >
-                <span className="text-lg">👨‍🏫</span>
                 <span className="font-bold">Supervisor Analysis</span>
               </button>
             </nav>
@@ -1887,9 +1957,22 @@ Generated on: ${new Date().toLocaleString()}
                           ) : (
                             <tr>
                               <td colSpan={7} className="py-16 text-center">
-                                <div className="text-gray-500">
-                                  <p className="text-lg font-medium mb-2">No Performance Data Available</p>
-                                  <p className="text-sm">Student performance metrics will be displayed once assessments and quizzes are completed.</p>
+                                <div className="flex flex-col items-center">
+                                  <svg
+                                    className="w-12 h-12 text-gray-400 mb-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                    />
+                                  </svg>
+                                  <p className="text-gray-500 font-medium text-lg mb-2">No Performance Data Available</p>
+                                  <p className="text-gray-400 text-sm">Student performance metrics will be displayed once assessments and quizzes are completed.</p>
                                 </div>
                               </td>
                             </tr>
@@ -2071,9 +2154,29 @@ Generated on: ${new Date().toLocaleString()}
                           <tr>
                             <td
                               colSpan={8}
-                              className="py-4 text-center text-gray-500"
+                              className="py-12 text-center"
                             >
-                              No recent payment data available
+                              <div className="flex flex-col items-center">
+                                <svg
+                                  className="w-12 h-12 text-gray-400 mb-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                                  />
+                                </svg>
+                                <p className="text-gray-500 font-medium">
+                                  No recent payment data available
+                                </p>
+                                <p className="text-gray-400 text-sm mt-1">
+                                  Payment transactions will appear here
+                                </p>
+                              </div>
                             </td>
                           </tr>
                         )}
@@ -3204,6 +3307,37 @@ Generated on: ${new Date().toLocaleString()}
 
       {/* Bottom spacing for scroll */}
       <div className="pb-20"></div>
+
+      {/* Modals */}
+      {showConfirmModal && confirmConfig && (
+        <ConfirmModal
+          isOpen={showConfirmModal}
+          onClose={() => {
+            setShowConfirmModal(false);
+            setConfirmConfig(null);
+          }}
+          onConfirm={confirmConfig.onConfirm}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          type={confirmConfig.type}
+          confirmText="Confirm"
+          cancelText="Cancel"
+        />
+      )}
+      {showPromptModal && promptConfig && (
+        <PromptModal
+          isOpen={showPromptModal}
+          onClose={() => {
+            setShowPromptModal(false);
+            setPromptConfig(null);
+          }}
+          onSubmit={promptConfig.onSubmit}
+          title={promptConfig.title}
+          message={promptConfig.message}
+          defaultValue={promptConfig.defaultValue}
+          placeholder={promptConfig.placeholder}
+        />
+      )}
     </div>
   );
 };

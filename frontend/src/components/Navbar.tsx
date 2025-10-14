@@ -6,6 +6,7 @@ import { logout } from "../store/slices/authSlice";
 import { RootState } from "../store/store";
 import Button from "./common/Button";
 import { authApi } from "../utils/api";
+import '../styles/AnimatedButton.css';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -148,15 +149,17 @@ const Navbar: React.FC = () => {
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50 relative">
       <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-green-600 via-red-600 to-yellow-500 shadow-sm"></div>
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6">
+        <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo */}
-          <div className="cursor-pointer group" onClick={() => navigate("/")}>
-            <div className="text-xl font-bold bg-gradient-to-r from-green-700 via-red-700 to-yellow-600 bg-clip-text text-transparent">
-              Learn Bangla to Deutsch
+          <div className="cursor-pointer group flex-shrink-0" onClick={() => navigate("/")}>
+            <div className="text-sm sm:text-base md:text-lg lg:text-xl font-bold bg-gradient-to-r from-green-700 via-red-700 to-yellow-600 bg-clip-text text-transparent leading-tight">
+              <span className="hidden sm:inline">Learn Bangla to Deutsch</span>
+              <span className="sm:hidden">LB2D</span>
             </div>
-            <div className="text-xs text-gray-500">
-              German for Bengali Speakers
+            <div className="text-[10px] sm:text-xs text-gray-500 leading-tight">
+              <span className="hidden md:inline">German for Bengali Speakers</span>
+              <span className="md:hidden">German Learning</span>
             </div>
           </div>
 
@@ -229,7 +232,7 @@ const Navbar: React.FC = () => {
 
                 {/* Dropdown Menu */}
                 {isMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-[100]">
+                  <div className="absolute right-0 mt-2 w-64 sm:w-72 md:w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-[100] max-w-[calc(100vw-2rem)]">
                     <div className="py-2">
                       {/* Notifications Menu Item */}
                       <button
@@ -262,10 +265,10 @@ const Navbar: React.FC = () => {
                       </button>
 
                       {/* Notifications Dropdown Content with Smooth Transition */}
-                      <div 
+                      <div
                         className={`border-t border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50 transition-all duration-300 ease-in-out transform origin-top relative z-[110] ${
-                          showNotifications 
-                            ? 'max-h-96 opacity-100 scale-y-100 visible' 
+                          showNotifications
+                            ? 'max-h-96 opacity-100 scale-y-100 visible'
                             : 'max-h-0 opacity-0 scale-y-95 invisible'
                         }`}
                         style={{
@@ -273,22 +276,22 @@ const Navbar: React.FC = () => {
                           backgroundColor: showNotifications ? 'rgba(248, 250, 252, 0.95)' : 'transparent'
                         }}
                       >
-                        <div className="px-4 py-3 max-h-72 overflow-y-auto">
+                        <div className="px-3 sm:px-4 py-3 max-h-64 sm:max-h-72 overflow-y-auto">
                           {/* Notifications Header */}
-                          <div className="flex items-center justify-between mb-4 mt-2">
+                          <div className="flex items-center justify-between mb-3 sm:mb-4 mt-2">
                             {notifications.length > 0 && (
-                              <div className="w-full flex justify-center space-x-4">
+                              <div className="w-full flex justify-center space-x-2 sm:space-x-4">
                                 {unreadCount > 0 && (
                                   <button
                                     onClick={markAllAsRead}
-                                    className="flex-1 text-sm text-blue-700 font-semibold transition-all duration-200 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg border border-blue-200 shadow-sm text-center"
+                                    className="flex-1 text-xs sm:text-sm text-blue-700 font-semibold transition-all duration-200 bg-blue-50 hover:bg-blue-100 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-blue-200 shadow-sm text-center"
                                   >
                                     Mark all read
                                   </button>
                                 )}
                                 <button
                                   onClick={clearAll}
-                                  className="flex-1 text-sm text-gray-700 font-semibold transition-all duration-200 bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-lg border border-gray-200 shadow-sm text-center"
+                                  className="flex-1 text-xs sm:text-sm text-gray-700 font-semibold transition-all duration-200 bg-gray-50 hover:bg-gray-100 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-gray-200 shadow-sm text-center"
                                 >
                                   Clear all
                                 </button>
@@ -355,24 +358,24 @@ const Navbar: React.FC = () => {
                                 return (
                                   <div
                                     key={notification.id}
-                                    className={`p-4 rounded-xl cursor-pointer transition-all duration-200 backdrop-blur-sm hover:shadow-md ${
+                                    className={`p-3 sm:p-4 rounded-lg sm:rounded-xl cursor-pointer transition-all duration-200 backdrop-blur-sm hover:shadow-md ${
                                       !notification.read
                                         ? `bg-gradient-to-r from-white to-gray-50/80 border-l-4 ${getNotificationBorderColor(notification.type, notification.urgent)} shadow-lg border border-gray-100`
                                         : "bg-gray-50/70 border border-gray-200 hover:bg-gray-100/70"
                                     }`}
                                     onClick={() => handleNotificationClick(notification)}
                                   >
-                                    <div className="flex items-start justify-between">
-                                      <div className="flex items-start space-x-2 flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex items-start space-x-1.5 sm:space-x-2 flex-1 min-w-0">
                                         <div className="flex-1 min-w-0">
                                           {notification.type === 'video_comment' ? (
                                             // Special display format for video comment notifications
-                                            <div className="space-y-2">
-                                              <div className="flex items-center space-x-2">
-                                                <div className={`w-2 h-2 rounded-full ${!notification.read ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}></div>
-                                                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
-                                                  notification.fromRole === 'Student' 
-                                                    ? 'bg-blue-100 text-blue-800' 
+                                            <div className="space-y-1.5 sm:space-y-2">
+                                              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                                                <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${!notification.read ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-semibold ${
+                                                  notification.fromRole === 'Student'
+                                                    ? 'bg-blue-100 text-blue-800'
                                                     : notification.fromRole === 'Supervisor'
                                                     ? 'bg-purple-100 text-purple-800'
                                                     : 'bg-gray-100 text-gray-800'
@@ -380,26 +383,26 @@ const Navbar: React.FC = () => {
                                                   {notification.title}
                                                 </span>
                                               </div>
-                                              <p className={`text-sm leading-relaxed ${!notification.read ? "text-gray-700" : "text-gray-500"}`}>
+                                              <p className={`text-xs sm:text-sm leading-relaxed ${!notification.read ? "text-gray-700" : "text-gray-500"}`}>
                                                 {notification.message}
                                               </p>
                                             </div>
                                           ) : (
                                             // Default display format for other notifications
                                             <div>
-                                              <p className={`text-sm mt-1 leading-relaxed ${!notification.read ? "text-gray-700" : "text-gray-500"}`}>
+                                              <p className={`text-xs sm:text-sm mt-1 leading-relaxed ${!notification.read ? "text-gray-700" : "text-gray-500"}`}>
                                                 {notification.message}
                                               </p>
                                             </div>
                                           )}
                                         </div>
                                       </div>
-                                      <div className="flex flex-col items-end space-y-1 flex-shrink-0 ml-2">
-                                        <span className={`text-xs font-medium ${!notification.read ? 'text-gray-500' : 'text-gray-400'}`}>
+                                      <div className="flex flex-col items-end space-y-0.5 sm:space-y-1 flex-shrink-0 ml-1 sm:ml-2">
+                                        <span className={`text-[10px] sm:text-xs font-medium ${!notification.read ? 'text-gray-500' : 'text-gray-400'}`}>
                                           {formatTime(notification.timestamp)}
                                         </span>
                                         <div className="text-xs text-blue-600 opacity-70 hover:opacity-100 transition-opacity">
-                                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                          <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                                           </svg>
                                         </div>
@@ -509,13 +512,17 @@ const Navbar: React.FC = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-3">
-                <Button
-                  onClick={() => navigate("/login")}
-                  variant="secondary"
-                  className="group relative hidden md:block bg-gradient-to-r from-slate-50 to-gray-50 text-slate-700 border-2 border-slate-200 hover:border-slate-500 hover:shadow-lg hover:bg-gradient-to-r hover:from-slate-200 hover:to-gray-200 hover:text-slate-900 transition-all duration-[2500ms] ease-[cubic-bezier(0.16,1,0.3,1)] font-semibold overflow-hidden"
-                >
-                  {/* Login Button Stars - More stars added */}
-                  <div className="fixed w-4 h-4 top-[8%] left-[12%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                {/* Login Button with Stars All Over Window */}
+                <div className="group relative hidden md:block">
+                  <Button
+                    onClick={() => navigate("/login")}
+                    variant="secondary"
+                    className="animated-btn relative bg-gradient-to-r from-slate-50 to-gray-50 text-slate-700 border-2 border-slate-200 hover:border-slate-500 hover:shadow-lg hover:!bg-transparent transition-all duration-[2500ms] ease-[cubic-bezier(0.16,1,0.3,1)] font-semibold overflow-hidden"
+                  >
+                    <span className="relative z-10">Login</span>
+                  </Button>
+                  {/* Stars positioned across the entire viewport */}
+                  <div className="fixed w-4 h-4 top-[10%] left-[15%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -524,7 +531,7 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-2 h-2 top-[28%] left-[85%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-2 h-2 top-[40%] right-[18%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -533,16 +540,16 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-3 h-3 bottom-[18%] left-[45%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-3 h-3 bottom-[15%] left-[50%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
-                      className="w-full h-full fill-slate-600 drop-shadow-[0_0_10px_rgba(71,85,105,0.8)]"
+                      className="w-full h-full fill-slate-500 drop-shadow-[0_0_10px_rgba(100,116,139,0.8)]"
                     >
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-2 h-2 top-[45%] left-[25%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2800ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-2 h-2 top-[25%] left-[75%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2800ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -551,7 +558,7 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-3 h-3 top-[12%] right-[20%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-3 h-3 bottom-[35%] right-[8%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -560,40 +567,44 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-2 h-2 bottom-[8%] right-[15%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-2.5 h-2.5 top-[60%] left-[30%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
-                      className="w-full h-full fill-slate-400 drop-shadow-[0_0_6px_rgba(148,163,184,0.8)]"
+                      className="w-full h-full fill-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]"
                     >
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-3 h-3 top-[60%] left-[70%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-3.5 h-3.5 bottom-[20%] right-[25%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
-                      className="w-full h-full fill-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.7)]"
+                      className="w-full h-full fill-sky-500 drop-shadow-[0_0_10px_rgba(14,165,233,0.8)]"
                     >
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-2 h-2 bottom-[35%] left-[8%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-2 h-2 top-[50%] right-[45%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2900ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
-                      className="w-full h-full fill-gray-400 drop-shadow-[0_0_6px_rgba(156,163,175,0.8)]"
+                      className="w-full h-full fill-indigo-400 drop-shadow-[0_0_7px_rgba(129,140,248,0.7)]"
                     >
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <span className="relative z-10">Login</span>
-                </Button>
-                <Button
-                  onClick={() => navigate("/register")}
-                  className="group relative bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:shadow-xl hover:from-emerald-700 hover:to-teal-800 shadow-lg transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] font-semibold overflow-hidden"
-                >
-                  {/* Sign Up Button Stars - More stars added */}
+                </div>
+
+                {/* Sign Up Button with Stars All Over Window */}
+                <div className="group relative">
+                  <Button
+                    onClick={() => navigate("/register")}
+                    className="animated-btn relative bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:shadow-xl hover:!bg-transparent shadow-lg transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] font-semibold overflow-hidden"
+                  >
+                    <span className="relative z-10">Sign Up</span>
+                  </Button>
+                  {/* Stars positioned across the entire viewport */}
                   <div className="fixed w-5 h-5 top-[8%] left-[18%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -603,7 +614,7 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-3 h-3 top-[25%] right-[12%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2800ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-3 h-3 top-[28%] right-[12%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2800ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -612,7 +623,7 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-2 h-2 bottom-[22%] left-[65%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-2 h-2 bottom-[25%] left-[65%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -621,7 +632,7 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-4 h-4 top-[45%] left-[8%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-4 h-4 top-[50%] left-[8%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -630,7 +641,7 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-2 h-2 bottom-[8%] right-[28%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-2 h-2 bottom-[10%] right-[25%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -639,7 +650,7 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-3 h-3 top-[15%] right-[45%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-3 h-3 top-[15%] right-[40%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -648,7 +659,7 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-2 h-2 top-[58%] left-[75%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-2 h-2 top-[42%] right-[70%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -657,7 +668,7 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-3 h-3 bottom-[12%] left-[35%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-3 h-3 bottom-[35%] left-[25%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3600ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -666,16 +677,7 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <div className="fixed w-2 h-2 top-[35%] left-[88%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2900ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 784.11 815.53"
-                      className="w-full h-full fill-cyan-200 drop-shadow-[0_0_6px_rgba(165,243,252,0.7)]"
-                    >
-                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
-                    </svg>
-                  </div>
-                  <div className="fixed w-3 h-3 bottom-[40%] left-[15%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3800ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                  <div className="fixed w-3.5 h-3.5 top-[70%] right-[35%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2700ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 784.11 815.53"
@@ -684,8 +686,25 @@ const Navbar: React.FC = () => {
                       <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
                     </svg>
                   </div>
-                  <span className="relative z-10">Sign Up</span>
-                </Button>
+                  <div className="fixed w-2.5 h-2.5 bottom-[45%] right-[15%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3100ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-teal-400 drop-shadow-[0_0_9px_rgba(45,212,191,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                  <div className="fixed w-2 h-2 top-[35%] left-[45%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2500ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 784.11 815.53"
+                      className="w-full h-full fill-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]"
+                    >
+                      <path d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             )}
 

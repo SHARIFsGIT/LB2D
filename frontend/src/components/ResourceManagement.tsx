@@ -4,6 +4,8 @@ import ResourceUpload from './ResourceUpload';
 import ResourceViewer from './ResourceViewer';
 import Modal from './common/Modal';
 import Button from './common/Button';
+import { useNotification } from '../hooks/useNotification';
+import ConfirmModal from './common/ConfirmModal';
 
 interface Resource {
   _id: string;
@@ -38,11 +40,14 @@ interface Course {
 }
 
 const ResourceManagement: React.FC = () => {
+  const { showSuccess, showError } = useNotification();
   const [resources, setResources] = useState<Resource[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [resourceToDelete, setResourceToDelete] = useState<string | null>(null);
   const [filter, setFilter] = useState({
     status: 'all',
     courseId: 'all',
@@ -97,33 +102,40 @@ const ResourceManagement: React.FC = () => {
       const response = await resourceApi.submitForApproval(resourceId);
       if (response.success) {
         // Update resource status in local state
-        setResources(prev => 
-          prev.map(resource => 
-            resource._id === resourceId 
+        setResources(prev =>
+          prev.map(resource =>
+            resource._id === resourceId
               ? { ...resource, status: 'pending' }
               : resource
           )
         );
+        showSuccess('Resource submitted for approval successfully', 'Submitted');
       }
     } catch (error: any) {
       console.error('Error submitting resource for approval:', error);
-      alert(error.message || 'Failed to submit resource for approval');
+      showError(error.message || 'Failed to submit resource for approval', 'Submission Failed');
     }
   };
 
-  const handleDeleteResource = async (resourceId: string) => {
-    if (!window.confirm('Are you sure you want to delete this resource?')) {
-      return;
-    }
+  const handleDeleteResource = (resourceId: string) => {
+    setResourceToDelete(resourceId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteResource = async () => {
+    if (!resourceToDelete) return;
 
     try {
-      const response = await resourceApi.delete(resourceId);
+      const response = await resourceApi.delete(resourceToDelete);
       if (response.success) {
-        setResources(prev => prev.filter(resource => resource._id !== resourceId));
+        setResources(prev => prev.filter(resource => resource._id !== resourceToDelete));
+        showSuccess('Resource deleted successfully', 'Deleted');
+        setShowDeleteConfirm(false);
+        setResourceToDelete(null);
       }
     } catch (error: any) {
       console.error('Error deleting resource:', error);
-      alert(error.message || 'Failed to delete resource');
+      showError(error.message || 'Failed to delete resource', 'Delete Failed');
     }
   };
 
@@ -344,6 +356,21 @@ const ResourceManagement: React.FC = () => {
           )}
         </Modal>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setResourceToDelete(null);
+        }}
+        onConfirm={confirmDeleteResource}
+        title="Delete Resource"
+        message="Are you sure you want to delete this resource? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

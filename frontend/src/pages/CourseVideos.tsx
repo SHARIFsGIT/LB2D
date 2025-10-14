@@ -6,6 +6,7 @@ import Card from '../components/common/Card';
 import VideoComments from '../components/VideoComments';
 import ResourceViewer from '../components/ResourceViewer';
 import { RootState } from '../store/store';
+import { useNotification } from '../hooks/useNotification';
 
 interface Video {
   _id: string;
@@ -85,6 +86,7 @@ const CourseVideos: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { showWarning } = useNotification();
   
   const [videos, setVideos] = useState<Video[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -511,11 +513,11 @@ const CourseVideos: React.FC = () => {
       }
       
       const blockingItem = blockingItemIndex >= 0 ? timelineItems[blockingItemIndex] : null;
-      const message = blockingItem 
+      const message = blockingItem
         ? `Please complete "${(blockingItem.data as any).title}" to at least 90% before accessing this content.`
         : 'Please complete the previous content before accessing this item.';
-      
-      alert(message);
+
+      showWarning(message, 'Content Locked');
       return;
     }
     
@@ -552,11 +554,11 @@ const CourseVideos: React.FC = () => {
       }
       
       const blockingVideo = blockingVideoIndex >= 0 ? videos[blockingVideoIndex] : null;
-      const message = blockingVideo 
+      const message = blockingVideo
         ? `Please complete "${blockingVideo.title}" to at least 90% before accessing this video.`
         : 'Please complete the previous videos to at least 90% before accessing this video.';
-      
-      alert(message);
+
+      showWarning(message, 'Video Locked');
       return;
     }
     
@@ -820,8 +822,8 @@ const CourseVideos: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center px-4">
+        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -834,23 +836,23 @@ const CourseVideos: React.FC = () => {
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-white bg-opacity-10 rounded-full translate-x-1/2 translate-y-1/2"></div>
         <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
         
-        <div className="bg-white bg-opacity-60 backdrop-blur-md px-10 py-6 rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10">
+        <div className="bg-white bg-opacity-60 backdrop-blur-md px-6 sm:px-8 md:px-10 py-6 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10 mx-4">
           {/* Header */}
-          <div className="text-center mb-6">
-            <div className="text-3xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2">
+          <div className="text-center mb-4 sm:mb-6">
+            <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2">
               Course Not Found
             </div>
           </div>
-          
-          <div className="text-center mb-8">
-            <p className="text-gray-700 text-lg leading-relaxed">
+
+          <div className="text-center mb-6 sm:mb-8">
+            <p className="text-gray-700 text-base sm:text-lg leading-relaxed">
               The course you're looking for doesn't exist or you don't have access to it.
             </p>
           </div>
           
           <button
             onClick={() => navigate('/my-courses')}
-            className="group relative w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-green-600 font-semibold text-white rounded-xl hover:shadow-lg transition-all duration-300"
+            className="group relative w-full py-3 px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-green-600 font-semibold text-white rounded-lg sm:rounded-xl hover:shadow-lg transition-all duration-300 min-h-[44px] text-sm sm:text-base"
           >
             {/* Stars for hover effect */}
             <div className="fixed w-4 h-4 top-[15%] left-[20%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[2400ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
@@ -890,13 +892,13 @@ const CourseVideos: React.FC = () => {
               </svg>
             </div>
             
-            <span className="relative z-10 font-semibold text-lg">Back to My Courses</span>
+            <span className="relative z-10 font-semibold text-sm sm:text-base md:text-lg">Back to My Courses</span>
           </button>
-          
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
+
+          <div className="mt-4 sm:mt-6 text-center">
+            <p className="text-gray-600 text-sm sm:text-base">
               Need help?{' '}
-              <button 
+              <button
                 onClick={() => navigate('/contact')}
                 className="text-green-600 font-semibold hover:text-green-700 transition-colors"
               >
@@ -912,20 +914,20 @@ const CourseVideos: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white py-8">
+      <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white py-6 sm:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
                 {course.title}
               </h1>
-              <p className="text-xl text-blue-100">
+              <p className="text-base sm:text-lg md:text-xl text-blue-100">
                 {course.level} • {course.instructor}
               </p>
             </div>
-            <Button 
+            <Button
               onClick={() => navigate('/supervisor')}
-              className="text-blue-600 hover:bg-gray-100 transition-colors duration-200 px-4 py-2 rounded-lg shadow-md"
+              className="text-blue-600 hover:bg-gray-100 transition-colors duration-200 px-4 py-2 rounded-lg shadow-md text-sm sm:text-base min-h-[44px]"
             >
               Back to Dashboard
             </Button>
@@ -933,23 +935,23 @@ const CourseVideos: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Progress Bar - Only for Students */}
         {user?.role === 'Student' && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-5 md:p-6 mb-6 sm:mb-8">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-semibold text-gray-800">Course Progress</h3>
-              <span className="text-sm font-bold text-blue-600">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800">Course Progress</h3>
+              <span className="text-xs sm:text-sm font-bold text-blue-600">
                 {Math.round(progressPercentage)}% Complete
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
+            <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3">
               <div
-                className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500"
+                className="bg-gradient-to-r from-blue-500 to-green-500 h-2 sm:h-3 rounded-full transition-all duration-500"
                 style={{ width: `${progressPercentage}%` }}
               ></div>
             </div>
-            <div className="flex justify-between text-sm text-gray-600 mt-2">
+            <div className="flex flex-col sm:flex-row justify-between text-xs sm:text-sm text-gray-600 mt-2 gap-1 sm:gap-0">
               <span>{completedContentItems} of {totalContentItems} items completed</span>
               <span>{videos.length} videos, {quizzes.length} quizzes, {resources.length} resources</span>
             </div>
@@ -958,23 +960,23 @@ const CourseVideos: React.FC = () => {
 
         {/* Supervisor Info Bar */}
         {(user?.role === 'Supervisor' || user?.role === 'Admin') && (
-          <div className="bg-gradient-to-r from-orange-100 via-red-100 to-pink-100 rounded-xl shadow-lg p-6 mb-8 border-2 border-orange-200">
-            <div className="flex items-center justify-between">
+          <div className="bg-gradient-to-r from-orange-100 via-red-100 to-pink-100 rounded-xl shadow-lg p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 border-2 border-orange-200">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
               <div>
-                <p className="text-gray-700 mt-1 font-medium">
+                <p className="text-sm sm:text-base text-gray-700 font-medium">
                   Review and preview course content.
                 </p>
               </div>
-              <div className="text-right">
-                <span className="text-3xl font-bold text-orange-600">{videos.length}</span>
-                <p className="text-sm text-orange-800 font-semibold">Videos Available</p>
+              <div className="text-left sm:text-right">
+                <span className="text-2xl sm:text-3xl font-bold text-orange-600">{videos.length}</span>
+                <p className="text-xs sm:text-sm text-orange-800 font-semibold">Videos Available</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Main Content Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
           {/* Video Player Section - Left Side */}
           <div className="lg:col-span-2">
             {currentVideo ? (
@@ -1017,14 +1019,14 @@ const CourseVideos: React.FC = () => {
                       Your browser does not support the video tag.
                     </video>
                   )}
-                  
+
                 </div>
-                <div className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                <div className="p-4 sm:p-5 md:p-6">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2">
                     {currentVideo.title}
                   </h2>
-                  <p className="text-gray-600 mb-4">{currentVideo.description}</p>
-                  <div className="flex items-center justify-between text-sm text-gray-500">
+                  <p className="text-sm sm:text-base text-gray-600 mb-4">{currentVideo.description}</p>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs sm:text-sm text-gray-500 gap-2 sm:gap-0">
                     <span>
                       Video {currentVideo.sequenceNumber} of {videos.length}
                     </span>
@@ -1035,8 +1037,8 @@ const CourseVideos: React.FC = () => {
 
               {/* Video Comments */}
               {currentVideo && (
-                <div className="mt-8">
-                  <VideoComments 
+                <div className="mt-6 sm:mt-8">
+                  <VideoComments
                     videoId={currentVideo._id}
                     courseId={courseId || ''}
                   />
@@ -1044,8 +1046,8 @@ const CourseVideos: React.FC = () => {
               )}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No videos available for this course.</p>
+              <div className="text-center py-8 sm:py-10 md:py-12">
+                <p className="text-gray-500 text-base sm:text-lg">No videos available for this course.</p>
               </div>
             )}
 
@@ -1054,24 +1056,24 @@ const CourseVideos: React.FC = () => {
           {/* Course Content Timeline - Right Sidebar */}
           <div className="lg:col-span-1">
             <Card>
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-800">
+              <div className="p-3 sm:p-4 border-b border-gray-200">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800">
                   Course Content
                 </h3>
               </div>
-              <div className="p-4 max-h-96 overflow-y-auto">
+              <div className="p-3 sm:p-4 max-h-80 sm:max-h-96 overflow-y-auto">
                 {timelineItems.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {timelineItems.map((item, index) => {
                       const isLocked = isContentLocked(item, index);
                       const isCurrentItem = item.type === 'video' && currentVideo && item.id === currentVideo._id;
-                      
+
                       return (
-                        <div 
+                        <div
                           key={item.id}
-                          className={`p-3 rounded-lg border-2 transition-all duration-200 ${
-                            isCurrentItem 
-                              ? 'border-blue-500 bg-blue-50 shadow-md' 
+                          className={`p-2 sm:p-3 rounded-lg border-2 transition-all duration-200 ${
+                            isCurrentItem
+                              ? 'border-blue-500 bg-blue-50 shadow-md'
                               : isLocked
                               ? 'border-gray-300 bg-gray-100 opacity-60 cursor-not-allowed'
                               : 'border-gray-200 bg-white hover:border-gray-300 cursor-pointer'
@@ -1079,21 +1081,21 @@ const CourseVideos: React.FC = () => {
                           onClick={() => handleContentSelect(item, index)}
                         >
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                               {/* Content Type Icon */}
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                                item.type === 'video' 
-                                  ? 'bg-blue-100 text-blue-600' 
+                              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0 ${
+                                item.type === 'video'
+                                  ? 'bg-blue-100 text-blue-600'
                                   : item.type === 'quiz'
                                   ? 'bg-green-100 text-green-600'
                                   : 'bg-purple-100 text-purple-600'
                               }`}>
                                 {item.type === 'video' ? 'V' : item.type === 'quiz' ? 'Q' : 'R'}
                               </div>
-                              
+
                               {/* Content Info */}
                               <div className="flex-1 min-w-0">
-                                <h4 className={`text-sm font-medium truncate ${
+                                <h4 className={`text-xs sm:text-sm font-medium truncate ${
                                   isLocked ? 'text-gray-500' : 'text-gray-900'
                                 }`}>
                                   {(item.data as any).title}
@@ -1101,7 +1103,7 @@ const CourseVideos: React.FC = () => {
                                 <p className={`text-xs mt-1 ${
                                   isLocked ? 'text-gray-400' : 'text-gray-600'
                                 }`}>
-                                  {item.type === 'video' 
+                                  {item.type === 'video'
                                     ? `Video • ${formatDuration((item.data as Video).duration)}`
                                     : item.type === 'quiz'
                                     ? `${(item.data as Quiz).type.charAt(0).toUpperCase() + (item.data as Quiz).type.slice(1)} • ${(item.data as Quiz).questions.length} questions`
@@ -1148,7 +1150,7 @@ const CourseVideos: React.FC = () => {
 
       {/* Resource Modal */}
       {showResourceModal && selectedResource && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -1156,25 +1158,25 @@ const CourseVideos: React.FC = () => {
             }
           }}
         >
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl max-h-[90vh] w-full overflow-hidden">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-4xl max-h-[90vh] w-full overflow-hidden">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl font-bold">
+            <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                  <span className="text-lg sm:text-xl md:text-2xl font-bold flex-shrink-0">
                     {selectedResource.type === 'document' ? 'DOC' :
                      selectedResource.type === 'audio' ? 'AUD' :
                      selectedResource.type === 'image' ? 'IMG' :
                      selectedResource.type === 'video' ? 'VID' : 'FILE'}
                   </span>
-                  <div>
-                    <h3 className="text-xl font-bold">{selectedResource.title}</h3>
-                    <p className="text-purple-100 text-sm">{selectedResource.fileName}</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold truncate">{selectedResource.title}</h3>
+                    <p className="text-purple-100 text-xs sm:text-sm truncate">{selectedResource.fileName}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowResourceModal(false)}
-                  className="text-white hover:text-purple-200 transition-colors text-2xl font-bold p-2"
+                  className="text-white hover:text-purple-200 transition-colors text-2xl sm:text-3xl font-bold p-2 flex-shrink-0"
                 >
                   ×
                 </button>
@@ -1182,10 +1184,10 @@ const CourseVideos: React.FC = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 overflow-auto max-h-[calc(90vh-200px)]">
+            <div className="p-4 sm:p-6 overflow-auto max-h-[calc(90vh-200px)]">
               {selectedResource.description && (
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-gray-700">{selectedResource.description}</p>
+                <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm sm:text-base text-gray-700">{selectedResource.description}</p>
                 </div>
               )}
 
@@ -1202,9 +1204,9 @@ const CourseVideos: React.FC = () => {
                 )}
                 
                 {selectedResource.type === 'audio' && (
-                  <div className="bg-gray-50 rounded-lg p-8">
+                  <div className="bg-gray-50 rounded-lg p-4 sm:p-6 md:p-8">
                     <div className="text-center mb-4">
-                      <h4 className="text-lg font-semibold">{selectedResource.title}</h4>
+                      <h4 className="text-base sm:text-lg font-semibold">{selectedResource.title}</h4>
                     </div>
                     <audio
                       controls
@@ -1250,17 +1252,17 @@ const CourseVideos: React.FC = () => {
 
                 {/* Fallback for non-viewable resources */}
                 {!selectedResource.isViewableInline && (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <h4 className="text-lg font-semibold mb-2">Preview not available</h4>
-                    <p className="text-gray-600 mb-4">This file type cannot be previewed inline.</p>
-                    <p className="text-sm text-gray-500">Use the download button below to view the file.</p>
+                  <div className="text-center py-8 sm:py-10 md:py-12 bg-gray-50 rounded-lg">
+                    <h4 className="text-base sm:text-lg font-semibold mb-2">Preview not available</h4>
+                    <p className="text-sm sm:text-base text-gray-600 mb-4">This file type cannot be previewed inline.</p>
+                    <p className="text-xs sm:text-sm text-gray-500">Use the download button below to view the file.</p>
                   </div>
                 )}
               </div>
 
               {/* File Info */}
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
                   <div>
                     <span className="font-semibold text-gray-600">File Type:</span>
                     <p className="text-gray-800 capitalize">{selectedResource.type}</p>
@@ -1286,11 +1288,11 @@ const CourseVideos: React.FC = () => {
                   onClick={() => {
                     window.open(`${process.env.REACT_APP_API_URL || 'http://localhost:5005'}/api/resources/${selectedResource._id}/download`, '_blank');
                   }}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg text-sm sm:text-base min-h-[44px]"
                 >
                   Download
                 </button>
-                
+
                 {user?.role === 'Student' && (
                   <button
                     onClick={async () => {
@@ -1311,7 +1313,7 @@ const CourseVideos: React.FC = () => {
                         console.error('Error marking resource as completed:', error);
                       }
                     }}
-                    className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                    className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg text-sm sm:text-base min-h-[44px]"
                   >
                     Mark Complete
                   </button>

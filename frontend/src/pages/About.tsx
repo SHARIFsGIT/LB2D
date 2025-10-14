@@ -57,7 +57,7 @@ const About: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">Our Story</h2>
+              <h2 className="text-4xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-6">Our Story</h2>
               <p className="text-lg text-gray-600 mb-4 text-justify">
                 Founded by Bengali speakers who successfully made Germany their new home, Learn Bangla to Deutsch 
                 was born from the understanding that learning German can be challenging when traditional methods 
@@ -116,7 +116,7 @@ const About: React.FC = () => {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">What Makes Us Different</h2>
+            <h2 className="text-4xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-4">What Makes Us Different</h2>
             <p className="text-xl text-gray-600">
               Specialized approach designed for Bengali speakers
             </p>
@@ -124,23 +124,23 @@ const About: React.FC = () => {
           
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="p-6 text-center">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Native Bengali Instructors</h3>
-              <p className="text-gray-600">
-                Learn from teachers who understand your mother tongue and can explain German concepts in Bengali
-              </p>
-            </Card>
-            
-            <Card className="p-6 text-center">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Structured CEFR Curriculum</h3>
+              <h3 className="text-xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-3">Structured CEFR Curriculum</h3>
               <p className="text-gray-600">
                 Complete A1 to C1 courses following European standards with Bengali explanations
               </p>
             </Card>
-            
+
             <Card className="p-6 text-center">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Proven Success Rate</h3>
+              <h3 className="text-xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-3">Global Community</h3>
               <p className="text-gray-600">
-                96% of our students pass their German proficiency exams and achieve their goals
+                Join thousands of Bengali speakers learning German and connect with students worldwide
+              </p>
+            </Card>
+
+            <Card className="p-6 text-center">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-3">Weekly Exam</h3>
+              <p className="text-gray-600">
+                Regular assessments to track your progress and prepare you for official German proficiency tests
               </p>
             </Card>
           </div>

@@ -414,9 +414,9 @@ const CourseManagement: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white py-16">
+      <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white py-8 sm:py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
             Course Management
           </h1>
         </div>
@@ -424,31 +424,31 @@ const CourseManagement: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
         {/* Quick Stats & Create Button */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
-          <div className="flex justify-between items-center">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 border border-gray-100">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center space-x-3">
-              <div className="text-4xl font-bold text-blue-600">STATS</div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-700">{courses.length} Total Courses</h3>
-                <p className="text-sm text-gray-500">Active courses</p>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-700">{courses.length} Total Courses</h3>
+                <p className="text-xs sm:text-sm text-gray-500">Active courses</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={handleCreateCourse}
-                className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-1200 ease-out"
+                className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 sm:px-6 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-1200 ease-out text-sm sm:text-base min-h-[44px]"
               >
                 Create New Course
               </button>
               <button
                 onClick={() => setIncludeDeleted(!includeDeleted)}
-                className={`px-6 py-3 rounded-xl font-bold shadow-lg transition-all duration-1200 ease-out ${
-                  includeDeleted 
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:shadow-xl hover:from-blue-600 hover:to-indigo-700' 
+                className={`px-4 sm:px-6 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg transition-all duration-1200 ease-out text-sm sm:text-base min-h-[44px] ${
+                  includeDeleted
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:shadow-xl hover:from-blue-600 hover:to-indigo-700'
                     : 'bg-gradient-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:from-orange-600 hover:to-red-700'
                 }`}
               >
-                {includeDeleted ? 'Show Active Courses' : 'Show Deleted Courses'}
+                <span className="hidden sm:inline">{includeDeleted ? 'Show Active Courses' : 'Show Deleted Courses'}</span>
+                <span className="sm:hidden">{includeDeleted ? 'Active' : 'Deleted'}</span>
               </button>
             </div>
           </div>
@@ -456,14 +456,14 @@ const CourseManagement: React.FC = () => {
 
         {/* Courses Grid */}
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="bg-white rounded-3xl shadow-xl p-12">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-4"></div>
-              <p className="text-xl text-gray-600 font-medium text-center">Loading courses...</p>
+          <div className="flex justify-center items-center py-12 sm:py-16 md:py-20 px-4">
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl p-8 sm:p-10 md:p-12">
+              <div className="animate-spin rounded-full h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-4"></div>
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 font-medium text-center">Loading courses...</p>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {courses.map((course) => (
               <div key={course._id} className={`bg-white rounded-3xl shadow-xl border overflow-hidden group ${
                 course.isDeleted ? 'border-red-300 opacity-75' : 'border-gray-100'
@@ -601,13 +601,13 @@ const CourseManagement: React.FC = () => {
                       <>
                         <button
                           onClick={() => handleRestoreCourse(course._id)}
-                          className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-xl font-bold hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+                          className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg sm:rounded-xl font-bold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 text-sm sm:text-base min-h-[44px]"
                         >
                           Restore
                         </button>
                         <button
                           onClick={() => handlePermanentDeleteCourse(course._id)}
-                          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-bold hover:from-red-600 hover:to-red-700 transition-all duration-300"
+                          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-lg sm:rounded-xl font-bold hover:from-red-600 hover:to-red-700 transition-all duration-300 text-sm sm:text-base min-h-[44px]"
                         >
                           Delete
                         </button>
@@ -617,13 +617,13 @@ const CourseManagement: React.FC = () => {
                       <>
                         <button
                           onClick={() => handleEditCourse(course)}
-                          className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-1200 ease-out"
+                          className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 sm:px-4 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-1200 ease-out text-sm sm:text-base min-h-[44px]"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteCourse(course._id)}
-                          className="flex-1 bg-gradient-to-r from-red-500 to-rose-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-red-600 hover:to-rose-700 transition-all duration-1200 ease-out"
+                          className="flex-1 bg-gradient-to-r from-red-500 to-rose-600 text-white px-3 sm:px-4 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-red-600 hover:to-rose-700 transition-all duration-1200 ease-out text-sm sm:text-base min-h-[44px]"
                         >
                           Delete
                         </button>
@@ -637,21 +637,19 @@ const CourseManagement: React.FC = () => {
         )}
 
         {courses.length === 0 && !loading && (
-          <div className="text-center py-16">
-            <div className="bg-white rounded-3xl shadow-xl p-12 border border-gray-100">
+          <div className="text-center py-12 sm:py-16 px-4">
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl p-8 sm:p-10 md:p-12 border border-gray-100">
               {includeDeleted ? (
                 <>
-                  <div className="text-6xl mb-6">🗑️</div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">No deleted courses found</h3>
-                  <p className="text-gray-600 text-lg max-w-md mx-auto">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">No deleted courses found</h3>
+                  <p className="text-gray-600 text-sm sm:text-base md:text-lg max-w-md mx-auto">
                     Great! You don't have any deleted courses at the moment. All your courses are active and available for students.
                   </p>
                 </>
               ) : (
                 <>
-                  <div className="text-6xl mb-6">📚</div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">No courses found</h3>
-                  <p className="text-gray-600 text-lg max-w-md mx-auto">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">No courses found</h3>
+                  <p className="text-gray-600 text-sm sm:text-base md:text-lg max-w-md mx-auto">
                     Start creating amazing German courses for your students!
                   </p>
                 </>
@@ -910,18 +908,18 @@ const CourseManagement: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={() => setShowModal(false)}
-              className="px-6 py-3 bg-gray-200 text-gray-800 rounded-xl font-bold"
+              className="px-4 sm:px-6 py-3 bg-gray-200 text-gray-800 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base min-h-[44px] order-2 sm:order-1"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-1200 ease-out disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 sm:px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-1200 ease-out disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base min-h-[44px] order-1 sm:order-2"
             >
               {loading ? 'Saving...' : (editingCourse ? 'Update Course' : 'Create Course')}
             </button>

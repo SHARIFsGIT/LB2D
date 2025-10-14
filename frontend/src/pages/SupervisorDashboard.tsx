@@ -3,6 +3,9 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { RootState } from "../store/store";
+import { useNotification } from "../hooks/useNotification";
+import ConfirmModal from "../components/common/ConfirmModal";
+import Modal from "../components/common/Modal";
 
 interface Student {
   _id: string;
@@ -202,6 +205,8 @@ const UploadModal: React.FC<UploadModalProps> = ({
   onClose,
   course,
 }) => {
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
+
   const [activeTab, setActiveTab] = useState<
     "quizzes" | "resources" | "videos"
   >("quizzes");
@@ -214,6 +219,14 @@ const UploadModal: React.FC<UploadModalProps> = ({
   const [showVideoForm, setShowVideoForm] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState<any>(null);
   const [editingResource, setEditingResource] = useState<any>(null);
+
+  // Modal state for delete confirmations
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string; type: 'quiz' | 'resource' | 'video' } | null>(null);
+
+  // Modal state for video details
+  const [showVideoDetailsModal, setShowVideoDetailsModal] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<any>(null);
 
   const token = sessionStorage.getItem("accessToken");
 
@@ -317,14 +330,14 @@ const UploadModal: React.FC<UploadModalProps> = ({
       if (response.ok) {
         // Refresh quizzes to update status
         fetchQuizzes();
-        alert("Quiz submitted for admin approval successfully!");
+        showSuccess("Quiz submitted for admin approval successfully!", "Success");
       } else {
         const errorData = await response.json();
-        alert(errorData.message || "Failed to submit quiz for approval");
+        showError(errorData.message || "Failed to submit quiz for approval", "Error");
       }
     } catch (error) {
       console.error("Error submitting quiz for approval:", error);
-      alert("Failed to submit quiz for approval");
+      showError("Failed to submit quiz for approval", "Error");
     }
   };
 
@@ -344,14 +357,14 @@ const UploadModal: React.FC<UploadModalProps> = ({
       if (response.ok) {
         // Refresh quizzes to update status
         fetchQuizzes();
-        alert("Quiz resubmitted for admin approval successfully!");
+        showSuccess("Quiz resubmitted for admin approval successfully!", "Success");
       } else {
         const errorData = await response.json();
-        alert(errorData.message || "Failed to resubmit quiz for approval");
+        showError(errorData.message || "Failed to resubmit quiz for approval", "Error");
       }
     } catch (error) {
       console.error("Error resubmitting quiz for approval:", error);
-      alert("Failed to resubmit quiz for approval");
+      showError("Failed to resubmit quiz for approval", "Error");
     }
   };
 
@@ -371,14 +384,14 @@ const UploadModal: React.FC<UploadModalProps> = ({
       if (response.ok) {
         // Refresh resources to update status
         fetchResources();
-        alert("Resource submitted for admin approval successfully!");
+        showSuccess("Resource submitted for admin approval successfully!", "Success");
       } else {
         const errorData = await response.json();
-        alert(errorData.message || "Failed to submit resource for approval");
+        showError(errorData.message || "Failed to submit resource for approval", "Error");
       }
     } catch (error) {
       console.error("Error submitting resource for approval:", error);
-      alert("Failed to submit resource for approval");
+      showError("Failed to submit resource for approval", "Error");
     }
   };
 
@@ -393,44 +406,8 @@ const UploadModal: React.FC<UploadModalProps> = ({
     setShowQuizForm(true);
   };
 
-  const handleDeleteQuiz = async (quizId: string, quizTitle: string) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete "${quizTitle}"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/quizzes/${quizId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        if (data.data?.requiresApproval) {
-          alert(
-            "Deletion request submitted to admin for approval. You will be notified once the admin reviews your request."
-          );
-        } else {
-          alert("Quiz deleted successfully");
-        }
-        fetchQuizzes();
-      } else {
-        alert(data.message || "Failed to delete quiz");
-      }
-    } catch (error) {
-      console.error("Error deleting quiz:", error);
-      alert("Failed to delete quiz");
-    }
+  const handleDeleteQuiz = (quizId: string, quizTitle: string) => {
+    initiateDeleteQuiz(quizId, quizTitle);
   };
 
   // Handler functions for resource buttons
@@ -459,52 +436,16 @@ const UploadModal: React.FC<UploadModalProps> = ({
         // Refresh resources to update download count
         fetchResources();
       } else {
-        alert("Failed to download resource");
+        showError("Failed to download resource", "Error");
       }
     } catch (error) {
       console.error("Error downloading resource:", error);
-      alert("Failed to download resource");
+      showError("Failed to download resource", "Error");
     }
   };
 
-  const handleDeleteResource = async (resourceId: string, resourceTitle: string) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete "${resourceTitle}"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/resources/${resourceId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        if (data.data?.requiresApproval) {
-          alert(
-            "Deletion request submitted to admin for approval. You will be notified once the admin reviews your request."
-          );
-        } else {
-          alert("Resource deleted successfully");
-        }
-        fetchResources();
-      } else {
-        alert(data.message || "Failed to delete resource");
-      }
-    } catch (error) {
-      console.error("Error deleting resource:", error);
-      alert("Failed to delete resource");
-    }
+  const handleDeleteResource = (resourceId: string, resourceTitle: string) => {
+    initiateDeleteResource(resourceId, resourceTitle);
   };
 
   // Add missing resource handlers to match quiz handlers
@@ -524,14 +465,14 @@ const UploadModal: React.FC<UploadModalProps> = ({
       if (response.ok) {
         // Refresh resources to update status
         fetchResources();
-        alert("Resource resubmitted for admin approval successfully!");
+        showSuccess("Resource resubmitted for admin approval successfully!", "Success");
       } else {
         const errorData = await response.json();
-        alert(errorData.message || "Failed to resubmit resource for approval");
+        showError(errorData.message || "Failed to resubmit resource for approval", "Error");
       }
     } catch (error) {
       console.error("Error resubmitting resource for approval:", error);
-      alert("Failed to resubmit resource for approval");
+      showError("Failed to resubmit resource for approval", "Error");
     }
   };
 
@@ -551,14 +492,14 @@ const UploadModal: React.FC<UploadModalProps> = ({
       if (response.ok) {
         // Refresh videos to update status
         fetchVideos();
-        alert("Video resubmitted for admin approval successfully!");
+        showSuccess("Video resubmitted for admin approval successfully!", "Success");
       } else {
         const errorData = await response.json();
-        alert(errorData.message || "Failed to resubmit video for approval");
+        showError(errorData.message || "Failed to resubmit video for approval", "Error");
       }
     } catch (error) {
       console.error("Error resubmitting video for approval:", error);
-      alert("Failed to resubmit video for approval");
+      showError("Failed to resubmit video for approval", "Error");
     }
   };
 
@@ -600,48 +541,77 @@ const UploadModal: React.FC<UploadModalProps> = ({
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch (error) {
       console.error('Error viewing resource:', error);
-      alert('Failed to view resource. Please try again.');
+      showError('Failed to view resource. Please try again.', 'Error');
     }
   };
 
   // Handler functions for video buttons
-  const handleDeleteVideo = async (videoId: string, videoTitle: string) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete "${videoTitle}"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+  const handleDeleteVideo = (videoId: string, videoTitle: string) => {
+    initiateDeleteVideo(videoId, videoTitle);
+  };
+
+  // Initiate delete functions
+  const initiateDeleteQuiz = (quizId: string, quizTitle: string) => {
+    setDeleteTarget({ id: quizId, title: quizTitle, type: 'quiz' });
+    setShowDeleteConfirm(true);
+  };
+
+  const initiateDeleteResource = (resourceId: string, resourceTitle: string) => {
+    setDeleteTarget({ id: resourceId, title: resourceTitle, type: 'resource' });
+    setShowDeleteConfirm(true);
+  };
+
+  const initiateDeleteVideo = (videoId: string, videoTitle: string) => {
+    setDeleteTarget({ id: videoId, title: videoTitle, type: 'video' });
+    setShowDeleteConfirm(true);
+  };
+
+  // Confirm delete function
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
 
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/videos/${videoId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      let endpoint = '';
+      if (deleteTarget.type === 'quiz') {
+        endpoint = `${process.env.REACT_APP_API_URL}/quizzes/${deleteTarget.id}`;
+      } else if (deleteTarget.type === 'resource') {
+        endpoint = `${process.env.REACT_APP_API_URL}/resources/${deleteTarget.id}`;
+      } else if (deleteTarget.type === 'video') {
+        endpoint = `${process.env.REACT_APP_API_URL}/videos/${deleteTarget.id}`;
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
       const data = await response.json();
 
       if (response.ok) {
         if (data.data?.requiresApproval) {
-          alert(
-            "Deletion request submitted to admin for approval. You will be notified once the admin reviews your request."
+          showInfo(
+            'Deletion request submitted to admin for approval. You will be notified once the admin reviews your request.',
+            'Request Submitted'
           );
         } else {
-          alert("Video deleted successfully");
+          showSuccess(`${deleteTarget.type.charAt(0).toUpperCase() + deleteTarget.type.slice(1)} deleted successfully`, 'Success');
         }
-        fetchVideos();
+        // Refresh the appropriate list
+        if (deleteTarget.type === 'quiz') fetchQuizzes();
+        else if (deleteTarget.type === 'resource') fetchResources();
+        else if (deleteTarget.type === 'video') fetchVideos();
       } else {
-        alert(data.message || "Failed to delete video");
+        showError(data.message || `Failed to delete ${deleteTarget.type}`, 'Error');
       }
     } catch (error) {
-      console.error("Error deleting video:", error);
-      alert("Failed to delete video");
+      console.error(`Error deleting ${deleteTarget?.type}:`, error);
+      showError(`Failed to delete ${deleteTarget?.type}`, 'Error');
+    } finally {
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -715,7 +685,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
                     </button>
                   </div>
 
-                  {quizzes.length === 0 ? (
+                  {quizzes.filter(quiz => quiz.deletionStatus !== 'approved' && !quiz.isDeleted).length === 0 ? (
                     <div className="text-center py-12 bg-gray-50 rounded-xl">
                       <h4 className="text-lg font-medium text-gray-800 mb-2">
                         No Quizzes Yet
@@ -726,7 +696,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {quizzes.map((quiz) => (
+                      {quizzes.filter(quiz => quiz.deletionStatus !== 'approved' && !quiz.isDeleted).map((quiz) => (
                         <div
                           key={quiz._id}
                           className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-shadow"
@@ -1115,8 +1085,8 @@ const UploadModal: React.FC<UploadModalProps> = ({
                           <div className="flex space-x-2">
                             <button
                               onClick={() => {
-                                // For now just show alert, can implement edit later
-                                alert(`View video: ${video.title}\nURL: ${video.videoUrl}`);
+                                setSelectedVideo(video);
+                                setShowVideoDetailsModal(true);
                               }}
                               className="flex-1 text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
                             >
@@ -1256,6 +1226,78 @@ const UploadModal: React.FC<UploadModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Video Details Modal */}
+      <Modal
+        isOpen={showVideoDetailsModal}
+        onClose={() => {
+          setShowVideoDetailsModal(false);
+          setSelectedVideo(null);
+        }}
+        title="Video Details"
+        size="medium"
+      >
+        {selectedVideo && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Title</h3>
+              <p className="text-gray-900">{selectedVideo.title}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Description</h3>
+              <p className="text-gray-900">{selectedVideo.description || 'No description available'}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Video URL</h3>
+              <a
+                href={selectedVideo.videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 hover:underline break-all"
+              >
+                {selectedVideo.videoUrl}
+              </a>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Status</h3>
+              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                selectedVideo.status === 'approved'
+                  ? 'bg-green-100 text-green-800'
+                  : selectedVideo.status === 'pending'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {selectedVideo.status?.charAt(0).toUpperCase() + selectedVideo.status?.slice(1)}
+              </span>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Sequence Number</h3>
+              <p className="text-gray-900">{selectedVideo.sequenceNumber}</p>
+            </div>
+            {selectedVideo.rejectionReason && (
+              <div>
+                <h3 className="text-sm font-semibold text-red-700 mb-1">Rejection Reason</h3>
+                <p className="text-red-600 bg-red-50 p-3 rounded">{selectedVideo.rejectionReason}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setDeleteTarget(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };
@@ -1266,8 +1308,11 @@ const StudentsModal: React.FC<StudentsModalProps> = ({
   onClose,
   course,
 }) => {
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
   const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showGradingModal, setShowGradingModal] = useState(false);
+  const [selectedAttempt, setSelectedAttempt] = useState<any>(null);
   const token = sessionStorage.getItem("accessToken");
 
   useEffect(() => {
@@ -1305,16 +1350,8 @@ const StudentsModal: React.FC<StudentsModalProps> = ({
   };
 
   const handleGradeAttempt = (attempt: any) => {
-    // For now, show an alert with attempt details
-    // TODO: Implement a proper grading modal/form
-    alert(`
-Grading Details:
-Student: ${attempt.studentId?.firstName} ${attempt.studentId?.lastName}
-Quiz: ${attempt.quizId?.title}
-Score: ${attempt.score}/${attempt.maxScore} (${attempt.percentage}%)
-Status: ${attempt.isGraded ? "Already Graded" : "Needs Review"}
-Submitted: ${new Date(attempt.submittedAt).toLocaleString()}
-    `);
+    setSelectedAttempt(attempt);
+    setShowGradingModal(true);
   };
 
   if (!isOpen) return null;
@@ -1417,6 +1454,66 @@ Submitted: ${new Date(attempt.submittedAt).toLocaleString()}
           </div>
         </div>
       </div>
+
+      {/* Grading Details Modal */}
+      <Modal
+        isOpen={showGradingModal}
+        onClose={() => {
+          setShowGradingModal(false);
+          setSelectedAttempt(null);
+        }}
+        title="Grading Details"
+        size="medium"
+      >
+        {selectedAttempt && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Student</h3>
+              <p className="text-gray-900">
+                {selectedAttempt.studentId?.firstName} {selectedAttempt.studentId?.lastName}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Quiz</h3>
+              <p className="text-gray-900">{selectedAttempt.quizId?.title}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Score</h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {selectedAttempt.score}/{selectedAttempt.maxScore}
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Percentage</h3>
+                <p className="text-2xl font-bold text-gray-900">{selectedAttempt.percentage}%</p>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Status</h3>
+              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                selectedAttempt.isGraded
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {selectedAttempt.isGraded ? "Already Graded" : "Needs Review"}
+              </span>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Submitted</h3>
+              <p className="text-gray-900">
+                {new Date(selectedAttempt.submittedAt).toLocaleString()}
+              </p>
+            </div>
+            {selectedAttempt.feedback && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Feedback</h3>
+                <p className="text-gray-900 bg-gray-50 p-3 rounded">{selectedAttempt.feedback}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
@@ -1435,6 +1532,7 @@ const QuizForm: React.FC<QuizFormProps> = ({
   onCancel,
   editingQuiz = null,
 }) => {
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
   const isViewOnly = editingQuiz?.isViewOnly || false;
 
   const [formData, setFormData] = useState({
@@ -1572,7 +1670,7 @@ const QuizForm: React.FC<QuizFormProps> = ({
               const message = editingQuiz
                 ? "Quiz updated and resubmitted for approval successfully!"
                 : "Quiz created and submitted for approval successfully!";
-              alert(message);
+              showSuccess(message, "Success");
             } else {
               const submitError = await submitResponse.json();
               console.error(
@@ -1598,16 +1696,17 @@ const QuizForm: React.FC<QuizFormProps> = ({
                 const message = editingQuiz
                   ? "Quiz updated and resubmitted for approval successfully!"
                   : "Quiz created and submitted for approval successfully!";
-                alert(message);
+                showSuccess(message, "Success");
               } else {
                 console.error("Alternative submission also failed");
                 const baseMessage = editingQuiz
                   ? "Quiz updated successfully"
                   : "Quiz created successfully";
-                alert(
+                showWarning(
                   `${baseMessage}, but failed to submit for approval. Error: ${
                     submitError.message || "Unknown error"
-                  }. Please try submitting manually.`
+                  }. Please try submitting manually.`,
+                  "Partial Success"
                 );
               }
             }
@@ -1616,21 +1715,23 @@ const QuizForm: React.FC<QuizFormProps> = ({
             const baseMessage = editingQuiz
               ? "Quiz updated successfully"
               : "Quiz created successfully";
-            alert(
-              `${baseMessage}, but network error occurred during submission. Please try submitting manually.`
+            showWarning(
+              `${baseMessage}, but network error occurred during submission. Please try submitting manually.`,
+              "Partial Success"
             );
           }
         } else {
           // For regular updates (approved quizzes being edited), just show success
-          alert("Quiz updated successfully!");
+          showSuccess("Quiz updated successfully!", "Success");
         }
         onSuccess();
       } else {
         const errorData = await response.json();
-        alert(
+        showError(
           `Failed to ${editingQuiz ? "update" : "create"} quiz: ${
             errorData.message || "Unknown error"
-          }`
+          }`,
+          "Error"
         );
       }
     } catch (error) {
@@ -1638,7 +1739,7 @@ const QuizForm: React.FC<QuizFormProps> = ({
         `Error ${editingQuiz ? "updating" : "creating"} quiz:`,
         error
       );
-      alert(`Failed to ${editingQuiz ? "update" : "create"} quiz`);
+      showError(`Failed to ${editingQuiz ? "update" : "create"} quiz`, "Error");
     } finally {
       setLoading(false);
     }
@@ -1922,6 +2023,7 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
   onCancel,
   editingResource,
 }) => {
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
   const [formData, setFormData] = useState({
     title: editingResource?.title || "",
     description: editingResource?.description || "",
@@ -1964,13 +2066,13 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
     
     // Skip file requirement for editing existing resources
     if (!editingResource && !file) {
-      alert("Please select a file");
+      showWarning("Please select a file", "File Required");
       return;
     }
 
     // Check if this is view-only mode
     if (editingResource?.isViewOnly) {
-      alert("This resource is in view-only mode");
+      showInfo("This resource is in view-only mode", "View Only");
       return;
     }
 
@@ -2002,8 +2104,9 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
           onSuccess();
         } else {
           const errorData = await response.json();
-          alert(
-            `Failed to update resource: ${errorData.message || "Unknown error"}`
+          showError(
+            `Failed to update resource: ${errorData.message || "Unknown error"}`,
+            "Error"
           );
         }
       } else {
@@ -2031,14 +2134,15 @@ const ResourceUploadForm: React.FC<ResourceUploadFormProps> = ({
           onSuccess();
         } else {
           const errorData = await response.json();
-          alert(
-            `Failed to upload resource: ${errorData.message || "Unknown error"}`
+          showError(
+            `Failed to upload resource: ${errorData.message || "Unknown error"}`,
+            "Error"
           );
         }
       }
     } catch (error) {
       console.error("Error with resource:", error);
-      alert(editingResource ? "Failed to update resource" : "Failed to upload resource");
+      showError(editingResource ? "Failed to update resource" : "Failed to upload resource", "Error");
     } finally {
       setLoading(false);
     }
@@ -2682,6 +2786,7 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
   onUpload,
   selectedCourse = null,
 }) => {
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
   const [formData, setFormData] = useState({
     courseId: selectedCourse?._id || "",
     title: "",
@@ -2728,7 +2833,7 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
       // Validate file size (500MB limit)
       const maxSize = 500 * 1024 * 1024; // 500MB
       if (file.size > maxSize) {
-        alert("File too large. Maximum size is 500MB.");
+        showWarning("File too large. Maximum size is 500MB.", "File Size Error");
         e.target.value = ""; // Clear the input
         return;
       }
@@ -2743,8 +2848,9 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
         "video/webm",
       ];
       if (!allowedTypes.includes(file.type)) {
-        alert(
-          "Invalid file type. Please select a video file (MP4, MPEG, MOV, AVI, WMV, or WEBM)."
+        showWarning(
+          "Invalid file type. Please select a video file (MP4, MPEG, MOV, AVI, WMV, or WEBM).",
+          "Invalid File Type"
         );
         e.target.value = ""; // Clear the input
         return;
@@ -2794,7 +2900,7 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
           throw new Error(errorData.message || "Failed to upload video");
         }
 
-        alert("Video uploaded successfully!");
+        showSuccess("Video uploaded successfully!", "Success");
       } else {
         // Handle URL upload
         const response = await fetch(
@@ -2814,7 +2920,7 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
           throw new Error(errorData.message || "Failed to upload video");
         }
 
-        alert("Video uploaded successfully!");
+        showSuccess("Video uploaded successfully!", "Success");
       }
 
       // Reset form
@@ -2837,7 +2943,7 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
       onClose();
     } catch (error: any) {
       console.error("Upload error:", error);
-      alert(error.message || "Failed to upload video");
+      showError(error.message || "Failed to upload video", "Error");
     } finally {
       setUploading(false);
     }
@@ -3042,6 +3148,7 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
 const SupervisorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
 
   const [students, setStudents] = useState<Student[]>([]);
   const [studentProgress, setStudentProgress] = useState<any[]>([]);
@@ -3074,6 +3181,8 @@ const SupervisorDashboard: React.FC = () => {
     "connected" | "disconnected"
   >("disconnected");
   const [lastActivity, setLastActivity] = useState<string>("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string; type: 'quiz' | 'resource' | 'video' } | null>(null);
 
   const token = sessionStorage.getItem("accessToken");
 
@@ -3148,6 +3257,77 @@ const SupervisorDashboard: React.FC = () => {
     // Debug logging
     setStats(newStats);
   }, [students, testResults, myVideos, courses]);
+
+  // Delete confirmation handlers
+  const initiateDeleteQuiz = (quizId: string, quizTitle: string) => {
+    setDeleteTarget({ id: quizId, title: quizTitle, type: 'quiz' });
+    setShowDeleteConfirm(true);
+  };
+
+  const initiateDeleteResource = (resourceId: string, resourceTitle: string) => {
+    setDeleteTarget({ id: resourceId, title: resourceTitle, type: 'resource' });
+    setShowDeleteConfirm(true);
+  };
+
+  const initiateDeleteVideo = (videoId: string, videoTitle: string) => {
+    setDeleteTarget({ id: videoId, title: videoTitle, type: 'video' });
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    setShowDeleteConfirm(false);
+
+    try {
+      let endpoint = '';
+
+      switch (deleteTarget.type) {
+        case 'quiz':
+          endpoint = `${process.env.REACT_APP_API_URL}/quizzes/${deleteTarget.id}`;
+          break;
+        case 'resource':
+          endpoint = `${process.env.REACT_APP_API_URL}/resources/${deleteTarget.id}`;
+          break;
+        case 'video':
+          endpoint = `${process.env.REACT_APP_API_URL}/videos/${deleteTarget.id}`;
+          break;
+      }
+
+      const response = await fetch(endpoint, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (data.data?.requiresApproval) {
+          showInfo(
+            "Deletion request submitted to admin for approval. You will be notified once the admin reviews your request.",
+            "Request Submitted"
+          );
+        } else {
+          showSuccess(`${deleteTarget.type.charAt(0).toUpperCase() + deleteTarget.type.slice(1)} deleted successfully`, "Success");
+        }
+        // Refresh relevant data
+        if (deleteTarget.type === 'video') {
+          fetchMyVideos();
+        }
+        // Refresh dashboard to update counts
+        fetchDashboardData();
+      } else {
+        showError(data.message || `Failed to delete ${deleteTarget.type}`, "Error");
+      }
+    } catch (error) {
+      console.error(`Error deleting ${deleteTarget.type}:`, error);
+      showError(`Failed to delete ${deleteTarget.type}`, "Error");
+    } finally {
+      setDeleteTarget(null);
+    }
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -3527,63 +3707,27 @@ const SupervisorDashboard: React.FC = () => {
       );
 
       if (response.ok) {
-        alert(
-          "Video uploaded successfully! It will be reviewed by an admin before going live."
+        showSuccess(
+          "Video uploaded successfully! It will be reviewed by an admin before going live.",
+          "Success"
         );
         setShowUploadModal(false);
         fetchMyVideos();
       } else {
         const error = await response.json();
-        alert(error.message || "Failed to upload video");
+        showError(error.message || "Failed to upload video", "Error");
       }
     } catch (error) {
       console.error("Error uploading video:", error);
-      alert("Failed to upload video");
+      showError("Failed to upload video", "Error");
     }
   };
 
-  const handleDeleteVideo = async (videoId: string, videoStatus: string) => {
-    const confirmMessage = videoStatus === 'approved'
-      ? "Are you sure you want to request deletion of this approved video? This will require admin approval."
-      : "Are you sure you want to delete this video? This action cannot be undone.";
-
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/videos/${videoId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-
-        if (data.data?.requiresApproval) {
-          alert(
-            "Deletion request submitted successfully! The admin will review your request."
-          );
-        } else {
-          alert(
-            "Video deleted successfully! You can now re-upload with the same sequence number."
-          );
-        }
-        fetchMyVideos();
-      } else {
-        const error = await response.json();
-        alert(error.message || "Failed to delete video");
-      }
-    } catch (error) {
-      console.error("Error deleting video:", error);
-      alert("Failed to delete video");
-    }
+  const handleDeleteVideo = (videoId: string, videoStatus: string) => {
+    // Find the video title from myVideos
+    const video = myVideos.find(v => v._id === videoId);
+    const videoTitle = video?.title || 'this video';
+    initiateDeleteVideo(videoId, videoTitle);
   };
 
   if (!user || user.role !== "Supervisor") {
@@ -3618,12 +3762,12 @@ const SupervisorDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white py-16">
+      <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white py-8 sm:py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
             Supervisor Dashboard
           </h1>
-          <p className="text-xl md:text-2xl text-green-100 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-green-100 max-w-3xl mx-auto">
             Welcome back, {user?.firstName}! Hope you're having a great day.
           </p>
         </div>
@@ -3631,9 +3775,9 @@ const SupervisorDashboard: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
         {/* Tab Navigation */}
-        <div className="mb-8">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-4">
+        <div className="mb-6 sm:mb-8">
+          <div className="border-b border-gray-200 overflow-x-auto">
+            <nav className="-mb-px flex space-x-2 sm:space-x-4 min-w-max">
               {[
                 { key: "courses", label: "My Classes", color: "purple" },
                 { key: "students", label: "Students", color: "blue" },
@@ -3643,7 +3787,7 @@ const SupervisorDashboard: React.FC = () => {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as any)}
-                  className={`py-3 px-6 rounded-t-xl font-semibold text-sm transition-all duration-300 ${
+                  className={`py-2.5 sm:py-3 px-3 sm:px-4 md:px-6 rounded-t-lg sm:rounded-t-xl font-semibold text-xs sm:text-sm transition-all duration-300 min-h-[44px] sm:min-h-0 whitespace-nowrap ${
                     activeTab === tab.key
                       ? tab.color === "purple"
                         ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg"
@@ -3670,14 +3814,14 @@ const SupervisorDashboard: React.FC = () => {
 
         {/* Courses Tab */}
         {activeTab === "courses" && (
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
-              <h2 className="text-3xl font-bold text-white">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-4 sm:p-5 md:p-6">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
                 My Assigned Courses
               </h2>
             </div>
 
-            <div className="p-6">
+            <div className="p-4 sm:p-5 md:p-6">
               {courses.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {courses.map((course) => {
@@ -4427,6 +4571,19 @@ const SupervisorDashboard: React.FC = () => {
           studentProgress={studentProgress}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setDeleteTarget(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+        type="danger"
+      />
     </div>
   );
 };

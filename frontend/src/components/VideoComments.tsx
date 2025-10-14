@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store/store';
 import { updateUser } from '../store/slices/authSlice';
+import { useNotification } from '../hooks/useNotification';
+import ConfirmModal from './common/ConfirmModal';
 
 interface VideoComment {
   _id: string;
@@ -28,7 +30,8 @@ interface VideoCommentsProps {
 const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
   const { user } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
-  
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
+
   // Check if user can post comments (must have approved role)
   const canPostComments = user && ['Student', 'Supervisor', 'Admin'].includes(user.role);
   const isPending = user?.role === 'Pending';
@@ -42,6 +45,8 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
   const [editReplyText, setEditReplyText] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
   const token = sessionStorage.getItem('accessToken');
 
@@ -86,17 +91,17 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
         
         if (!serverUser) {
           console.error('❌ No user data received from server');
-          alert('Failed to get your profile data from server. Please try logging out and back in.');
+          showError('Failed to get your profile data from server. Please try logging out and back in.', 'Profile Error');
           return;
         }
-        
+
         // Only update if both roles are valid and different
         if (serverUser.role && user?.role && serverUser.role !== user.role) {
           // Validate that the server role is a valid role
           const validRoles = ['Student', 'Supervisor', 'Admin', 'Pending'];
           if (!validRoles.includes(serverUser.role)) {
             console.error('❌ Invalid role received from server:', serverUser.role);
-            alert(`Invalid role received from server: "${serverUser.role}". Please contact support.`);
+            showError(`Invalid role received from server: "${serverUser.role}". Please contact support.`, 'Invalid Role');
             return;
           }
           
@@ -115,24 +120,36 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
           };
           // Update the Redux store with the current server data
           dispatch(updateUser(updatedUserData));
-          
-          alert(`Role updated!\nYour role has been updated from "${user.role}" to "${serverUser.role}"\n\nYou can now post comments!`);
-          
+
+          showSuccess(
+            `Your role has been updated from "${user.role}" to "${serverUser.role}". You can now post comments!`,
+            'Role Updated',
+            {
+              duration: 5000,
+              actions: [
+                {
+                  label: 'Reload Page',
+                  onClick: () => window.location.reload()
+                }
+              ]
+            }
+          );
+
           // Refresh the page to update UI
-          window.location.reload();
+          setTimeout(() => window.location.reload(), 2000);
         } else if (!serverUser.role) {
           console.error('❌ Server returned empty role');
-          alert('Server returned invalid user data. Please try logging out and back in.');
+          showError('Server returned invalid user data. Please try logging out and back in.', 'Invalid Data');
         } else {
-          alert('Your role is up to date!');
+          showInfo('Your role is up to date!', 'Role Check');
         }
       } else {
         console.error('❌ Failed to fetch profile from server');
-        alert('Failed to check your current role. Please try logging out and back in.');
+        showError('Failed to check your current role. Please try logging out and back in.', 'Role Check Failed');
       }
     } catch (error) {
       console.error('❌ Error checking user role:', error);
-      alert('Network error checking role. Please check your connection.');
+      showError('Network error checking role. Please check your connection.', 'Network Error');
     }
   };
 
@@ -177,7 +194,7 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
 
     // Check if user can post comments
     if (!canPostComments) {
-      alert('You need to have an approved account to post comments. Please wait for account approval.');
+      showWarning('You need to have an approved account to post comments. Please wait for account approval.', 'Approval Required');
       return;
     }
 
@@ -210,7 +227,7 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
           url: response.url,
           error
         });
-        alert(`Failed to post comment: ${error.message || response.statusText || 'Unknown error'}`);
+        showError(`Failed to post comment: ${error.message || response.statusText || 'Unknown error'}`, 'Post Failed');
       }
     } catch (error) {
       console.error('💥 Network error posting comment:', error);
@@ -219,7 +236,7 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
         message: (error as Error).message,
         stack: (error as Error).stack
       });
-      alert(`Failed to post comment: ${(error as Error).message || 'Network error'}`);
+      showError(`Failed to post comment: ${(error as Error).message || 'Network error'}`, 'Network Error');
     } finally {
       setSubmitting(false);
     }
@@ -230,7 +247,7 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
 
     // Check if user can post comments
     if (!canPostComments) {
-      alert('You need to have an approved account to post replies. Please wait for account approval.');
+      showWarning('You need to have an approved account to post replies. Please wait for account approval.', 'Approval Required');
       return;
     }
     setSubmitting(true);
@@ -254,11 +271,11 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
         fetchComments(); // Refresh comments
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to post reply');
+        showError(error.message || 'Failed to post reply', 'Reply Failed');
       }
     } catch (error) {
       console.error('Error posting reply:', error);
-      alert('Failed to post reply');
+      showError('Failed to post reply', 'Network Error');
     } finally {
       setSubmitting(false);
     }
@@ -296,11 +313,11 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
         fetchComments(); // Refresh comments
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to update comment');
+        showError(error.message || 'Failed to update comment', 'Update Failed');
       }
     } catch (error) {
       console.error('Error updating comment:', error);
-      alert('Failed to update comment');
+      showError('Failed to update comment', 'Network Error');
     } finally {
       setSubmitting(false);
     }
@@ -328,21 +345,26 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
         fetchComments(); // Refresh comments
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to update reply');
+        showError(error.message || 'Failed to update reply', 'Update Failed');
       }
     } catch (error) {
       console.error('Error updating reply:', error);
-      alert('Failed to update reply');
+      showError('Failed to update reply', 'Network Error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeleteComment = async (commentId: string) => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+  const handleDeleteComment = (commentId: string) => {
+    setCommentToDelete(commentId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/video-comments/${commentId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/video-comments/${commentToDelete}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -351,14 +373,17 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
       });
 
       if (response.ok) {
+        showSuccess('Comment deleted successfully', 'Deleted');
         fetchComments(); // Refresh comments
+        setShowDeleteConfirm(false);
+        setCommentToDelete(null);
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to delete comment');
+        showError(error.message || 'Failed to delete comment', 'Delete Failed');
       }
     } catch (error) {
       console.error('Error deleting comment:', error);
-      alert('Failed to delete comment');
+      showError('Failed to delete comment', 'Network Error');
     }
   };
 
@@ -377,11 +402,11 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
         fetchComments(); // Refresh comments
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to update comment status');
+        showError(error.message || 'Failed to update comment status', 'Update Failed');
       }
     } catch (error) {
       console.error('Error updating comment status:', error);
-      alert('Failed to update comment status');
+      showError('Failed to update comment status', 'Network Error');
     }
   };
 
@@ -586,7 +611,9 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
                       className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
                       title="Delete comment"
                     >
-                      🗑️
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                     </button>
                   )}
                 </div>
@@ -733,7 +760,9 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
                               className="text-red-600 hover:text-red-800 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
                               title="Delete reply"
                             >
-                              🗑️
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
                             </button>
                           )}
                         </div>
@@ -779,6 +808,21 @@ const VideoComments: React.FC<VideoCommentsProps> = ({ videoId, courseId }) => {
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setCommentToDelete(null);
+        }}
+        onConfirm={confirmDeleteComment}
+        title="Delete Comment"
+        message="Are you sure you want to delete this comment? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

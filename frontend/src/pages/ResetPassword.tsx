@@ -257,13 +257,13 @@ const ResetPassword: React.FC = () => {
   // Success screen
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 relative overflow-hidden px-4 sm:px-6">
         {/* Background decorative elements */}
         <div className="absolute top-0 left-0 w-72 h-72 bg-white bg-opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-white bg-opacity-10 rounded-full translate-x-1/2 translate-y-1/2"></div>
         <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
-        
-        <div className="bg-white bg-opacity-60 backdrop-blur-md px-10 py-6 rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10 text-center">
+
+        <div className="bg-white bg-opacity-60 backdrop-blur-md px-6 sm:px-8 md:px-10 py-6 rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10 text-center">
           <div className="mb-4">
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
               <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -271,11 +271,11 @@ const ResetPassword: React.FC = () => {
               </svg>
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-4 text-gray-900">Password Reset Successful!</h2>
-          <p className="text-gray-600 mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-900">Password Reset Successful!</h2>
+          <p className="text-gray-600 mb-4 text-sm sm:text-base">
             Your password has been reset successfully. You will be redirected to the login page in a few seconds.
           </p>
-          <Link to="/login" className="text-red-600 hover:underline font-semibold">
+          <Link to="/login" className="text-red-600 hover:underline font-semibold text-sm sm:text-base">
             Go to Login Now
           </Link>
         </div>
@@ -284,16 +284,16 @@ const ResetPassword: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 relative overflow-hidden px-4 sm:px-6">
       {/* Background decorative elements */}
       <div className="absolute top-0 left-0 w-72 h-72 bg-white bg-opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-white bg-opacity-10 rounded-full translate-x-1/2 translate-y-1/2"></div>
       <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
-      
-      <div className="bg-white bg-opacity-60 backdrop-blur-md px-10 py-6 rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10">
+
+      <div className="bg-white bg-opacity-60 backdrop-blur-md px-6 sm:px-8 md:px-10 py-6 rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="text-3xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2 whitespace-nowrap">
+          <div className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2">
             Reset Your Password
           </div>
         </div>
@@ -320,16 +320,16 @@ const ResetPassword: React.FC = () => {
             {/* Show masked phone number and verification if user has a phone */}
             {maskedPhone && (
               <>
-                <div className="text-center mb-4 p-4 bg-blue-50 bg-opacity-80 backdrop-blur-sm rounded-xl border border-blue-200">
-                  <p className="text-sm text-gray-700 mb-1">Your Phone Number:</p>
-                  <p className="text-xl font-bold text-gray-900 tracking-wider">{maskedPhone}</p>
+                <div className="text-center mb-4 p-3 sm:p-4 bg-blue-50 bg-opacity-80 backdrop-blur-sm rounded-xl border border-blue-200">
+                  <p className="text-xs sm:text-sm text-gray-700 mb-1">Your Phone Number:</p>
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 tracking-wider">{maskedPhone}</p>
                 </div>
 
                 <div className="text-center">
                   <label className="block text-gray-700 text-sm font-semibold mb-2">
                     Enter the 6 Hidden Digits
                   </label>
-                  <div className="flex gap-2 justify-center items-center mb-3">
+                  <div className="flex gap-1.5 sm:gap-2 justify-center items-center mb-3">
                     {phoneDigits.map((digit, index) => (
                       <div key={index} className="relative">
                         <input
@@ -340,7 +340,7 @@ const ResetPassword: React.FC = () => {
                           onKeyDown={(e) => handleDigitKeyDown(index, e)}
                           onPaste={handleDigitPaste}
                           disabled={phoneVerified}
-                          className={`w-12 h-14 text-center text-2xl font-bold border-2 rounded-xl focus:outline-none focus:ring-2 bg-white bg-opacity-90 backdrop-blur-sm shadow-md transition-all duration-200 ${
+                          className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold border-2 rounded-xl focus:outline-none focus:ring-2 bg-white bg-opacity-90 backdrop-blur-sm shadow-md transition-all duration-200 ${
                             phoneVerified
                               ? 'border-green-400 bg-green-50 text-green-700'
                               : 'border-gray-300 focus:ring-blue-400 focus:border-blue-500 hover:border-gray-400'
@@ -513,7 +513,7 @@ const ResetPassword: React.FC = () => {
             <button
               type="submit"
               disabled={loading || !formData.password || !formData.confirmPassword}
-              className="group relative w-full py-3 px-6 bg-gradient-to-r from-gray-600 to-green-600 font-semibold text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed mt-12"
+              className="group relative w-full py-3 px-6 bg-gradient-to-r from-gray-600 to-green-600 font-semibold text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed mt-8 sm:mt-12 min-h-[44px]"
             >
               {/* Star 1 - Black */}
               <div className="fixed w-5 h-5 top-[10%] left-[5%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)] pointer-events-none">

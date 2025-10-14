@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import { useNotification } from '../hooks/useNotification';
+import '../styles/AnimatedButton.css';
 
 const Contact: React.FC = () => {
   const { showSuccess, showError, showInfo } = useNotification();
@@ -208,63 +209,63 @@ const Contact: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 via-white to-green-50">
       {/* Hero Section */}
-      <section className="relative bg-cover bg-center bg-no-repeat text-white py-32" style={{backgroundImage: 'url(/hero-bg-without-text.png)', backgroundPosition: 'center 30%'}}>
+      <section className="relative bg-cover bg-center bg-no-repeat text-white py-16 sm:py-24 md:py-32" style={{backgroundImage: 'url(/hero-bg-without-text.png)', backgroundPosition: 'center 30%'}}>
         <div className="absolute inset-0 bg-black opacity-50"></div>
-        <div className="relative max-w-7xl mx-auto px-4 text-center">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
             Contact Us
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 text-blue-100 max-w-3xl mx-auto">
             Get in touch with our team for any questions about German learning. <br />We're here to support your language journey every step of the way.
           </p>
-          <div className="mt-8 flex justify-center space-x-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20">
-              <span className="text-white font-semibold">Get Support Now</span>
+          <div className="mt-6 sm:mt-8 flex justify-center space-x-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 sm:py-3 border border-white/20">
+              <span className="text-white font-semibold text-sm sm:text-base">Get Support Now</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Contact Information */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            <Card className="text-center p-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Email Us</h3>
-              <p className="text-gray-600 mb-3">
+      <section className="py-12 sm:py-16 md:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12 md:mb-16">
+            <Card className="text-center p-6 sm:p-8">
+              <h3 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-2">Email Us</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-3">
                 Send us an email and we'll respond within 24 hours
               </p>
-              <a href="mailto:learnbangla2deutsch@gmail.com" className="text-red-600 hover:underline">
+              <a href="mailto:learnbangla2deutsch@gmail.com" className="text-red-600 hover:underline text-sm sm:text-base">
                 learnbangla2deutsch@gmail.com
               </a>
             </Card>
 
-            <Card className="text-center p-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Call Us</h3>
-              <p className="text-gray-600 mb-3">
+            <Card className="text-center p-6 sm:p-8">
+              <h3 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-2">Call Us</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-3">
                 Speak with our advisors during business hours
               </p>
-              <p className="text-red-600 font-semibold">+880-XXX-XXXXXX</p>
-              <p className="text-sm text-gray-500">9 AM - 9 PM (Bangladesh Time)</p>
+              <p className="text-red-600 font-semibold text-sm sm:text-base">+880-XXX-XXXXXX</p>
+              <p className="text-xs sm:text-sm text-gray-500">9 AM - 9 PM (Bangladesh Time)</p>
             </Card>
 
-            <Card className="text-center p-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">WhatsApp</h3>
-              <p className="text-gray-600 mb-3">
+            <Card className="text-center p-6 sm:p-8 sm:col-span-2 md:col-span-1">
+              <h3 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-2">WhatsApp</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-3">
                 Join our community group for instant support
               </p>
-              <Button className="bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-1200 ease-out">
+              <Button className="animated-btn bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold shadow-lg hover:shadow-xl hover:!bg-transparent transition-all duration-1200 ease-out text-sm sm:text-base min-h-[44px] px-4 sm:px-6">
                 Join WhatsApp Group
               </Button>
             </Card>
           </div>
 
           {/* Contact Form */}
-          <div className="grid md:grid-cols-2 gap-12 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10 md:gap-12 items-start">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Send us a Message</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-4 sm:mb-6">Send us a Message</h2>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                     Full Name *
@@ -276,7 +277,7 @@ const Contact: React.FC = () => {
                     required
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base"
                     placeholder="Enter your full name"
                   />
                 </div>
@@ -292,7 +293,7 @@ const Contact: React.FC = () => {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base"
                     placeholder="Enter your email address"
                   />
                 </div>
@@ -307,7 +308,7 @@ const Contact: React.FC = () => {
                     required
                     value={formData.subject}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base"
                   >
                     <option value="">Select a subject</option>
                     <option value="course-inquiry">Course Inquiry</option>
@@ -328,18 +329,18 @@ const Contact: React.FC = () => {
                     id="message"
                     name="message"
                     required
-                    rows={24}
+                    rows={8}
                     value={formData.message}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base"
                     placeholder="Tell us how we can help you..."
                   />
                 </div>
 
-                <Button 
+                <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-teal-800 transition-all duration-1200 ease-out disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="animated-btn w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold shadow-lg hover:shadow-xl hover:!bg-transparent transition-all duration-1200 ease-out disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base min-h-[44px]"
                 >
                   {isSubmitting ? 'Sending...' : 'Send Message'}
                 </Button>
@@ -348,10 +349,10 @@ const Contact: React.FC = () => {
 
             {/* Enhanced FAQ Section */}
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
-              
+              <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-4 sm:mb-6">Frequently Asked Questions</h2>
+
               {/* Search and Filter */}
-              <div className="mb-6 space-y-4">
+              <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
                 {/* Search Bar */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -361,7 +362,7 @@ const Contact: React.FC = () => {
                     placeholder="Search questions..."
                     value={faqSearchTerm}
                     onChange={(e) => setFaqSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base"
                   />
                 </div>
 
@@ -371,7 +372,7 @@ const Contact: React.FC = () => {
                     <button
                       key={category.value}
                       onClick={() => setSelectedCategory(category.value)}
-                      className={`px-3 py-2 rounded text-sm font-medium ${
+                      className={`px-3 py-2 rounded text-xs sm:text-sm font-medium min-h-[44px] sm:min-h-0 ${
                         selectedCategory === category.value
                           ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
                           : 'bg-gray-500 bg-opacity-10 backdrop-blur-xl border border-gray-400 border-opacity-20 text-gray-700 shadow-sm'
@@ -448,21 +449,21 @@ const Contact: React.FC = () => {
       </section>
 
       {/* Office Hours */}
-      <section className="py-20 bg-white bg-opacity-10 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Office Hours</h2>
-            <p className="text-lg text-gray-600">
+      <section className="py-12 sm:py-16 md:py-20 bg-white bg-opacity-10 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-10 md:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-3 sm:mb-4">Office Hours</h2>
+            <p className="text-base sm:text-lg text-gray-600">
               Our support team is available during the following hours
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            <Card className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+            <Card className="p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center">
                 Bangladesh Time
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-2 text-sm sm:text-base">
                 <div className="flex justify-between">
                   <span>Monday - Friday:</span>
                   <span className="font-semibold">9:00 AM - 9:00 PM</span>
@@ -478,11 +479,11 @@ const Contact: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <Card className="p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center">
                 Germany Time
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-2 text-sm sm:text-base">
                 <div className="flex justify-between">
                   <span>Monday - Friday:</span>
                   <span className="font-semibold">5:00 AM - 5:00 PM</span>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../store/store';
+import { useNotification } from '../hooks/useNotification';
 
 interface Certificate {
   _id: string;
@@ -33,6 +34,7 @@ interface TestHistory {
 const Certificates: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { showSuccess, showError } = useNotification();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [testHistory, setTestHistory] = useState<TestHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,13 +97,13 @@ const Certificates: React.FC = () => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        alert('Certificate downloaded successfully!');
+        showSuccess('Certificate downloaded successfully!', 'Download Complete');
       } else {
-        alert('Failed to download certificate');
+        showError('Failed to download certificate. Please try again.', 'Download Failed');
       }
     } catch (error) {
       // Error downloading certificate
-      alert('Failed to download certificate. Please try again.');
+      showError('Failed to download certificate. Please try again.', 'Download Error');
     } finally {
       setDownloadingCert(null);
     }
@@ -148,12 +150,12 @@ const Certificates: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-12">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-8 sm:py-10 md:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
             My Certificates
           </h1>
-          <p className="text-blue-100">
+          <p className="text-sm sm:text-base text-blue-100">
             View and download your German language proficiency certificates
           </p>
         </div>
@@ -204,10 +206,10 @@ const Certificates: React.FC = () => {
         </div>
 
         {/* Stats Overview */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Overview</h2>
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 border border-gray-200">
+          <h2 className="text-base sm:text-lg font-bold bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 bg-clip-text text-transparent mb-4">Overview</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <p className="text-sm text-gray-600 mb-1">Certificates Earned</p>
               <p className="text-2xl font-bold text-gray-900">{certificates.length}</p>
@@ -295,20 +297,20 @@ const Certificates: React.FC = () => {
             {/* Certificates Tab */}
             {activeTab === 'certificates' && (
               certificates.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">No Certificates Yet</h3>
-                  <p className="text-gray-600 mb-6">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 sm:p-8 md:p-12 text-center">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">No Certificates Yet</h3>
+                  <p className="text-sm sm:text-base text-gray-600 mb-6 px-2">
                     Take an assessment to earn your first German language certificate
                   </p>
                   <button
                     onClick={() => navigate('/assessment')}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors min-h-[44px] text-sm sm:text-base"
                   >
                     Start Assessment
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {certificates.map((cert) => (
                     <div
                       key={cert._id}
@@ -379,49 +381,49 @@ const Certificates: React.FC = () => {
             {/* Test History Tab */}
             {activeTab === 'history' && (
               testHistory.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">No Test History</h3>
-                  <p className="text-gray-600 mb-6">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 sm:p-8 md:p-12 text-center">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">No Test History</h3>
+                  <p className="text-sm sm:text-base text-gray-600 mb-6 px-2">
                     Take your first assessment to see your progress history
                   </p>
                   <button
                     onClick={() => navigate('/assessment')}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors min-h-[44px] text-sm sm:text-base"
                   >
                     Start Assessment
                   </button>
                 </div>
               ) : (
                 <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                  <div className="bg-blue-600 p-4">
-                    <h3 className="text-lg font-bold text-white">Assessment History</h3>
-                    <p className="text-blue-100 text-sm mt-1">Track your progress over time</p>
+                  <div className="bg-blue-600 p-3 sm:p-4">
+                    <h3 className="text-base sm:text-lg font-bold text-white">Assessment History</h3>
+                    <p className="text-blue-100 text-xs sm:text-sm mt-1">Track your progress over time</p>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="min-w-full">
+                    <table className="min-w-full text-sm sm:text-base">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Step</th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Score</th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Level</th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                          <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Certificate</th>
+                          <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Date</th>
+                          <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Step</th>
+                          <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Score</th>
+                          <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Level</th>
+                          <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700 hidden md:table-cell">Status</th>
+                          <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">Action</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {testHistory.map((test: any) => (
                           <tr key={test._id}>
-                            <td className="px-6 py-4 text-sm text-gray-700">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700 whitespace-nowrap">
                               {new Date(test.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4">
-                              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4">
+                              <span className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium whitespace-nowrap">
                                 Step {test.step}
                               </span>
                             </td>
-                            <td className="px-6 py-4">
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            <td className="px-3 sm:px-6 py-3 sm:py-4">
+                              <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                                 test.score >= 75 ? 'bg-green-100 text-green-800' :
                                 test.score >= 50 ? 'bg-yellow-100 text-yellow-800' :
                                 'bg-red-100 text-red-800'
@@ -429,24 +431,24 @@ const Certificates: React.FC = () => {
                                 {test.score}%
                               </span>
                             </td>
-                            <td className="px-6 py-4">
-                              <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4">
+                              <span className="px-2 sm:px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium whitespace-nowrap">
                                 {test.certificationLevel || 'N/A'}
                               </span>
                             </td>
-                            <td className="px-6 py-4">
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 hidden md:table-cell">
+                              <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                                 test.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                               }`}>
                                 {test.status}
                               </span>
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4">
                               {test.certificationLevel && test.score >= 60 ? (
                                 <button
                                   onClick={() => handleDownloadCertificate(test)}
                                   disabled={downloadingCert === test._id}
-                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                  className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap min-h-[44px] sm:min-h-0"
                                 >
                                   {downloadingCert === test._id ? 'Downloading...' : 'Download'}
                                 </button>

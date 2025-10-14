@@ -117,12 +117,12 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white py-16">
+      <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white py-8 sm:py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-gray-100 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-white to-gray-100 bg-clip-text text-transparent">
             Student Dashboard
           </h1>
-          <p className="text-xl md:text-2xl text-gray-100 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-100 max-w-3xl mx-auto">
             Welcome back, {user.firstName}! Continue your German language learning journey
           </p>
         </div>
@@ -132,24 +132,24 @@ const Dashboard: React.FC = () => {
 
         {/* Role Rejection Notification */}
         {user.rejectionReason && user.rejectionDate && (
-          <div className="mb-8 bg-red-50 border border-red-200 rounded-xl p-6 shadow-lg">
+          <div className="mb-6 sm:mb-8 bg-red-50 border border-red-200 rounded-xl p-4 sm:p-6 shadow-lg">
             <div className="flex items-start">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-red-800 mb-2">
+                <h3 className="text-base sm:text-lg font-semibold text-red-800 mb-2">
                   Role Request Update
                 </h3>
-                <div className="bg-white rounded-lg p-4 border border-red-200">
-                  <p className="text-sm text-red-700 mb-3">
+                <div className="bg-white rounded-lg p-3 sm:p-4 border border-red-200">
+                  <p className="text-xs sm:text-sm text-red-700 mb-3">
                     Your request for <strong>{user.requestedRole || 'elevated privileges'}</strong> was not approved.
                   </p>
                   <div className="space-y-2">
                     <div>
                       <span className="text-xs font-medium text-red-600">Reason:</span>
-                      <p className="text-sm text-red-800 mt-1">{user.rejectionReason}</p>
+                      <p className="text-xs sm:text-sm text-red-800 mt-1">{user.rejectionReason}</p>
                     </div>
                     <div>
                       <span className="text-xs font-medium text-red-600">Decision Date:</span>
-                      <p className="text-sm text-red-700 mt-1">
+                      <p className="text-xs sm:text-sm text-red-700 mt-1">
                         {new Date(user.rejectionDate).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'long',
@@ -161,17 +161,17 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <button
                     onClick={() => navigate('/contact')}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                    className="bg-red-600 text-white px-4 py-3 sm:py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors min-h-[44px] sm:min-h-0"
                   >
                     Contact Support
                   </button>
                   <button
                     onClick={handleDismissRejection}
                     disabled={dismissingRejection}
-                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    className="bg-gray-100 text-gray-700 px-4 py-3 sm:py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 min-h-[44px] sm:min-h-0"
                   >
                     {dismissingRejection ? 'Dismissing...' : 'Dismiss Notification'}
                   </button>
@@ -182,87 +182,87 @@ const Dashboard: React.FC = () => {
         )}
 
         {/* Main Dashboard Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8">
           {/* Quick Actions */}
           <div className="bg-white/30 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 overflow-hidden">
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4">
-              <h3 className="text-xl font-bold text-white flex items-center">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-3 sm:p-4">
+              <h3 className="text-lg sm:text-xl font-bold text-white flex items-center">
                 Quick Actions
               </h3>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
               <button
                 onClick={() => navigate('/courses')}
-                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-4 rounded-xl font-semibold shadow-lg transition-colors duration-200"
+                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-3 sm:p-4 rounded-xl font-semibold shadow-lg transition-colors duration-200 min-h-[44px]"
               >
                 <div className="text-center">
-                  <span className="text-lg font-semibold">Available Courses</span>
+                  <span className="text-base sm:text-lg font-semibold">Available Courses</span>
                 </div>
-                <p className="text-sm text-blue-100 mt-1">Browse and enroll in German courses</p>
+                <p className="text-xs sm:text-sm text-blue-100 mt-1">Browse and enroll in German courses</p>
               </button>
               <button
                 onClick={() => navigate('/my-courses')}
-                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-4 rounded-xl font-semibold shadow-lg transition-colors duration-200"
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-3 sm:p-4 rounded-xl font-semibold shadow-lg transition-colors duration-200 min-h-[44px]"
               >
                 <div className="text-center">
-                  <span className="text-lg font-semibold">My Classroom</span>
+                  <span className="text-base sm:text-lg font-semibold">My Classroom</span>
                 </div>
-                <p className="text-sm text-emerald-100 mt-1">Access your enrolled courses</p>
+                <p className="text-xs sm:text-sm text-emerald-100 mt-1">Access your enrolled courses</p>
               </button>
               <button
                 onClick={() => navigate('/assessment')}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 rounded-xl font-semibold shadow-lg transition-colors duration-200"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white p-3 sm:p-4 rounded-xl font-semibold shadow-lg transition-colors duration-200 min-h-[44px]"
               >
                 <div className="text-center">
-                  <span className="text-lg font-semibold">Start Assessment</span>
+                  <span className="text-base sm:text-lg font-semibold">Start Assessment</span>
                 </div>
-                <p className="text-sm text-orange-100 mt-1">Take your German proficiency test</p>
+                <p className="text-xs sm:text-sm text-orange-100 mt-1">Take your German proficiency test</p>
               </button>
               <button
                 onClick={() => navigate('/certificates')}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-xl font-semibold shadow-lg transition-colors duration-200"
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white p-3 sm:p-4 rounded-xl font-semibold shadow-lg transition-colors duration-200 min-h-[44px]"
               >
                 <div className="text-center">
-                  <span className="text-lg font-semibold">Certificates</span>
+                  <span className="text-base sm:text-lg font-semibold">Certificates</span>
                 </div>
-                <p className="text-sm text-purple-100 mt-1">Download your certificates</p>
+                <p className="text-xs sm:text-sm text-purple-100 mt-1">Download your certificates</p>
               </button>
             </div>
           </div>
 
           {/* Real-time Rankings */}
           <div className="bg-white/30 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 overflow-hidden">
-            <div className="bg-gradient-to-r from-orange-600 to-red-600 p-4">
-              <h3 className="text-xl font-bold text-white flex items-center">
+            <div className="bg-gradient-to-r from-orange-600 to-red-600 p-3 sm:p-4">
+              <h3 className="text-lg sm:text-xl font-bold text-white flex items-center">
                 Performance Rankings
               </h3>
             </div>
-            <div className="p-4">
-              <div className="space-y-3">
+            <div className="p-3 sm:p-4">
+              <div className="space-y-2 sm:space-y-3">
                 {/* Assessment Ranking */}
-                <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                <div className="bg-blue-50 rounded-lg p-2 sm:p-3 border border-blue-200">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-semibold text-blue-800">Assessment Score</span>
+                      <span className="text-xs sm:text-sm font-semibold text-blue-800">Assessment Score</span>
                     </div>
                     <div className="text-xs text-blue-600">Live Rank</div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-2xl font-bold text-blue-900">
-                        {rankingsData?.data?.hasCompletedTests ? 
+                      <div className="text-xl sm:text-2xl font-bold text-blue-900">
+                        {rankingsData?.data?.hasCompletedTests ?
                           `${rankingsData.data.examScore}%` : 'N/A'
                         }
                       </div>
-                      <div className="text-sm text-blue-600">
+                      <div className="text-xs sm:text-sm text-blue-600">
                         {rankingsData?.data?.hasCompletedTests ? 'Best assessment score' : 'No assessments completed'}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-blue-700">
+                      <div className="text-base sm:text-lg font-bold text-blue-700">
                         {rankingsData?.data?.hasCompletedTests && rankingsData.data.examRank ? `# ${rankingsData.data.examRank}` : '# --'}
                       </div>
-                      <div className="text-sm text-blue-500">
+                      <div className="text-xs sm:text-sm text-blue-500">
                         {rankingsData?.data?.totalUsers > 0 ? `of ${rankingsData.data.totalUsers}` : 'of --'}
                       </div>
                     </div>
@@ -270,41 +270,41 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Exam Ranking */}
-                <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                <div className="bg-green-50 rounded-lg p-2 sm:p-3 border border-green-200">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-semibold text-green-800">Exam Score</span>
+                      <span className="text-xs sm:text-sm font-semibold text-green-800">Exam Score</span>
                     </div>
                     <div className="text-xs text-green-600">Live Rank</div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-2xl font-bold text-green-900">N/A</div>
-                      <div className="text-sm text-green-600">No video exams completed</div>
+                      <div className="text-xl sm:text-2xl font-bold text-green-900">N/A</div>
+                      <div className="text-xs sm:text-sm text-green-600">No video exams completed</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-green-700"># --</div>
-                      <div className="text-sm text-green-500">of --</div>
+                      <div className="text-base sm:text-lg font-bold text-green-700"># --</div>
+                      <div className="text-xs sm:text-sm text-green-500">of --</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Quiz Ranking */}
-                <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                <div className="bg-purple-50 rounded-lg p-2 sm:p-3 border border-purple-200">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-semibold text-purple-800">Quiz Score</span>
+                      <span className="text-xs sm:text-sm font-semibold text-purple-800">Quiz Score</span>
                     </div>
                     <div className="text-xs text-purple-600">Live Rank</div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-2xl font-bold text-purple-900">N/A</div>
-                      <div className="text-sm text-purple-600">No video quizzes completed</div>
+                      <div className="text-xl sm:text-2xl font-bold text-purple-900">N/A</div>
+                      <div className="text-xs sm:text-sm text-purple-600">No video quizzes completed</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-purple-700"># --</div>
-                      <div className="text-sm text-purple-500">of --</div>
+                      <div className="text-base sm:text-lg font-bold text-purple-700"># --</div>
+                      <div className="text-xs sm:text-sm text-purple-500">of --</div>
                     </div>
                   </div>
                 </div>

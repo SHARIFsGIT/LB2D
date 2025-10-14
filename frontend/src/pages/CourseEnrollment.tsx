@@ -172,12 +172,12 @@ const CourseEnrollment: React.FC = () => {
       if (data.success) {
         setCourse(data.data);
       } else {
-        alert(`Course not found: ${data.message || 'Unknown error'}`);
+        showError(`Course not found: ${data.message || 'Unknown error'}`, 'Course Not Found');
         navigate('/courses');
       }
     } catch (error) {
       console.error('Failed to fetch course:', error);
-      alert('Failed to load course details');
+      showError('Failed to load course details', 'Loading Error');
       navigate('/courses');
     }
   };
@@ -292,10 +292,10 @@ const CourseEnrollment: React.FC = () => {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex justify-center items-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex justify-center items-center px-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-4"></div>
-          <p className="text-xl text-gray-600 font-medium">Loading course details...</p>
+          <div className="animate-spin rounded-full h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-4"></div>
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 font-medium">Loading course details...</p>
         </div>
       </div>
     );
@@ -304,15 +304,15 @@ const CourseEnrollment: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Hero Header */}
-      <div className="relative bg-cover bg-center bg-no-repeat text-white py-32" style={{backgroundImage: 'url(/hero-bg-without-text.png)', backgroundPosition: 'center 30%'}}>
+      <div className="relative bg-cover bg-center bg-no-repeat text-white py-16 sm:py-20 md:py-24 lg:py-32" style={{backgroundImage: 'url(/hero-bg-without-text.png)', backgroundPosition: 'center 30%'}}>
         <div className="absolute inset-0 bg-black opacity-50"></div>
-        <div className="relative max-w-7xl mx-auto px-4 text-center">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
             {step === 1 && 'Course Enrollment'}
             {step === 2 && 'Select Payment Method'}
             {step === 3 && 'Complete Payment'}
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 text-blue-100 max-w-3xl mx-auto">
             {step === 1 && 'Start your journey to fluency today!'}
             {step === 2 && 'Choose your preferred payment method'}
             {step === 3 && 'Complete your enrollment process'}
@@ -322,45 +322,48 @@ const CourseEnrollment: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
         {/* Enhanced Progress Steps */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
-          <div className="flex justify-center">
-            <div className="flex items-center space-x-8">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 mb-6 sm:mb-8 border border-gray-100">
+          <div className="flex justify-center overflow-x-auto">
+            <div className="flex items-center space-x-3 sm:space-x-6 md:space-x-8 min-w-max">
               <div className="flex flex-col items-center">
-                <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${
-                  step >= 1 
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white border-transparent shadow-lg' 
+                <div className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 transition-all duration-300 text-sm sm:text-base ${
+                  step >= 1
+                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white border-transparent shadow-lg'
                     : 'bg-white text-gray-400 border-gray-300'
                 }`}>
                   {step > 1 ? '✓' : '1'}
                 </div>
-                <span className={`mt-2 text-sm font-medium ${step >= 1 ? 'text-emerald-600' : 'text-gray-400'}`}>
-                  Course Details
+                <span className={`mt-2 text-xs sm:text-sm font-medium whitespace-nowrap ${step >= 1 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                  <span className="hidden md:inline">Course Details</span>
+                  <span className="md:hidden">Details</span>
                 </span>
               </div>
-              <div className={`w-24 h-1 rounded-full transition-all duration-300 ${step >= 2 ? 'bg-gradient-to-r from-emerald-500 to-green-600' : 'bg-gray-300'}`}></div>
+              <div className={`w-12 sm:w-16 md:w-24 h-1 rounded-full transition-all duration-300 ${step >= 2 ? 'bg-gradient-to-r from-emerald-500 to-green-600' : 'bg-gray-300'}`}></div>
               <div className="flex flex-col items-center">
-                <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${
-                  step >= 2 
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white border-transparent shadow-lg' 
+                <div className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 transition-all duration-300 text-sm sm:text-base ${
+                  step >= 2
+                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white border-transparent shadow-lg'
                     : 'bg-white text-gray-400 border-gray-300'
                 }`}>
                   {step > 2 ? '✓' : '2'}
                 </div>
-                <span className={`mt-2 text-sm font-medium ${step >= 2 ? 'text-emerald-600' : 'text-gray-400'}`}>
-                  Payment Method
+                <span className={`mt-2 text-xs sm:text-sm font-medium whitespace-nowrap ${step >= 2 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                  <span className="hidden md:inline">Payment Method</span>
+                  <span className="md:hidden">Payment</span>
                 </span>
               </div>
-              <div className={`w-24 h-1 rounded-full transition-all duration-300 ${step >= 3 ? 'bg-gradient-to-r from-emerald-500 to-green-600' : 'bg-gray-300'}`}></div>
+              <div className={`w-12 sm:w-16 md:w-24 h-1 rounded-full transition-all duration-300 ${step >= 3 ? 'bg-gradient-to-r from-emerald-500 to-green-600' : 'bg-gray-300'}`}></div>
               <div className="flex flex-col items-center">
-                <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${
-                  step >= 3 
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white border-transparent shadow-lg' 
+                <div className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 transition-all duration-300 text-sm sm:text-base ${
+                  step >= 3
+                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white border-transparent shadow-lg'
                     : 'bg-white text-gray-400 border-gray-300'
                 }`}>
                   {step > 3 ? '✓' : '3'}
                 </div>
-                <span className={`mt-2 text-sm font-medium ${step >= 3 ? 'text-emerald-600' : 'text-gray-400'}`}>
-                  Complete Payment
+                <span className={`mt-2 text-xs sm:text-sm font-medium whitespace-nowrap ${step >= 3 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                  <span className="hidden md:inline">Complete Payment</span>
+                  <span className="md:hidden">Complete</span>
                 </span>
               </div>
             </div>
@@ -373,30 +376,30 @@ const CourseEnrollment: React.FC = () => {
             <div className="lg:col-span-2 space-y-4">
               <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                 {/* Course Header with Gradient */}
-                <div className={`bg-gradient-to-r ${levelGradients[course.level]} p-6 text-white relative overflow-hidden`}>
+                <div className={`bg-gradient-to-r ${levelGradients[course.level]} p-4 sm:p-5 md:p-6 text-white relative overflow-hidden`}>
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
                   <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="inline-flex items-center px-4 py-2 text-sm font-bold rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
-                        <span className="mr-2">{levelIcons[course.level]}</span>
+                    <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
+                      <div className="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
+                        <span className="mr-1 sm:mr-2">{levelIcons[course.level]}</span>
                         {course.level}
                       </div>
-                      <div className="text-sm opacity-90">
+                      <div className="text-xs sm:text-sm opacity-90">
                         {course.duration} weeks course
                       </div>
                     </div>
-                    <h2 className="text-3xl font-bold mb-2">{course.title}</h2>
-                    <p className="text-white text-opacity-90">{course.instructor}</p>
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">{course.title}</h2>
+                    <p className="text-sm sm:text-base text-white text-opacity-90">{course.instructor}</p>
                   </div>
                 </div>
 
-                <div className="p-6">
-                  <p className="text-gray-700 mb-8 text-lg leading-relaxed">{course.description}</p>
+                <div className="p-4 sm:p-5 md:p-6">
+                  <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-6 sm:mb-8 leading-relaxed">{course.description}</p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-4">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">
                         Course Schedule
                       </h3>
                       <div className="space-y-3">
@@ -419,7 +422,7 @@ const CourseEnrollment: React.FC = () => {
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-4">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">
                         Class Information
                       </h3>
                       <div className="space-y-3">
@@ -446,8 +449,8 @@ const CourseEnrollment: React.FC = () => {
 
                   {/* Features Section */}
                   {course.features && course.features.length > 0 && (
-                    <div className="mb-6">
-                      <h3 className="text-xl font-bold text-gray-900 mb-4">
+                    <div className="mb-4 sm:mb-6">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">
                         What You'll Learn
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -464,7 +467,7 @@ const CourseEnrollment: React.FC = () => {
                   {/* Prerequisites Section */}
                   {course.requirements && course.requirements.length > 0 && (
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-4">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">
                         Prerequisites
                       </h3>
                       <div className="space-y-2">
@@ -482,8 +485,8 @@ const CourseEnrollment: React.FC = () => {
             </div>
 
             {/* Enhanced Enrollment Summary */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-5 md:p-6">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                 Enrollment Summary
               </h3>
               
@@ -522,9 +525,9 @@ const CourseEnrollment: React.FC = () => {
               </div>
 
               <button
-                onClick={() => setStep(2)} 
+                onClick={() => setStep(2)}
                 disabled={course.currentStudents >= course.maxStudents}
-                className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 ${
+                className={`w-full py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg transition-all duration-300 min-h-[44px] ${
                   course.currentStudents >= course.maxStudents
                     ? 'bg-gray-100 text-gray-500 cursor-not-allowed border-2 border-gray-200'
                     : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-700 border-0'
@@ -542,7 +545,7 @@ const CourseEnrollment: React.FC = () => {
                 )}
               </button>
 
-              <div className="mt-4 text-xs text-gray-500 text-center">
+              <div className="mt-3 sm:mt-4 text-xs text-gray-500 text-center">
                 Secure payment processing with 256-bit SSL encryption
               </div>
             </div>
@@ -551,19 +554,19 @@ const CourseEnrollment: React.FC = () => {
 
         {step === 2 && (
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-3">
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-100 p-4 sm:p-6 md:p-8">
+              <div className="text-center mb-6 sm:mb-8">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3">
                   Payment Method
                 </h2>
-                <p className="text-gray-600 text-lg">Secure and convenient payment options</p>
-                <div className="w-24 h-1 bg-gradient-to-r from-emerald-500 to-teal-600 mx-auto mt-4 rounded-full"></div>
+                <p className="text-sm sm:text-base md:text-lg text-gray-600">Secure and convenient payment options</p>
+                <div className="w-20 sm:w-24 h-1 bg-gradient-to-r from-emerald-500 to-teal-600 mx-auto mt-3 sm:mt-4 rounded-full"></div>
               </div>
               
               {/* Country Selection */}
               {!selectedCountry && (
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Select Your Country</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center">Select Your Country</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                     {countries.map((country) => (
                       <div
@@ -584,14 +587,14 @@ const CourseEnrollment: React.FC = () => {
               {/* Payment Method Selection */}
               {selectedCountry && (
                 <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-2xl font-bold text-gray-900">Payment Methods</h3>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Payment Methods</h3>
                     <button
                       onClick={() => {
                         setSelectedCountry('');
                         setSelectedPaymentMethod('');
                       }}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-300"
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-colors duration-300 min-h-[44px] sm:min-h-0 whitespace-nowrap"
                     >
                       Change Country
                     </button>
@@ -633,12 +636,12 @@ const CourseEnrollment: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex justify-between items-center space-x-4">
+              <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4">
                 <button
                   onClick={() => setStep(1)}
-                  className="px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="px-6 sm:px-8 py-3 sm:py-4 bg-gray-100 text-gray-700 rounded-lg sm:rounded-xl font-semibold hover:bg-gray-200 transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base min-h-[44px] order-2 sm:order-1"
                 >
-                  <span className="flex items-center">
+                  <span className="flex items-center justify-center">
                     <span className="mr-2">←</span>
                     Back to Course
                   </span>
@@ -646,21 +649,23 @@ const CourseEnrollment: React.FC = () => {
                 <button
                   onClick={handleEnrollment}
                   disabled={!selectedPaymentMethod || loading}
-                  className={`px-8 py-4 rounded-xl font-bold shadow-lg ${
+                  className={`px-6 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold shadow-lg text-sm sm:text-base min-h-[44px] order-1 sm:order-2 ${
                     !selectedPaymentMethod || loading
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-sm'
                       : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
                   }`}
                 >
-                  <span className="flex items-center">
+                  <span className="flex items-center justify-center">
                     {loading ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>
-                        Processing Payment...
+                        <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent mr-2 sm:mr-3"></div>
+                        <span className="hidden sm:inline">Processing Payment...</span>
+                        <span className="sm:hidden">Processing...</span>
                       </>
                     ) : (
                       <>
-                        Continue to Payment
+                        <span className="hidden sm:inline">Continue to Payment</span>
+                        <span className="sm:hidden">Continue</span>
                         <span className="ml-2">→</span>
                       </>
                     )}

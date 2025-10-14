@@ -58,65 +58,65 @@ const EmailVerification: React.FC = () => {
   }, [token]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 relative overflow-hidden px-4">
       {/* Background decorative elements */}
       <div className="absolute top-0 left-0 w-72 h-72 bg-white bg-opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-white bg-opacity-10 rounded-full translate-x-1/2 translate-y-1/2"></div>
       <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
-      
-      <div className="bg-white bg-opacity-60 backdrop-blur-md px-10 py-6 rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10 text-center">
+
+      <div className="bg-white bg-opacity-60 backdrop-blur-md px-6 sm:px-8 md:px-10 py-6 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10 text-center">
         {verificationStatus === 'loading' && isLoading && (
           <div className="text-center">
             {/* Header */}
-            <div className="text-center mb-6">
-              <div className="text-3xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2">
+            <div className="text-center mb-4 sm:mb-6">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2">
                 Verifying Email...
               </div>
             </div>
-            
+
             {/* Loading Spinner */}
-            <div className="mb-6">
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="mb-4 sm:mb-6">
+              <div className="mx-auto flex items-center justify-center h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-blue-100">
+                <div className="animate-spin rounded-full h-7 w-7 sm:h-8 sm:w-8 border-b-2 border-blue-600"></div>
               </div>
             </div>
-            
-            <p className="text-gray-600 text-sm">Please wait while we verify your email address...</p>
+
+            <p className="text-gray-600 text-xs sm:text-sm">Please wait while we verify your email address...</p>
           </div>
         )}
 
         {verificationStatus === 'success' && (
           <div className="text-center">
             {/* Header */}
-            <div className="text-center mb-6">
-              <div className="text-3xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2">
+            <div className="text-center mb-4 sm:mb-6">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2">
                 Email Verified Successfully!
               </div>
             </div>
-            
+
             {/* Success Icon */}
-            <div className="mb-6">
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
-                <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mb-4 sm:mb-6">
+              <div className="mx-auto flex items-center justify-center h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-green-100">
+                <svg className="h-7 w-7 sm:h-8 sm:w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
               </div>
             </div>
-            
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">
+
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">
                 Welcome to Learn Bangla to Deutsch!
               </h2>
-              <p className="text-gray-600 text-sm mb-4">
+              <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">
                 Your email has been verified successfully.
                 <br />
-                Please wait for admin approval. You’ll be notified by email once approved..
+                Please wait for admin approval. You'll be notified by email once approved..
               </p>
             </div>
-            
+
             <button
               onClick={() => navigate('/login')}
-              className="group relative w-full bg-gradient-to-r from-slate-800 to-gray-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl hover:from-slate-800 hover:to-gray-800 transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden mb-4"
+              className="group relative w-full bg-gradient-to-r from-slate-800 to-gray-700 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl hover:from-slate-800 hover:to-gray-800 transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden mb-3 sm:mb-4 text-sm sm:text-base min-h-[44px]"
             >
               {/* Go to Login Button Stars - Success */}
               <div className="fixed w-4 h-4 top-[10%] left-[15%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
@@ -163,36 +163,36 @@ const EmailVerification: React.FC = () => {
         {verificationStatus === 'error' && (
           <div className="text-center">
             {/* Header */}
-            <div className="text-center mb-6">
-              <div className="text-3xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2">
+            <div className="text-center mb-4 sm:mb-6">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2">
                 Verification Failed
               </div>
             </div>
-            
+
             {/* Error Icon */}
-            <div className="mb-6">
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100">
-                <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mb-4 sm:mb-6">
+              <div className="mx-auto flex items-center justify-center h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-red-100">
+                <svg className="h-7 w-7 sm:h-8 sm:w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </div>
             </div>
-            
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">
+
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">
                 Unable to Verify Email
               </h2>
-              <div className="bg-red-50 bg-opacity-80 backdrop-blur-sm p-3 rounded-xl border border-red-200 mb-4">
-                <p className="text-red-800 text-sm">
+              <div className="bg-red-50 bg-opacity-80 backdrop-blur-sm p-3 rounded-lg sm:rounded-xl border border-red-200 mb-3 sm:mb-4">
+                <p className="text-red-800 text-xs sm:text-sm">
                   {errorMessage || 'The verification link is invalid or has expired.'}
                 </p>
               </div>
             </div>
-            
+
             <div className="space-y-3 mb-4">
               <button
                 onClick={() => navigate('/login')}
-                className="group relative w-full bg-gradient-to-r from-slate-600 to-gray-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl hover:from-slate-800 hover:to-gray-800 transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden"
+                className="group relative w-full bg-gradient-to-r from-slate-600 to-gray-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl hover:from-slate-800 hover:to-gray-800 transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden text-sm sm:text-base min-h-[44px]"
               >
                 {/* Go to Login Button Stars - Error */}
                 <div className="fixed w-4 h-4 top-[10%] left-[15%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
@@ -229,7 +229,7 @@ const EmailVerification: React.FC = () => {
               </button>
               <button
                 onClick={() => navigate('/register')}
-                className="group relative w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-800 hover:to-teal-800 transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden"
+                className="group relative w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-800 hover:to-teal-800 transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden text-sm sm:text-base min-h-[44px]"
               >
                 {/* Register Again Button Stars */}
                 <div className="fixed w-4 h-4 top-[12%] left-[18%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3200ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">

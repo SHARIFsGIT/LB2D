@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import ConfirmModal from '../components/common/ConfirmModal';
+import PromptModal from '../components/common/PromptModal';
+import { useNotification } from '../hooks/useNotification';
 import { NotificationData, useWebSocket } from '../hooks/useWebSocket';
 import { updateUser } from '../store/slices/authSlice';
 import { RootState } from '../store/store';
@@ -698,6 +701,25 @@ const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const currentUser = useSelector((state: RootState) => state.auth.user);
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
+
+  // Modal states
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'danger' | 'warning' | 'info';
+  } | null>(null);
+  const [showPromptModal, setShowPromptModal] = useState(false);
+  const [promptConfig, setPromptConfig] = useState<{
+    title: string;
+    message: string;
+    onSubmit: (value: string) => void;
+    defaultValue?: string;
+    placeholder?: string;
+  } | null>(null);
+
   const [users, setUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -755,9 +777,9 @@ const AdminDashboard: React.FC = () => {
                 
                 // Show notification about role change
                 if (notification.data?.newRole) {
-                  alert(`Your role has been updated to ${notification.data.newRole}. Please refresh the page to see the new interface.`);
+                  showInfo(`Your role has been updated to ${notification.data.newRole}. Please refresh the page to see the new interface.`, 'Role Updated');
                 } else if (notification.title?.includes('Role Approved')) {
-                  alert(`Your role request has been approved! Please refresh the page to see the new interface.`);
+                  showInfo(`Your role request has been approved! Please refresh the page to see the new interface.`, 'Role Approved');
                 }
               }
             }
@@ -918,7 +940,7 @@ const AdminDashboard: React.FC = () => {
         navigate('/login');
       } else if (response.status === 403) {
         console.error('Forbidden access - insufficient permissions');
-        alert('Access denied. Admin privileges required.');
+        showError('Access denied. Admin privileges required.', 'Access Denied');
         navigate('/dashboard');
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
@@ -1225,145 +1247,176 @@ const AdminDashboard: React.FC = () => {
       });
 
       if (response.ok) {
-        alert('Video approved successfully');
+        showSuccess('Video approved successfully', 'Success');
         fetchAllVideos();
         fetchVideoCount(); // Update count immediately
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to approve video');
+        showError(error.message || 'Failed to approve video', 'Error');
       }
     } catch (error) {
       console.error('Error approving video:', error);
-      alert('Failed to approve video');
+      showError('Failed to approve video', 'Error');
     }
   };
 
   // Reject video
   const handleRejectVideo = async (videoId: string) => {
-    const rejectionReason = prompt('Please provide a reason for rejection:');
-    if (!rejectionReason) return;
+    setPromptConfig({
+      title: 'Reject Video',
+      message: 'Please provide a reason for rejection:',
+      placeholder: 'Enter rejection reason...',
+      onSubmit: async (rejectionReason) => {
+        setShowPromptModal(false);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}/reject`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ rejectionReason })
-      });
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}/reject`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rejectionReason })
+          });
 
-      if (response.ok) {
-        alert('Video rejected successfully');
-        fetchAllVideos();
-        fetchVideoCount(); // Update count immediately
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to reject video');
+          if (response.ok) {
+            showSuccess('Video rejected successfully', 'Success');
+            fetchAllVideos();
+            fetchVideoCount(); // Update count immediately
+          } else {
+            const error = await response.json();
+            showError(error.message || 'Failed to reject video', 'Error');
+          }
+        } catch (error) {
+          console.error('Error rejecting video:', error);
+          showError('Failed to reject video', 'Error');
+        }
       }
-    } catch (error) {
-      console.error('Error rejecting video:', error);
-      alert('Failed to reject video');
-    }
+    });
+    setShowPromptModal(true);
   };
 
   // Delete video
   const handleDeleteVideo = async (videoId: string) => {
-    if (!window.confirm('Are you sure you want to delete this video? This action cannot be undone.')) return;
-    
     if (!token) {
-      alert('Authentication token not found. Please log in again.');
+      showError('Authentication token not found. Please log in again.', 'Error');
       return;
     }
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+    setConfirmConfig({
+      title: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this video? This action cannot be undone.',
+      type: 'danger',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
 
-      if (response.ok) {
-        alert('Video deleted successfully');
-        fetchAllVideos();
-        fetchVideoCount(); // Update count immediately
-      } else {
-        const error = await response.json();
-        console.error('Delete video error response:', error);
-        alert(error.message || `Failed to delete video (Status: ${response.status})`);
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Video deleted successfully', 'Success');
+            fetchAllVideos();
+            fetchVideoCount(); // Update count immediately
+          } else {
+            const error = await response.json();
+            console.error('Delete video error response:', error);
+            showError(error.message || `Failed to delete video (Status: ${response.status})`, 'Error');
+          }
+        } catch (error) {
+          console.error('Error deleting video:', error);
+          showError('Failed to delete video. Please check your connection and try again.', 'Error');
+        }
       }
-    } catch (error) {
-      console.error('Error deleting video:', error);
-      alert('Failed to delete video. Please check your connection and try again.');
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   // Delete quiz
   const handleDeleteQuiz = async (quizId: string) => {
-    if (!window.confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) return;
-
     if (!token) {
-      alert('Authentication token not found. Please log in again.');
+      showError('Authentication token not found. Please log in again.', 'Error');
       return;
     }
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+    setConfirmConfig({
+      title: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this quiz? This action cannot be undone.',
+      type: 'danger',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
 
-      if (response.ok) {
-        alert('Quiz deleted successfully');
-        fetchAllQuizzes();
-        fetchQuizCount(); // Update count immediately
-      } else {
-        const error = await response.json();
-        console.error('Delete quiz error response:', error);
-        alert(error.message || `Failed to delete quiz (Status: ${response.status})`);
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Quiz deleted successfully', 'Success');
+            fetchAllQuizzes();
+            fetchQuizCount(); // Update count immediately
+          } else {
+            const error = await response.json();
+            console.error('Delete quiz error response:', error);
+            showError(error.message || `Failed to delete quiz (Status: ${response.status})`, 'Error');
+          }
+        } catch (error) {
+          console.error('Delete quiz error:', error);
+          showError('Failed to delete quiz. Please check your connection and try again.', 'Error');
+        }
       }
-    } catch (error) {
-      console.error('Delete quiz error:', error);
-      alert('Failed to delete quiz. Please check your connection and try again.');
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   // Delete resource
   const handleDeleteResource = async (resourceId: string) => {
-    if (!window.confirm('Are you sure you want to delete this resource? This action cannot be undone.')) return;
-
     if (!token) {
-      alert('Authentication token not found. Please log in again.');
+      showError('Authentication token not found. Please log in again.', 'Error');
       return;
     }
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/${resourceId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+    setConfirmConfig({
+      title: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this resource? This action cannot be undone.',
+      type: 'danger',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
 
-      if (response.ok) {
-        alert('Resource deleted successfully');
-        fetchAllResources();
-        fetchResourceCount(); // Update count immediately
-      } else {
-        const error = await response.json();
-        console.error('Delete resource error response:', error);
-        alert(error.message || `Failed to delete resource (Status: ${response.status})`);
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/${resourceId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Resource deleted successfully', 'Success');
+            fetchAllResources();
+            fetchResourceCount(); // Update count immediately
+          } else {
+            const error = await response.json();
+            console.error('Delete resource error response:', error);
+            showError(error.message || `Failed to delete resource (Status: ${response.status})`, 'Error');
+          }
+        } catch (error) {
+          console.error('Delete resource error:', error);
+          showError('Failed to delete resource. Please check your connection and try again.', 'Error');
+        }
       }
-    } catch (error) {
-      console.error('Delete resource error:', error);
-      alert('Failed to delete resource. Please check your connection and try again.');
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   // Approve quiz
@@ -1378,46 +1431,53 @@ const AdminDashboard: React.FC = () => {
       });
 
       if (response.ok) {
-        alert('Quiz approved successfully');
+        showSuccess('Quiz approved successfully', 'Success');
         fetchAllQuizzes();
         fetchQuizCount(); // Update count immediately
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to approve quiz');
+        showError(error.message || 'Failed to approve quiz', 'Error');
       }
     } catch (error) {
       console.error('Error approving quiz:', error);
-      alert('Failed to approve quiz');
+      showError('Failed to approve quiz', 'Error');
     }
   };
 
   // Reject quiz
   const handleRejectQuiz = async (quizId: string) => {
-    const rejectionReason = prompt('Please provide a reason for rejection:');
-    if (!rejectionReason) return;
+    setPromptConfig({
+      title: 'Reject Quiz',
+      message: 'Please provide a reason for rejection:',
+      placeholder: 'Enter rejection reason...',
+      onSubmit: async (rejectionReason) => {
+        setShowPromptModal(false);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}/reject`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ rejectionReason })
-      });
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}/reject`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rejectionReason })
+          });
 
-      if (response.ok) {
-        alert('Quiz rejected successfully');
-        fetchAllQuizzes();
-        fetchQuizCount(); // Update count immediately
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to reject quiz');
+          if (response.ok) {
+            showSuccess('Quiz rejected successfully', 'Success');
+            fetchAllQuizzes();
+            fetchQuizCount(); // Update count immediately
+          } else {
+            const error = await response.json();
+            showError(error.message || 'Failed to reject quiz', 'Error');
+          }
+        } catch (error) {
+          console.error('Error rejecting quiz:', error);
+          showError('Failed to reject quiz', 'Error');
+        }
       }
-    } catch (error) {
-      console.error('Error rejecting quiz:', error);
-      alert('Failed to reject quiz');
-    }
+    });
+    setShowPromptModal(true);
   };
 
   // Fetch quizzes pending deletion approval
@@ -1461,177 +1521,216 @@ const AdminDashboard: React.FC = () => {
 
   // Approve video deletion
   const handleApproveVideoDeletion = async (videoId: string, videoTitle: string) => {
-    if (!window.confirm(`Are you sure you want to approve the deletion of "${videoTitle}"? This will hide the video from supervisors.`)) {
-      return;
-    }
+    setConfirmConfig({
+      title: 'Approve Video Deletion',
+      message: `Are you sure you want to approve the deletion of "${videoTitle}"? This will hide the video from supervisors.`,
+      type: 'warning',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}/approve-deletion`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}/approve-deletion`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Video deletion approved - video hidden from supervisor', 'Success');
+            fetchAllVideos(); // Refresh main video list
+            fetchVideoCount(); // Update count
+          } else {
+            const error = await response.json();
+            showError(error.message || 'Failed to approve deletion', 'Error');
+          }
+        } catch (error) {
+          console.error('Error approving video deletion:', error);
+          showError('Failed to approve deletion', 'Error');
         }
-      });
-
-      if (response.ok) {
-        alert('Video deletion approved - video hidden from supervisor');
-        fetchAllVideos(); // Refresh main video list
-        fetchVideoCount(); // Update count
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to approve deletion');
       }
-    } catch (error) {
-      console.error('Error approving video deletion:', error);
-      alert('Failed to approve deletion');
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   // Reject video deletion
   const handleRejectVideoDeletion = async (videoId: string, videoTitle: string) => {
-    const rejectionReason = prompt(`Please provide a reason for rejecting the deletion of "${videoTitle}":`);
-    if (!rejectionReason) return;
+    setPromptConfig({
+      title: 'Reject Video Deletion',
+      message: `Please provide a reason for rejecting the deletion of "${videoTitle}":`,
+      placeholder: 'Enter rejection reason...',
+      onSubmit: async (rejectionReason) => {
+        setShowPromptModal(false);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}/reject-deletion`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reason: rejectionReason })
-      });
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/videos/${videoId}/reject-deletion`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: rejectionReason })
+          });
 
-      if (response.ok) {
-        alert('Deletion request rejected successfully');
-        fetchAllVideos(); // Refresh to show rejection reason
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to reject deletion');
+          if (response.ok) {
+            showSuccess('Deletion request rejected successfully', 'Success');
+            fetchAllVideos(); // Refresh to show rejection reason
+          } else {
+            const error = await response.json();
+            showError(error.message || 'Failed to reject deletion', 'Error');
+          }
+        } catch (error) {
+          console.error('Error rejecting video deletion:', error);
+          showError('Failed to reject deletion', 'Error');
+        }
       }
-    } catch (error) {
-      console.error('Error rejecting video deletion:', error);
-      alert('Failed to reject deletion');
-    }
+    });
+    setShowPromptModal(true);
   };
 
   // Approve quiz deletion
   const handleApproveQuizDeletion = async (quizId: string, quizTitle: string) => {
-    if (!window.confirm(`Are you sure you want to approve the deletion of "${quizTitle}"? This will hide the quiz from supervisors.`)) {
-      return;
-    }
+    setConfirmConfig({
+      title: 'Approve Quiz Deletion',
+      message: `Are you sure you want to approve the deletion of "${quizTitle}"? This will hide the quiz from supervisors.`,
+      type: 'warning',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}/approve-deletion`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}/approve-deletion`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Quiz deletion approved - quiz hidden from supervisor', 'Success');
+            fetchQuizzesPendingDeletion();
+            fetchAllQuizzes(); // Refresh main quiz list
+            fetchQuizCount(); // Update count
+          } else {
+            const error = await response.json();
+            showError(error.message || 'Failed to approve deletion', 'Error');
+          }
+        } catch (error) {
+          console.error('Error approving deletion:', error);
+          showError('Failed to approve deletion', 'Error');
         }
-      });
-
-      if (response.ok) {
-        alert('Quiz deletion approved - quiz hidden from supervisor');
-        fetchQuizzesPendingDeletion();
-        fetchAllQuizzes(); // Refresh main quiz list
-        fetchQuizCount(); // Update count
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to approve deletion');
       }
-    } catch (error) {
-      console.error('Error approving deletion:', error);
-      alert('Failed to approve deletion');
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   // Reject quiz deletion
   const handleRejectQuizDeletion = async (quizId: string, quizTitle: string) => {
-    const rejectionReason = prompt(`Please provide a reason for rejecting the deletion of "${quizTitle}":`);
-    if (!rejectionReason) return;
+    setPromptConfig({
+      title: 'Reject Quiz Deletion',
+      message: `Please provide a reason for rejecting the deletion of "${quizTitle}":`,
+      placeholder: 'Enter rejection reason...',
+      onSubmit: async (rejectionReason) => {
+        setShowPromptModal(false);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}/reject-deletion`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reason: rejectionReason })
-      });
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/quizzes/${quizId}/reject-deletion`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: rejectionReason })
+          });
 
-      if (response.ok) {
-        alert('Deletion request rejected successfully');
-        fetchQuizzesPendingDeletion();
-        fetchAllQuizzes(); // Refresh to show rejection reason
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to reject deletion');
+          if (response.ok) {
+            showSuccess('Deletion request rejected successfully', 'Success');
+            fetchQuizzesPendingDeletion();
+            fetchAllQuizzes(); // Refresh to show rejection reason
+          } else {
+            const error = await response.json();
+            showError(error.message || 'Failed to reject deletion', 'Error');
+          }
+        } catch (error) {
+          console.error('Error rejecting deletion:', error);
+          showError('Failed to reject deletion', 'Error');
+        }
       }
-    } catch (error) {
-      console.error('Error rejecting deletion:', error);
-      alert('Failed to reject deletion');
-    }
+    });
+    setShowPromptModal(true);
   };
 
   // Approve resource deletion
   const handleApproveResourceDeletion = async (resourceId: string, resourceTitle: string) => {
-    if (!window.confirm(`Are you sure you want to approve the deletion of "${resourceTitle}"? This will hide the resource from supervisors.`)) {
-      return;
-    }
+    setConfirmConfig({
+      title: 'Approve Resource Deletion',
+      message: `Are you sure you want to approve the deletion of "${resourceTitle}"? This will hide the resource from supervisors.`,
+      type: 'warning',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/${resourceId}/approve-deletion`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/${resourceId}/approve-deletion`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Resource deletion approved - resource hidden from supervisor', 'Success');
+            fetchResourcesPendingDeletion();
+            fetchAllResources(); // Refresh main resource list
+            fetchResourceCount(); // Update count
+          } else {
+            const error = await response.json();
+            showError(error.message || 'Failed to approve deletion', 'Error');
+          }
+        } catch (error) {
+          console.error('Error approving resource deletion:', error);
+          showError('Failed to approve deletion', 'Error');
         }
-      });
-
-      if (response.ok) {
-        alert('Resource deletion approved - resource hidden from supervisor');
-        fetchResourcesPendingDeletion();
-        fetchAllResources(); // Refresh main resource list
-        fetchResourceCount(); // Update count
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to approve deletion');
       }
-    } catch (error) {
-      console.error('Error approving resource deletion:', error);
-      alert('Failed to approve deletion');
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   // Reject resource deletion
   const handleRejectResourceDeletion = async (resourceId: string, resourceTitle: string) => {
-    const rejectionReason = prompt(`Please provide a reason for rejecting the deletion of "${resourceTitle}":`);
-    if (!rejectionReason) return;
+    setPromptConfig({
+      title: 'Reject Resource Deletion',
+      message: `Please provide a reason for rejecting the deletion of "${resourceTitle}":`,
+      placeholder: 'Enter rejection reason...',
+      onSubmit: async (rejectionReason) => {
+        setShowPromptModal(false);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/${resourceId}/reject-deletion`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reason: rejectionReason })
-      });
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/${resourceId}/reject-deletion`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: rejectionReason })
+          });
 
-      if (response.ok) {
-        alert('Deletion request rejected successfully');
-        fetchResourcesPendingDeletion();
-        fetchAllResources(); // Refresh to show rejection reason
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to reject deletion');
+          if (response.ok) {
+            showSuccess('Deletion request rejected successfully', 'Success');
+            fetchResourcesPendingDeletion();
+            fetchAllResources(); // Refresh to show rejection reason
+          } else {
+            const error = await response.json();
+            showError(error.message || 'Failed to reject deletion', 'Error');
+          }
+        } catch (error) {
+          console.error('Error rejecting resource deletion:', error);
+          showError('Failed to reject deletion', 'Error');
+        }
       }
-    } catch (error) {
-      console.error('Error rejecting resource deletion:', error);
-      alert('Failed to reject deletion');
-    }
+    });
+    setShowPromptModal(true);
   };
 
   // Approve resource
@@ -1646,46 +1745,53 @@ const AdminDashboard: React.FC = () => {
       });
 
       if (response.ok) {
-        alert('Resource approved successfully');
+        showSuccess('Resource approved successfully', 'Success');
         fetchAllResources();
         fetchResourceCount(); // Update count immediately
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to approve resource');
+        showError(error.message || 'Failed to approve resource', 'Error');
       }
     } catch (error) {
       console.error('Error approving resource:', error);
-      alert('Failed to approve resource');
+      showError('Failed to approve resource', 'Error');
     }
   };
 
   // Reject resource
   const handleRejectResource = async (resourceId: string) => {
-    const rejectionReason = prompt('Please provide a reason for rejection:');
-    if (!rejectionReason) return;
+    setPromptConfig({
+      title: 'Reject Resource',
+      message: 'Please provide a reason for rejection:',
+      placeholder: 'Enter rejection reason...',
+      onSubmit: async (rejectionReason) => {
+        setShowPromptModal(false);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/${resourceId}/reject`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ rejectionReason })
-      });
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/resources/${resourceId}/reject`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rejectionReason })
+          });
 
-      if (response.ok) {
-        alert('Resource rejected successfully');
-        fetchAllResources();
-        fetchResourceCount(); // Update count immediately
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to reject resource');
+          if (response.ok) {
+            showSuccess('Resource rejected successfully', 'Success');
+            fetchAllResources();
+            fetchResourceCount(); // Update count immediately
+          } else {
+            const error = await response.json();
+            showError(error.message || 'Failed to reject resource', 'Error');
+          }
+        } catch (error) {
+          console.error('Error rejecting resource:', error);
+          showError('Failed to reject resource', 'Error');
+        }
       }
-    } catch (error) {
-      console.error('Error rejecting resource:', error);
-      alert('Failed to reject resource');
-    }
+    });
+    setShowPromptModal(true);
   };
 
   // View/Open resource (document)
@@ -1723,11 +1829,11 @@ const AdminDashboard: React.FC = () => {
           triggerDownload(url, resource.fileName);
         }
       } else {
-        alert("Failed to open resource");
+        showError("Failed to open resource", "Error");
       }
     } catch (error) {
       console.error("Error opening resource:", error);
-      alert("Failed to open resource");
+      showError("Failed to open resource", "Error");
     }
   };
 
@@ -1789,20 +1895,20 @@ const AdminDashboard: React.FC = () => {
           
           // Show appropriate message based on what was changed
           if (updatedData.role && updatedData.role !== currentUser.role) {
-            alert(`Role updated successfully! Your role has been changed to ${updatedData.role}. Please refresh the page to see the new interface.`);
+            showInfo(`Role updated successfully! Your role has been changed to ${updatedData.role}. Please refresh the page to see the new interface.`, 'Role Updated');
           } else {
-            alert('Your profile has been updated successfully!');
+            showSuccess('Your profile has been updated successfully!', 'Success');
           }
         } else {
-          alert('User updated successfully');
+          showSuccess('User updated successfully', 'Success');
         }
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to update user');
+        showError(error.message || 'Failed to update user', 'Error');
       }
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('Failed to update user');
+      showError('Failed to update user', 'Error');
     }
   };
 
@@ -1821,14 +1927,14 @@ const AdminDashboard: React.FC = () => {
         setDeleteConfirm(null);
         fetchUsers();
         fetchStats();
-        alert('User deleted successfully');
+        showSuccess('User deleted successfully', 'Success');
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to delete user');
+        showError(error.message || 'Failed to delete user', 'Error');
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Failed to delete user');
+      showError('Failed to delete user', 'Error');
     }
   };
 
@@ -1850,14 +1956,14 @@ const AdminDashboard: React.FC = () => {
       if (response.ok) {
         fetchUsers();
         fetchStats();
-        alert(`Role approved! User is now a ${requestedRole}.`);
+        showSuccess(`Role approved! User is now a ${requestedRole}.`, 'Success');
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to approve role');
+        showError(error.message || 'Failed to approve role', 'Error');
       }
     } catch (error) {
       console.error('Error approving role:', error);
-      alert('Failed to approve role');
+      showError('Failed to approve role', 'Error');
     }
   };
 
@@ -1867,166 +1973,185 @@ const AdminDashboard: React.FC = () => {
     if (!user) return;
 
     // Confirm rejection
-    const confirmReject = window.confirm(
-      `Are you sure you want to reject ${user.firstName} ${user.lastName}'s request for ${user.requestedRole} role?`
-    );
-    
-    if (!confirmReject) return;
+    setConfirmConfig({
+      title: 'Reject Role Request',
+      message: `Are you sure you want to reject ${user.firstName} ${user.lastName}'s request for ${user.requestedRole} role?`,
+      type: 'warning',
+      onConfirm: () => {
+        setShowConfirmModal(false);
 
-    // Ask for rejection reason (optional)
-    const rejectionReason = window.prompt(
-      'Please provide a reason for rejection (optional):'
-    );
+        // Ask for rejection reason (optional)
+        setPromptConfig({
+          title: 'Rejection Reason',
+          message: 'Please provide a reason for rejection (optional):',
+          placeholder: 'Enter rejection reason...',
+          defaultValue: '',
+          onSubmit: async (rejectionReason) => {
+            setShowPromptModal(false);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/users/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-          requestedRole: null, // Clear the requested role
-          rejectionReason: rejectionReason || 'No reason provided'
-        })
-      });
+            try {
+              const response = await fetch(`${process.env.REACT_APP_API_URL}/admin/users/${userId}`, {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  requestedRole: null, // Clear the requested role
+                  rejectionReason: rejectionReason || 'No reason provided'
+                })
+              });
 
-      if (response.ok) {
-        fetchUsers();
-        fetchStats();
-        alert(`Role request for ${user.firstName} ${user.lastName} has been rejected.`);
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to reject role request');
+              if (response.ok) {
+                fetchUsers();
+                fetchStats();
+                showSuccess(`Role request for ${user.firstName} ${user.lastName} has been rejected.`, 'Success');
+              } else {
+                const error = await response.json();
+                showError(error.message || 'Failed to reject role request', 'Error');
+              }
+            } catch (error) {
+              console.error('Error rejecting role:', error);
+              showError('Failed to reject role request. Please try again.', 'Error');
+            }
+          }
+        });
+        setShowPromptModal(true);
       }
-    } catch (error) {
-      console.error('Error rejecting role:', error);
-      alert('Failed to reject role request. Please try again.');
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   const clearUserManagementData = async () => {
-    const isConfirmed = window.confirm(
-      'WARNING: This will permanently delete ALL user management data.\n\n' +
-      'This includes user activity logs, session data, and management records.\n\n' +
-      'This action cannot be undone. Are you absolutely sure you want to proceed?'
-    );
-    
-    if (!isConfirmed) return;
-    
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-user-management`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+    setConfirmConfig({
+      title: 'Clear User Management Data',
+      message: 'WARNING: This will permanently delete ALL user management data.\n\nThis includes user activity logs, session data, and management records.\n\nThis action cannot be undone. Are you absolutely sure you want to proceed?',
+      type: 'danger',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
+
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-user-management`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('User management data cleared successfully!', 'Success');
+            fetchUsers();
+            fetchStats();
+          } else {
+            showError('Failed to clear user management data', 'Error');
+          }
+        } catch (error) {
+          console.error('Error clearing user management data:', error);
+          showError('Error clearing user management data', 'Error');
         }
-      });
-      
-      if (response.ok) {
-        alert('User management data cleared successfully!');
-        fetchUsers();
-        fetchStats();
-      } else {
-        alert('Failed to clear user management data');
       }
-    } catch (error) {
-      console.error('Error clearing user management data:', error);
-      alert('Error clearing user management data');
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   const clearVideoManagementData = async () => {
-    const isConfirmed = window.confirm(
-      'WARNING: This will permanently delete ALL video management data.\n\n' +
-      'This includes video metadata, upload history, and management records.\n\n' +
-      'This action cannot be undone. Are you absolutely sure you want to proceed?'
-    );
-    
-    if (!isConfirmed) return;
-    
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-video-management`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+    setConfirmConfig({
+      title: 'Clear Video Management Data',
+      message: 'WARNING: This will permanently delete ALL video management data.\n\nThis includes video metadata, upload history, and management records.\n\nThis action cannot be undone. Are you absolutely sure you want to proceed?',
+      type: 'danger',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
+
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-video-management`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Video management data cleared successfully!', 'Success');
+            fetchAllVideos();
+            fetchVideoCount();
+          } else {
+            showError('Failed to clear video management data', 'Error');
+          }
+        } catch (error) {
+          console.error('Error clearing video management data:', error);
+          showError('Error clearing video management data', 'Error');
         }
-      });
-      
-      if (response.ok) {
-        alert('Video management data cleared successfully!');
-        fetchAllVideos();
-        fetchVideoCount();
-      } else {
-        alert('Failed to clear video management data');
       }
-    } catch (error) {
-      console.error('Error clearing video management data:', error);
-      alert('Error clearing video management data');
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   const clearQuizManagementData = async () => {
-    const isConfirmed = window.confirm(
-      'WARNING: This will permanently delete ALL quiz management data.\n\n' +
-      'This includes quiz metadata, questions, attempts, and management records.\n\n' +
-      'This action cannot be undone. Are you absolutely sure you want to proceed?'
-    );
-    
-    if (!isConfirmed) return;
-    
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-quiz-management`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+    setConfirmConfig({
+      title: 'Clear Quiz Management Data',
+      message: 'WARNING: This will permanently delete ALL quiz management data.\n\nThis includes quiz metadata, questions, attempts, and management records.\n\nThis action cannot be undone. Are you absolutely sure you want to proceed?',
+      type: 'danger',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
+
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-quiz-management`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Quiz management data cleared successfully!', 'Success');
+            fetchAllQuizzes();
+            fetchQuizCount();
+          } else {
+            showError('Failed to clear quiz management data', 'Error');
+          }
+        } catch (error) {
+          console.error('Error clearing quiz management data:', error);
+          showError('Error clearing quiz management data', 'Error');
         }
-      });
-      
-      if (response.ok) {
-        alert('Quiz management data cleared successfully!');
-        fetchAllQuizzes();
-        fetchQuizCount();
-      } else {
-        alert('Failed to clear quiz management data');
       }
-    } catch (error) {
-      console.error('Error clearing quiz management data:', error);
-      alert('Error clearing quiz management data');
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   const clearResourceManagementData = async () => {
-    const isConfirmed = window.confirm(
-      'WARNING: This will permanently delete ALL resource management data.\n\n' +
-      'This includes document metadata, upload history, and management records.\n\n' +
-      'This action cannot be undone. Are you absolutely sure you want to proceed?'
-    );
-    
-    if (!isConfirmed) return;
-    
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-resource-management`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+    setConfirmConfig({
+      title: 'Clear Resource Management Data',
+      message: 'WARNING: This will permanently delete ALL resource management data.\n\nThis includes document metadata, upload history, and management records.\n\nThis action cannot be undone. Are you absolutely sure you want to proceed?',
+      type: 'danger',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
+
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/analytics/clear-resource-management`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Resource management data cleared successfully!', 'Success');
+            fetchAllResources();
+            fetchResourceCount();
+          } else {
+            showError('Failed to clear resource management data', 'Error');
+          }
+        } catch (error) {
+          console.error('Error clearing resource management data:', error);
+          showError('Error clearing resource management data', 'Error');
         }
-      });
-      
-      if (response.ok) {
-        alert('Resource management data cleared successfully!');
-        fetchAllResources();
-        fetchResourceCount();
-      } else {
-        alert('Failed to clear resource management data');
       }
-    } catch (error) {
-      console.error('Error clearing resource management data:', error);
-      alert('Error clearing resource management data');
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   return (
@@ -2047,58 +2172,46 @@ const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-12">
           <div className="relative">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-30 blur animate-pulse"></div>
-            <div className="relative bg-gray-100 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white border-opacity-30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Total Users</h3>
-                  <p className="text-3xl font-bold text-green-600">{stats.total}</p>
-                </div>
+            <div className="relative bg-gray-100 backdrop-blur-md py-12 px-6 rounded-xl shadow-xl border border-white border-opacity-30 overflow-hidden">
+              <h3 className="text-sm font-medium text-gray-700 relative z-10">Total Users</h3>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 text-8xl font-bold text-green-600 opacity-20">
+                {stats.total}
               </div>
             </div>
           </div>
           <div className="relative">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-30 blur animate-pulse"></div>
-            <div className="relative bg-gray-100 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white border-opacity-30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Students</h3>
-                  <p className="text-3xl font-bold text-yellow-600">{stats.students}</p>
-                </div>
+            <div className="relative bg-gray-100 backdrop-blur-md py-12 px-6 rounded-xl shadow-xl border border-white border-opacity-30 overflow-hidden">
+              <h3 className="text-sm font-medium text-gray-700 relative z-10">Students</h3>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 text-8xl font-bold text-yellow-600 opacity-20">
+                {stats.students}
               </div>
             </div>
           </div>
           <div className="relative">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-30 blur animate-pulse"></div>
-            <div className="relative bg-gray-100 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white border-opacity-30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Supervisors</h3>
-                  <p className="text-3xl font-bold text-red-600">{stats.supervisors}</p>
-                </div>
-                <div className="text-4xl">👨‍🏫</div>
+            <div className="relative bg-gray-100 backdrop-blur-md py-12 px-6 rounded-xl shadow-xl border border-white border-opacity-30 overflow-hidden">
+              <h3 className="text-sm font-medium text-gray-700 relative z-10">Supervisors</h3>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 text-8xl font-bold text-red-600 opacity-20">
+                {stats.supervisors}
               </div>
             </div>
           </div>
           <div className="relative">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-30 blur animate-pulse"></div>
-            <div className="relative bg-gray-100 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white border-opacity-30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Admins</h3>
-                  <p className="text-3xl font-bold text-cyan-600">{stats.admins}</p>
-                </div>
-                <div className="text-4xl">👑</div>
+            <div className="relative bg-gray-100 backdrop-blur-md py-12 px-6 rounded-xl shadow-xl border border-white border-opacity-30 overflow-hidden">
+              <h3 className="text-sm font-medium text-gray-700 relative z-10">Admins</h3>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 text-8xl font-bold text-cyan-600 opacity-20">
+                {stats.admins}
               </div>
             </div>
           </div>
           <div className="relative">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-30 blur animate-pulse"></div>
-            <div className="relative bg-gray-100 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white border-opacity-30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Verified</h3>
-                  <p className="text-3xl font-bold text-green-600">{stats.verified}</p>
-                </div>
+            <div className="relative bg-gray-100 backdrop-blur-md py-12 px-6 rounded-xl shadow-xl border border-white border-opacity-30 overflow-hidden">
+              <h3 className="text-sm font-medium text-gray-700 relative z-10">Verified</h3>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 text-8xl font-bold text-green-600 opacity-20">
+                {stats.verified}
               </div>
             </div>
           </div>
@@ -2796,7 +2909,6 @@ const AdminDashboard: React.FC = () => {
                 </div>
               ) : [...allResources, ...resourcesPendingDeletion].length === 0 ? (
                 <div className="text-center py-10">
-                  <div className="text-6xl mb-4">📁</div>
                   <h3 className="text-xl font-bold text-gray-800 mb-2">No Resources for Review</h3>
                   <p className="text-gray-600">No pending, rejected, or approved resources to display!</p>
                 </div>
@@ -3122,6 +3234,37 @@ const AdminDashboard: React.FC = () => {
         onApproveDeletion={handleApproveQuizDeletion}
         onRejectDeletion={handleRejectQuizDeletion}
       />
+
+      {/* Modals */}
+      {showConfirmModal && confirmConfig && (
+        <ConfirmModal
+          isOpen={showConfirmModal}
+          onClose={() => {
+            setShowConfirmModal(false);
+            setConfirmConfig(null);
+          }}
+          onConfirm={confirmConfig.onConfirm}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          type={confirmConfig.type}
+          confirmText="Confirm"
+          cancelText="Cancel"
+        />
+      )}
+      {showPromptModal && promptConfig && (
+        <PromptModal
+          isOpen={showPromptModal}
+          onClose={() => {
+            setShowPromptModal(false);
+            setPromptConfig(null);
+          }}
+          onSubmit={promptConfig.onSubmit}
+          title={promptConfig.title}
+          message={promptConfig.message}
+          defaultValue={promptConfig.defaultValue}
+          placeholder={promptConfig.placeholder}
+        />
+      )}
     </div>
   );
 };

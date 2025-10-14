@@ -3,6 +3,7 @@ import { resourceApi } from '../utils/api';
 import ResourceViewer from './ResourceViewer';
 import Button from './common/Button';
 import Modal from './common/Modal';
+import { useNotification } from '../hooks/useNotification';
 
 interface Resource {
   _id: string;
@@ -31,6 +32,7 @@ interface Resource {
 }
 
 const ResourceApprovals: React.FC = () => {
+  const { showSuccess, showError } = useNotification();
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
@@ -64,15 +66,16 @@ const ResourceApprovals: React.FC = () => {
       const response = await resourceApi.approve(resourceId);
       
       if (response.success) {
-        setResources(prev => prev.map(resource => 
-          resource._id === resourceId 
+        setResources(prev => prev.map(resource =>
+          resource._id === resourceId
             ? { ...resource, status: 'approved' as const }
             : resource
         ));
+        showSuccess('Resource approved successfully', 'Approved');
       }
     } catch (error: any) {
       console.error('Error approving resource:', error);
-      alert(error.message || 'Failed to approve resource');
+      showError(error.message || 'Failed to approve resource', 'Approval Failed');
     } finally {
       setProcessingIds(prev => {
         const newSet = new Set(prev);
@@ -84,7 +87,7 @@ const ResourceApprovals: React.FC = () => {
 
   const handleReject = async () => {
     if (!selectedResource || !rejectionReason.trim()) {
-      alert('Please provide a rejection reason');
+      showError('Please provide a rejection reason', 'Reason Required');
       return;
     }
 
@@ -95,18 +98,19 @@ const ResourceApprovals: React.FC = () => {
       const response = await resourceApi.reject(selectedResource._id, rejectionReason.trim());
       
       if (response.success) {
-        setResources(prev => prev.map(resource => 
-          resource._id === selectedResource._id 
+        setResources(prev => prev.map(resource =>
+          resource._id === selectedResource._id
             ? { ...resource, status: 'rejected' as const, rejectionReason: rejectionReason.trim() }
             : resource
         ));
+        showSuccess('Resource rejected successfully', 'Rejected');
         setShowRejectModal(false);
         setSelectedResource(null);
         setRejectionReason('');
       }
     } catch (error: any) {
       console.error('Error rejecting resource:', error);
-      alert(error.message || 'Failed to reject resource');
+      showError(error.message || 'Failed to reject resource', 'Rejection Failed');
     } finally {
       setProcessingIds(prev => {
         const newSet = new Set(prev);

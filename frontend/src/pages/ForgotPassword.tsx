@@ -36,19 +36,19 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 relative overflow-hidden px-4 sm:px-6">
       {/* Background decorative elements */}
       <div className="absolute top-0 left-0 w-72 h-72 bg-white bg-opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-white bg-opacity-10 rounded-full translate-x-1/2 translate-y-1/2"></div>
       <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
-      
-      <div className="bg-white bg-opacity-60 backdrop-blur-md px-10 py-6 rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10">
+
+      <div className="bg-white bg-opacity-60 backdrop-blur-md px-6 sm:px-8 md:px-10 py-6 rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="text-3xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2 whitespace-nowrap">
+          <div className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2">
             Forgot Password
           </div>
-          <p className="text-gray-600 text-sm">Enter your email to receive a password reset link</p>
+          <p className="text-gray-600 text-sm sm:text-base">Enter your email to receive a password reset link</p>
         </div>
         
         {message && (
@@ -76,16 +76,16 @@ const ForgotPassword: React.FC = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-100 bg-opacity-80 backdrop-blur-sm"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-100 bg-opacity-80 backdrop-blur-sm text-sm sm:text-base"
               placeholder="Enter your email"
               required
             />
           </div>
-          
+
           <button
             type="submit"
             disabled={loading}
-            className="group relative w-full py-3 px-6 bg-gradient-to-r from-gray-600 to-green-600 font-semibold text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed mt-12"
+            className="group relative w-full py-3 px-6 bg-gradient-to-r from-gray-600 to-green-600 font-semibold text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed mt-8 sm:mt-12 min-h-[44px]"
           >
             {/* Star 1 - Black */}
             <div className="fixed w-5 h-5 top-[10%] left-[5%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)] pointer-events-none">
@@ -146,17 +146,17 @@ const ForgotPassword: React.FC = () => {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>
-                  <span className="font-medium">Sending Reset Link...</span>
+                  <span className="font-medium text-sm sm:text-base">Sending Reset Link...</span>
                 </>
               ) : (
-                <span className="font-semibold text-lg">Send Reset Link</span>
+                <span className="font-semibold text-base sm:text-lg">Send Reset Link</span>
               )}
             </div>
           </button>
         </form>
-        
+
         <div className="mt-6 pt-6 border-t border-gray-400 text-center">
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-sm sm:text-base">
             Remember your password?{' '}
             <Link to="/login" className="text-green-600 font-semibold hover:underline">
               Back to Login

@@ -16,23 +16,23 @@ const RegistrationSuccess: React.FC = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 relative overflow-hidden px-4">
       {/* Background decorative elements */}
       <div className="absolute top-0 left-0 w-72 h-72 bg-white bg-opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-white bg-opacity-10 rounded-full translate-x-1/2 translate-y-1/2"></div>
       <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
-      
-      <div className="bg-white bg-opacity-60 backdrop-blur-md px-10 py-6 rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10 text-center">
+
+      <div className="bg-white bg-opacity-60 backdrop-blur-md px-6 sm:px-8 md:px-10 py-6 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-lg border border-white border-opacity-50 relative z-10 text-center">
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="text-3xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2 whitespace-nowrap">
+        <div className="text-center mb-4 sm:mb-6">
+          <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-red-600 via-yellow-600 to-green-600 bg-clip-text text-transparent mb-2">
             Registration Successful!
           </div>
         </div>
 
         {/* Success Icon */}
-        <div className="mb-6">
-          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
+        <div className="mb-4 sm:mb-6">
+          <div className="mx-auto flex items-center justify-center h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-green-100">
             <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
             </svg>
@@ -40,19 +40,19 @@ const RegistrationSuccess: React.FC = () => {
         </div>
 
         {/* Content */}
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">
             Please Verify Your Email
           </h2>
-          <p className="text-gray-600 mb-4 text-sm">
+          <p className="text-gray-600 mb-3 sm:mb-4 text-xs sm:text-sm">
             We've sent a verification email to:
           </p>
-          <div className="bg-blue-50 bg-opacity-80 backdrop-blur-sm p-3 rounded-xl border border-blue-200 mb-4">
-            <p className="font-semibold text-blue-800 text-sm">
+          <div className="bg-blue-50 bg-opacity-80 backdrop-blur-sm p-3 rounded-lg sm:rounded-xl border border-blue-200 mb-3 sm:mb-4">
+            <p className="font-semibold text-blue-800 text-xs sm:text-sm break-all">
               {email}
             </p>
           </div>
-          <div className="bg-yellow-50 bg-opacity-80 backdrop-blur-sm p-3 rounded-xl border border-yellow-200 mb-4">
+          <div className="bg-yellow-50 bg-opacity-80 backdrop-blur-sm p-3 rounded-lg sm:rounded-xl border border-yellow-200 mb-3 sm:mb-4">
             <p className="text-yellow-800 text-xs">
               Note: Don't forget to check your spam folder if you don't see the email in your inbox.
             </p>
@@ -60,10 +60,10 @@ const RegistrationSuccess: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-3 mb-6">
+        <div className="space-y-3 mb-4 sm:mb-6">
           <button
             onClick={() => navigate('/login')}
-            className="group relative w-full bg-gradient-to-r from-slate-800 to-gray-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl hover:from-slate-800 hover:to-gray-800 transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden"
+            className="group relative w-full bg-gradient-to-r from-slate-800 to-gray-700 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl hover:from-slate-800 hover:to-gray-800 transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden text-sm sm:text-base min-h-[44px]"
           >
             {/* Go to Login Button Stars */}
             <div className="fixed w-4 h-4 top-[10%] left-[15%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[3000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
@@ -100,7 +100,7 @@ const RegistrationSuccess: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('/')}
-            className="group relative w-full bg-gradient-to-r from-emerald-800 to-teal-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-800 hover:to-teal-800 transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden"
+            className="group relative w-full bg-gradient-to-r from-emerald-800 to-teal-700 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-800 hover:to-teal-800 transition-all duration-[3500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden text-sm sm:text-base min-h-[44px]"
           >
             {/* Back to Home Button Stars */}
             <div className="fixed w-4 h-4 top-[12%] left-[18%] opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 z-50 transition-all duration-[4000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">

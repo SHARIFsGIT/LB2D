@@ -5,6 +5,7 @@ import { useNotification } from '../hooks/useNotification';
 import { updateUser } from '../store/slices/authSlice';
 import { RootState } from '../store/store';
 import { authApi } from '../utils/api';
+import ConfirmModal from '../components/common/ConfirmModal';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +32,10 @@ const Profile: React.FC = () => {
   // Device sessions state
   const [deviceSessions, setDeviceSessions] = useState<any[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+
+  // Confirm modal state
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [deviceToLogout, setDeviceToLogout] = useState<{ id: string; isCurrent: boolean } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -304,15 +309,16 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleLogoutFromDevice = async (deviceId: string, isCurrent: boolean) => {
-    const message = 'Are you sure you want to logout from this device? You will be redirected to the login page.';
+  const handleLogoutFromDevice = (deviceId: string, isCurrent: boolean) => {
+    setDeviceToLogout({ id: deviceId, isCurrent });
+    setShowLogoutConfirm(true);
+  };
 
-    if (!window.confirm(message)) {
-      return;
-    }
+  const confirmLogoutFromDevice = async () => {
+    if (!deviceToLogout) return;
 
     try {
-      await authApi.logoutFromDevice(deviceId);
+      await authApi.logoutFromDevice(deviceToLogout.id);
       sessionStorage.clear();
       localStorage.clear();
       navigate('/login');
@@ -343,35 +349,35 @@ const Profile: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white py-16">
+      <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white py-10 sm:py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
             My Profile
           </h1>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 -mt-6 sm:mt-8 relative z-10">
 
         {/* Profile Form */}
-        <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {/* Profile Photo Section */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6 sm:mb-8">
               <div className="relative inline-block">
-                <div className="w-32 h-32 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white text-4xl font-bold overflow-hidden">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white text-2xl sm:text-3xl md:text-4xl font-bold overflow-hidden">
                   {profilePhotoPreview ? (
-                    <img 
-                      src={profilePhotoPreview} 
-                      alt="Profile" 
+                    <img
+                      src={profilePhotoPreview}
+                      alt="Profile"
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     `${user.firstName?.charAt(0)?.toUpperCase()}${user.lastName?.charAt(0)?.toUpperCase()}`
                   )}
                 </div>
-                <label className="absolute bottom-0 right-0 bg-transparent text-white p-2 rounded-xl cursor-pointer shadow-lg border-2 border-gray-300 hover:border-gray-200 transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label className="absolute bottom-0 right-0 bg-transparent text-white p-1.5 sm:p-2 rounded-lg sm:rounded-xl cursor-pointer shadow-lg border-2 border-gray-300 hover:border-gray-200 transition-colors">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
@@ -383,7 +389,7 @@ const Profile: React.FC = () => {
                   />
                 </label>
               </div>
-              <p className="text-gray-600 mt-2 text-sm">Click the camera icon to upload a new photo</p>
+              <p className="text-gray-600 mt-2 text-xs sm:text-sm px-2">Click the camera icon to upload a new photo</p>
             </div>
 
             {/* Personal Information */}
@@ -445,9 +451,9 @@ const Profile: React.FC = () => {
             </div>
 
             {/* Account Information (Read-only) */}
-            <div className="bg-gray-50 rounded-xl p-6 mt-8">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Account Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-50 rounded-lg sm:rounded-xl p-4 sm:p-6 mt-6 sm:mt-8">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Account Information</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Role</label>
                   <div className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium inline-block">
@@ -488,16 +494,16 @@ const Profile: React.FC = () => {
             </div>
 
             {/* Active Devices Section */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mt-8 border border-blue-100">
-              <div className="flex justify-between items-center mb-4">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl p-4 sm:p-6 mt-6 sm:mt-8 border border-blue-100">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-3 sm:mb-4 gap-2 sm:gap-0">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">Active Devices</h3>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800">Active Devices</h3>
                   <p className="text-xs text-gray-600 mt-1">Manage your logged-in devices (Maximum 2)</p>
                 </div>
                 <button
                   onClick={loadDeviceSessions}
                   disabled={sessionsLoading}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium disabled:opacity-50 transition-colors"
+                  className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium disabled:opacity-50 transition-colors self-start sm:self-auto"
                 >
                   {sessionsLoading ? 'Refreshing...' : 'Refresh'}
                 </button>
@@ -520,29 +526,29 @@ const Profile: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {deviceSessions.map((session) => (
                       <div
                         key={session.deviceId}
-                        className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
+                        className={`bg-white rounded-lg p-3 sm:p-4 shadow-sm border-2 transition-all ${
                           session.isCurrent
                             ? 'border-green-400 bg-green-50'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <h4 className="font-semibold text-gray-800 truncate">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0 w-full sm:w-auto">
+                            <div className="flex items-center space-x-2 mb-1 sm:mb-2">
+                              <h4 className="text-sm sm:text-base font-semibold text-gray-800 truncate">
                                 {session.deviceName || 'Unknown Device'}
                               </h4>
                               {session.isCurrent && (
-                                <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">
+                                <span className="bg-green-600 text-white text-xs px-2 py-0.5 sm:py-1 rounded-full font-medium whitespace-nowrap">
                                   Current
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-xs sm:text-sm text-gray-600">
                               {new Date(session.loginTime).toLocaleDateString('en-US', {
                                 month: 'short',
                                 day: 'numeric',
@@ -554,11 +560,11 @@ const Profile: React.FC = () => {
                           </div>
                           <button
                             onClick={() => handleLogoutFromDevice(session.deviceId, session.isCurrent)}
-                            className={`ml-4 px-4 py-2 ${
+                            className={`w-full sm:w-auto px-4 py-2 ${
                               session.isCurrent
                                 ? 'bg-orange-500 hover:bg-orange-600'
                                 : 'bg-red-500 hover:bg-red-600'
-                            } text-white rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md flex-shrink-0`}
+                            } text-white rounded-lg text-xs sm:text-sm font-medium transition-colors shadow-sm hover:shadow-md flex-shrink-0`}
                             title={session.isCurrent ? 'Logout from this device' : 'Logout from this device'}
                           >
                             Logout
@@ -582,19 +588,19 @@ const Profile: React.FC = () => {
             </div>
 
 {/* Action Buttons */}
-            <div className="flex justify-end pt-6 space-x-4">
+            <div className="flex flex-col sm:flex-row justify-end pt-4 sm:pt-6 gap-3 sm:gap-0 sm:space-x-4">
               <button
                 type="button"
                 onClick={handleChangePassword}
                 disabled={changePasswordLoading}
-                className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-1200 ease-out disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-1200 ease-out disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {changePasswordLoading ? 'Sending Email...' : 'Change Password'}
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-1200 ease-out disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-1200 ease-out disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Updating...' : 'Update Profile'}
               </button>
@@ -602,9 +608,21 @@ const Profile: React.FC = () => {
           </form>
         </div>
       </div>
-      
+
       {/* Bottom spacing for scroll */}
       <div className="pb-20"></div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={confirmLogoutFromDevice}
+        title="Confirm Logout"
+        message="Are you sure you want to logout from this device? You will be redirected to the login page."
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="warning"
+      />
     </div>
   );
 };
