@@ -3,8 +3,8 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
-import { RootState } from '../store/store';
 import { useCurrency } from '../hooks/useCurrency';
+import { RootState } from '../store/store';
 import '../styles/AnimatedButton.css';
 
 interface Course {
@@ -201,10 +201,10 @@ const LandingPage: React.FC = () => {
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 md:py-32 lg:py-40">
           <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight invisible">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight">
               Learn German with Bengali Teachers
             </h1>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed invisible">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed">
               Master German from A1 to C1 with expert Bengali teachers.
               <br />
               Join 250+ Bangladeshi students who achieved their German dreams!
@@ -413,9 +413,9 @@ const LandingPage: React.FC = () => {
           ) : courses.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
               {courses.map((course) => (
-                <Card key={course._id} className="hover:shadow-2xl transition-all duration-300 overflow-hidden">
-                  <div className={`h-3 bg-gradient-to-r ${levelGradients[course.level]}`}></div>
-                  <div className="p-6 bg-gradient-to-br from-white via-gray-50 to-gray-100">
+                <Card key={course._id} className="hover:shadow-lg hover:scale-[1.02] transition-all duration-300 overflow-hidden border border-gray-200 shadow-md rounded-2xl">
+                  <div className={`h-2 bg-gradient-to-r ${levelGradients[course.level]}`}></div>
+                  <div className="p-6 bg-white">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center">
                         <div className={`text-xl font-bold px-3 py-2 bg-gradient-to-r ${levelGradients[course.level]} text-white rounded-xl mr-3 shadow-lg flex items-center`}>
@@ -537,11 +537,9 @@ const LandingPage: React.FC = () => {
                         </svg>
                       </div>
 
-                      <div className="absolute -inset-1 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-60 blur-lg animate-pulse"></div>
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-80 blur-md"></div>
                       <Button
                         onClick={() => navigate('/courses')}
-                        className="animated-btn relative w-full bg-white bg-opacity-20 backdrop-blur-md border-2 border-white border-opacity-30 text-white hover:!bg-transparent shadow-xl rounded-xl py-3 font-semibold"
+                        className="animated-btn relative w-full bg-gradient-to-r from-slate-50 to-gray-50 text-black border-2 border-slate-200 hover:border-slate-500 hover:shadow-lg rounded-xl py-3 font-semibold"
                       >
                         See More
                       </Button>
@@ -617,11 +615,9 @@ const LandingPage: React.FC = () => {
                   </svg>
                 </div>
 
-                <div className="absolute -inset-1 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-60 blur-lg animate-pulse"></div>
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-80 blur-md"></div>
                 <Button
                   onClick={() => navigate('/courses')}
-                  className="animated-btn relative bg-white bg-opacity-20 backdrop-blur-md border-2 border-white border-opacity-30 text-white hover:!bg-transparent px-8 py-3 rounded-xl font-semibold shadow-xl min-h-[44px]"
+                  className="animated-btn relative bg-gradient-to-r from-slate-50 to-gray-50 text-black border-2 border-slate-200 hover:border-slate-500 hover:shadow-lg px-8 py-3 rounded-xl font-semibold min-h-[44px]"
                 >
                   View All Courses
                 </Button>
@@ -694,13 +690,11 @@ const LandingPage: React.FC = () => {
                   </svg>
                 </div>
 
-                <div className="absolute -inset-1 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-60 blur-lg animate-pulse"></div>
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 rounded-xl opacity-80 blur-md"></div>
                 <Button
                   onClick={() => navigate('/courses')}
-                  className="animated-btn relative bg-white bg-opacity-20 backdrop-blur-md border-2 border-white border-opacity-30 text-white hover:!bg-transparent px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg rounded-xl font-semibold shadow-xl min-h-[44px]"
+                  className="animated-btn relative bg-gradient-to-r from-slate-50 to-gray-50 text-black border-2 border-slate-200 hover:border-slate-500 hover:shadow-lg px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg rounded-xl font-semibold min-h-[44px]"
                 >
-                  View All Courses →
+                  View All Courses
                 </Button>
               </div>
             </div>
