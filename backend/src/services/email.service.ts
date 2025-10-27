@@ -436,66 +436,90 @@ class EmailService {
   }) {
     const adminEmail = 'learnbangla2deutsch@gmail.com';
 
-    const mailOptions = {
-      from: `"Contact Form - Learn Bangla to Deutsch" <${process.env.EMAIL_USER}>`,
-      to: adminEmail,
-      replyTo: contactData.email,
-      subject: `Contact Form: ${contactData.subject}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #dc2626; padding: 20px; text-align: center;">
-            <h1 style="color: white; margin: 0;">New Contact Form Message</h1>
-            <p style="color: #fecaca; margin: 5px 0 0 0; font-size: 14px;">Learn Bangla to Deutsch</p>
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #dc2626; padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0;">New Contact Form Message</h1>
+          <p style="color: #fecaca; margin: 5px 0 0 0; font-size: 14px;">Learn Bangla to Deutsch</p>
+        </div>
+        <div style="padding: 30px; background-color: #f7f7f7;">
+          <h2 style="color: #dc2626;">Contact Form Submission</h2>
+          <p style="font-size: 16px; color: #333;">You have received a new message from the contact form.</p>
+
+          <div style="background-color: #fff; border-radius: 10px; padding: 20px; margin: 20px 0; border-left: 4px solid #dc2626;">
+            <h3 style="color: #dc2626; margin-top: 0;">Contact Details:</h3>
+            <p><strong>Name:</strong> ${contactData.name}</p>
+            <p><strong>Email:</strong> <a href="mailto:${contactData.email}" style="color: #dc2626;">${contactData.email}</a></p>
+            <p><strong>Subject:</strong> ${contactData.subject}</p>
+            <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
           </div>
-          <div style="padding: 30px; background-color: #f7f7f7;">
-            <h2 style="color: #dc2626;">Contact Form Submission</h2>
-            <p style="font-size: 16px; color: #333;">You have received a new message from the contact form.</p>
-            
-            <div style="background-color: #fff; border-radius: 10px; padding: 20px; margin: 20px 0; border-left: 4px solid #dc2626;">
-              <h3 style="color: #dc2626; margin-top: 0;">Contact Details:</h3>
-              <p><strong>Name:</strong> ${contactData.name}</p>
-              <p><strong>Email:</strong> <a href="mailto:${contactData.email}" style="color: #dc2626;">${contactData.email}</a></p>
-              <p><strong>Subject:</strong> ${contactData.subject}</p>
-              <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
-            </div>
 
-            <div style="background-color: #f3f4f6; border-radius: 10px; padding: 20px; margin: 20px 0;">
-              <h3 style="color: #374151; margin-top: 0;">Message:</h3>
-              <div style="background-color: #fff; padding: 15px; border-radius: 5px; border-left: 3px solid #10b981;">
-                <p style="color: #374151; margin: 0; white-space: pre-wrap; line-height: 1.6;">${contactData.message}</p>
-              </div>
-            </div>
-
-            <div style="background-color: #dbeafe; border-radius: 10px; padding: 20px; margin: 20px 0;">
-              <h4 style="color: #1d4ed8; margin-top: 0;">Quick Actions:</h4>
-              <div style="text-align: center; margin: 15px 0;">
-                <a href="mailto:${contactData.email}?subject=Re: ${contactData.subject}" style="background-color: #dc2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 14px; margin-right: 10px;">
-                  Reply to ${contactData.name}
-                </a>
-                <a href="mailto:${contactData.email}" style="background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 14px;">
-                  New Email
-                </a>
-              </div>
-            </div>
-
-            <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; color: #6b7280; font-size: 12px;">
-              <p style="margin: 0;"><strong>System Info:</strong></p>
-              <p style="margin: 5px 0;">This email was automatically generated from the contact form on your website.</p>
-              <p style="margin: 5px 0;">You can reply directly to this email to respond to ${contactData.name}.</p>
+          <div style="background-color: #f3f4f6; border-radius: 10px; padding: 20px; margin: 20px 0;">
+            <h3 style="color: #374151; margin-top: 0;">Message:</h3>
+            <div style="background-color: #fff; padding: 15px; border-radius: 5px; border-left: 3px solid #10b981;">
+              <p style="color: #374151; margin: 0; white-space: pre-wrap; line-height: 1.6;">${contactData.message}</p>
             </div>
           </div>
-          <div style="background-color: #1f2937; color: #9ca3af; padding: 20px; text-align: center; font-size: 12px;">
-            <p style="margin: 0;">© 2024 Learn Bangla to Deutsch. All rights reserved.</p>
-            <p style="margin: 5px 0 0 0;">Contact Form Notification System</p>
+
+          <div style="background-color: #dbeafe; border-radius: 10px; padding: 20px; margin: 20px 0;">
+            <h4 style="color: #1d4ed8; margin-top: 0;">Quick Actions:</h4>
+            <div style="text-align: center; margin: 15px 0;">
+              <a href="mailto:${contactData.email}?subject=Re: ${contactData.subject}" style="background-color: #dc2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 14px; margin-right: 10px;">
+                Reply to ${contactData.name}
+              </a>
+              <a href="mailto:${contactData.email}" style="background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 14px;">
+                New Email
+              </a>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; color: #6b7280; font-size: 12px;">
+            <p style="margin: 0;"><strong>System Info:</strong></p>
+            <p style="margin: 5px 0;">This email was automatically generated from the contact form on your website.</p>
+            <p style="margin: 5px 0;">You can reply directly to this email to respond to ${contactData.name}.</p>
           </div>
         </div>
-      `
-    };
+        <div style="background-color: #1f2937; color: #9ca3af; padding: 20px; text-align: center; font-size: 12px;">
+          <p style="margin: 0;">© 2025 Learn Bangla to Deutsch. All rights reserved.</p>
+          <p style="margin: 5px 0 0 0;">Contact Form Notification System</p>
+        </div>
+      </div>
+    `;
 
     try {
-      const info = await this.transporter.sendMail(mailOptions);
-      return info;
-    } catch (error) {
+      if (this.useSendGrid) {
+        const msg = {
+          to: adminEmail,
+          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@learnbangla2deutsch.com',
+          replyTo: contactData.email,
+          subject: `Contact Form: ${contactData.subject}`,
+          html: htmlContent
+        };
+        const result = await sgMail.send(msg);
+        return result;
+      } else if (this.useResend && this.resend) {
+        const result = await this.resend.emails.send({
+          from: 'LEARN BANGLA TO DEUTSCH <onboarding@resend.dev>',
+          to: adminEmail,
+          replyTo: contactData.email,
+          subject: `Contact Form: ${contactData.subject}`,
+          html: htmlContent
+        });
+        return result;
+      } else if (this.transporter) {
+        const mailOptions = {
+          from: `"Contact Form - Learn Bangla to Deutsch" <${process.env.EMAIL_USER}>`,
+          to: adminEmail,
+          replyTo: contactData.email,
+          subject: `Contact Form: ${contactData.subject}`,
+          html: htmlContent
+        };
+        const info = await this.transporter.sendMail(mailOptions);
+        return info;
+      } else {
+        throw new Error('No email service configured');
+      }
+    } catch (error: any) {
       throw error;
     }
   }
