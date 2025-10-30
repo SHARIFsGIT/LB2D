@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useNotification } from '@/hooks/useNotification';
 import { useLoginMutation } from '@/store/api/apiSlice';
-import { setCredentials } from '@/store/slices/authSlice';
 import { getDeviceFingerprint } from '@/lib/utils/deviceFingerprint';
-import { useAppDispatch } from '@/store/hooks';
+import { useAuthStore } from '@/store/authStore';
 
 const LoginPage: React.FC = () => {
   const { showSuccess, showError } = useNotification();
@@ -17,7 +16,7 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState('');
 
   const router = useRouter();
-  const dispatch = useAppDispatch();
+  const { setCredentials } = useAuthStore();
   const [login, { isLoading }] = useLoginMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,11 +36,11 @@ const LoginPage: React.FC = () => {
 
       if (result.success) {
 
-        dispatch(setCredentials({
-          user: result.data.user,
-          token: result.data.accessToken,
-          refreshToken: result.data.refreshToken
-        }));
+        setCredentials(
+          result.data.user,
+          result.data.accessToken,
+          result.data.refreshToken
+        );
 
         showSuccess(
           `Welcome back, ${result.data.user.firstName}!`,

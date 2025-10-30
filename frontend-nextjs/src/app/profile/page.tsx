@@ -3,17 +3,17 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotification } from '@/hooks/useNotification';
-import { updateUser } from '@/store/slices/authSlice';
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/lib/api/client';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { appConfig } from '@/config/app.config';
 
 const ProfilePage = () => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const { showSuccess, showError } = useNotification();
-  const { user, token } = useAppSelector((state) => state.auth);
+  
+  // Use Zustand for auth
+  const { user, token, isInitialized, updateUser: updateUserStore, initializeAuth } = useAuthStore();
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -38,21 +38,18 @@ const ProfilePage = () => {
   const [deviceSessions, setDeviceSessions] = useState<any[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
 
-  // Wait for mount and PersistGate hydration before checking auth
+  // Initialize auth and handle redirects
   useEffect(() => {
-    // Small delay to ensure PersistGate has rehydrated state
-    const timer = setTimeout(() => {
-      setIsMounted(true);
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []);
+    initializeAuth();
+    setIsMounted(true);
+  }, [initializeAuth]);
 
-  // Redirect to login if user navigates away or logs out
+  // Redirect to login if not authenticated (after initialization)
   useEffect(() => {
-    if (isMounted && !user && !token) {
+    if (isInitialized && !user && !token) {
       router.push('/login');
     }
-  }, [isMounted, user, token, router]);
+  }, [isInitialized, user, token, router]);
 
   // Confirm modal state
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -206,7 +203,7 @@ const ProfilePage = () => {
 
       const data = await response.json();
       if (response.ok && data.success) {
-        dispatch(updateUser(data.data.user));
+        updateUserStore(data.data.user);
         showSuccess('Profile updated successfully!');
         setTimeout(() => {
           router.back();
@@ -226,7 +223,7 @@ const ProfilePage = () => {
           const retryData = await retryResponse.json();
 
           if (retryResponse.ok && retryData.success) {
-            dispatch(updateUser(retryData.data.user));
+            updateUserStore(retryData.data.user);
             showError(
               'Profile updated, but photo was too large to save. Please try a smaller image.'
             );

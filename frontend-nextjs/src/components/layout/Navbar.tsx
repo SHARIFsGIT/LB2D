@@ -1,24 +1,24 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+
 import { useRouter, usePathname } from "next/navigation";
-// import { useNotifications } from "@/hooks/useNotifications";
-import { logout } from "@/store/slices/authSlice";
-import { RootState } from "@/store/store";
+import { useAuthStore } from "@/store/authStore";
+
+
+
 import Button from "@/components/ui/button";
 import { useLogoutMutation } from "@/store/api/apiSlice";
 
 const Navbar: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const dispatch = useDispatch();
-  const { isAuthenticated, user } = useSelector(
-    (state: RootState) => state.auth
-  );
+  
+  // Use Zustand for auth (better Next.js integration)
+  const { user, isAuthenticated, isInitialized, logout: logoutStore, initializeAuth } = useAuthStore();
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
   // Temporarily disabled notifications - TODO: Re-enable with proper WebSocket setup
   const unreadCount = 0;
@@ -29,10 +29,10 @@ const Navbar: React.FC = () => {
 
   const [logoutMutation] = useLogoutMutation();
 
-  // Prevent hydration mismatch - only show auth UI after client mount
+  // Initialize auth from sessionStorage on mount
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    initializeAuth();
+  }, [initializeAuth]);
 
   const handleLogout = async () => {
     try {
@@ -48,7 +48,7 @@ const Navbar: React.FC = () => {
       console.error('Logout error:', error);
     } finally {
       // Clear frontend state and storage
-      dispatch(logout());
+      logoutStore();
       router.push("/login");
     }
   };
@@ -197,7 +197,7 @@ const Navbar: React.FC = () => {
 
           {/* User Menu / Auth Buttons */}
           <div className="flex items-center space-x-4">
-            {!isMounted ? null : isAuthenticated ? (
+            {!isInitialized ? null : isAuthenticated ? (
               <div className="relative">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -532,7 +532,7 @@ const Navbar: React.FC = () => {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : isInitialized ? (
               <div className="flex items-center space-x-3">
                 {/* Login Button with Stars All Over Window */}
                 <div className="group relative hidden md:block">
@@ -728,7 +728,7 @@ const Navbar: React.FC = () => {
                   </div>
                 </div>
               </div>
-            )}
+            ) : null}
 
             {/* Mobile Menu Button */}
             <button
