@@ -38,13 +38,21 @@ const ProfilePage = () => {
   const [deviceSessions, setDeviceSessions] = useState<any[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
 
-  // Check auth on mount - PersistGate handles state hydration
+  // Wait for mount and PersistGate hydration before checking auth
   useEffect(() => {
-    setIsMounted(true);
-    if (!user && !token) {
+    // Small delay to ensure PersistGate has rehydrated state
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Redirect to login if user navigates away or logs out
+  useEffect(() => {
+    if (isMounted && !user && !token) {
       router.push('/login');
     }
-  }, [user, token, router]);
+  }, [isMounted, user, token, router]);
 
   // Confirm modal state
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);

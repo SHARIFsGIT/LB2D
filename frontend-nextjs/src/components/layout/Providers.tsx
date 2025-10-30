@@ -5,8 +5,8 @@
  * Enterprise-grade provider setup with error boundaries and monitoring
  */
 
-import { ReactNode } from 'react';
-import { Provider } from 'react-redux';
+import { ReactNode, useEffect } from 'react';
+import { Provider, useDispatch } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'react-hot-toast';
@@ -14,6 +14,20 @@ import { store, persistor } from '@/store';
 
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { initializeAuth } from '@/store/slices/authSlice';
+
+
+// Component to initialize auth from sessionStorage
+function AuthInitializer({ children }: { children: ReactNode }) {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    // Initialize auth state from sessionStorage on client mount
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
+  return <>{children}</>;
+}
 
 export function Providers({ children }: { children: ReactNode }) {
 
@@ -29,7 +43,8 @@ export function Providers({ children }: { children: ReactNode }) {
     >
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <NotificationProvider>
+          <AuthInitializer>
+            <NotificationProvider>
             <ThemeProvider attribute="class" defaultTheme="light" enableSystem suppressHydrationWarning>
               {children}
               <Toaster
@@ -59,8 +74,9 @@ export function Providers({ children }: { children: ReactNode }) {
                   },
                 }}
               />
-            </ThemeProvider>
-          </NotificationProvider>
+              </ThemeProvider>
+            </NotificationProvider>
+          </AuthInitializer>
         </PersistGate>
       </Provider>
     </ErrorBoundary>
