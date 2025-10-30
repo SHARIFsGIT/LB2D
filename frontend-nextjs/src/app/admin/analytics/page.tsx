@@ -10,7 +10,7 @@ import { NotificationData, useWebSocket } from "@/hooks/useWebSocket";
 import { appConfig } from '@/config/app.config';
 
 const AnalyticsDashboard: React.FC = () => {
-  const { showSuccess, showError, showWarning, showInfo } = useNotification();
+  const { showSuccess, showError, showWarning } = useNotification();
 
   // Modal states
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -37,7 +37,7 @@ const AnalyticsDashboard: React.FC = () => {
   const [assessmentReports, setAssessmentReports] = useState<any>(null);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [showStudentPopup, setShowStudentPopup] = useState(false);
-  const [realTimeUpdates, setRealTimeUpdates] = useState<NotificationData[]>(
+  const [_realTimeUpdates, setRealTimeUpdates] = useState<NotificationData[]>(
     []
   );
   const [lastUpdate, setLastUpdate] = useState<string>("");
