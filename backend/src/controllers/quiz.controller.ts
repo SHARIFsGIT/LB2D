@@ -10,6 +10,7 @@ import CourseResource from '../models/CourseResource.model';
 import ResourceProgress from '../models/ResourceProgress.model';
 import User from '../models/User.model';
 import notificationService from '../services/notification.service';
+import logger from '../utils/logger';
 
 // Utility function to update course progress
 const updateCourseProgress = async (userId: string, courseId: string) => {
@@ -99,7 +100,7 @@ const updateCourseProgress = async (userId: string, courseId: string) => {
     };
 
   } catch (error) {
-    console.error('Error in updateCourseProgress:', error);
+    logger.error('Error in updateCourseProgress:', error);
     throw error;
   }
 };
@@ -158,7 +159,7 @@ export const createQuiz = async (req: AuthenticatedRequest, res: Response) => {
         });
       }
     } catch (notificationError) {
-      console.error('Failed to notify admins about pending quiz:', notificationError);
+      logger.error('Failed to notify admins about pending quiz:', notificationError);
     }
 
     return res.status(201).json({
@@ -167,7 +168,7 @@ export const createQuiz = async (req: AuthenticatedRequest, res: Response) => {
       data: quiz
     });
   } catch (error: any) {
-    console.error('Error creating quiz:', error);
+    logger.error('Error creating quiz:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to create quiz',
@@ -213,7 +214,7 @@ export const getCourseQuizzes = async (req: AuthenticatedRequest, res: Response)
       data: quizzes
     });
   } catch (error: any) {
-    console.error('Error fetching course quizzes:', error);
+    logger.error('Error fetching course quizzes:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch quizzes',
@@ -251,7 +252,7 @@ export const updateQuiz = async (req: AuthenticatedRequest, res: Response) => {
       data: updatedQuiz
     });
   } catch (error: any) {
-    console.error('Error updating quiz:', error);
+    logger.error('Error updating quiz:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to update quiz',
@@ -320,7 +321,7 @@ export const submitQuizForApproval = async (req: AuthenticatedRequest, res: Resp
         }
       });
     } catch (notificationError) {
-      console.error('Failed to notify admins about pending quiz:', notificationError);
+      logger.error('Failed to notify admins about pending quiz:', notificationError);
     }
 
     return res.status(200).json({
@@ -329,7 +330,7 @@ export const submitQuizForApproval = async (req: AuthenticatedRequest, res: Resp
       data: { status: quiz.status }
     });
   } catch (error: any) {
-    console.error('Error submitting quiz for approval:', error);
+    logger.error('Error submitting quiz for approval:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to submit quiz for approval',
@@ -395,7 +396,7 @@ export const resubmitQuiz = async (req: AuthenticatedRequest, res: Response) => 
       data: { status: quiz.status }
     });
   } catch (error: any) {
-    console.error('Error resubmitting quiz:', error);
+    logger.error('Error resubmitting quiz:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to resubmit quiz',
@@ -423,7 +424,7 @@ export const getQuizAttempts = async (req: AuthenticatedRequest, res: Response) 
       data: attempts
     });
   } catch (error: any) {
-    console.error('Error fetching quiz attempts:', error);
+    logger.error('Error fetching quiz attempts:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch quiz attempts',
@@ -480,7 +481,7 @@ export const gradeQuizAttempt = async (req: AuthenticatedRequest, res: Response)
       data: attempt
     });
   } catch (error: any) {
-    console.error('Error grading quiz attempt:', error);
+    logger.error('Error grading quiz attempt:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to grade quiz attempt',
@@ -547,7 +548,7 @@ export const deleteQuiz = async (req: AuthenticatedRequest, res: Response) => {
       message: 'Quiz deleted successfully'
     });
   } catch (error: any) {
-    console.error('Error deleting quiz:', error);
+    logger.error('Error deleting quiz:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to delete quiz',
@@ -602,7 +603,7 @@ export const getQuizStatistics = async (req: AuthenticatedRequest, res: Response
       }
     });
   } catch (error: any) {
-    console.error('Error fetching quiz statistics:', error);
+    logger.error('Error fetching quiz statistics:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch quiz statistics',
@@ -660,7 +661,7 @@ export const approveQuiz = async (req: AuthenticatedRequest, res: Response) => {
         }
       });
     } catch (notificationError) {
-      console.error('Failed to send quiz approval notification to supervisor:', notificationError);
+      logger.error('Failed to send quiz approval notification to supervisor:', notificationError);
     }
 
     // Notify enrolled students about the new quiz (PERSISTED)
@@ -690,7 +691,7 @@ export const approveQuiz = async (req: AuthenticatedRequest, res: Response) => {
         });
       }
     } catch (notificationError) {
-      console.error('Failed to notify students about approved quiz:', notificationError);
+      logger.error('Failed to notify students about approved quiz:', notificationError);
     }
 
     return res.status(200).json({
@@ -699,7 +700,7 @@ export const approveQuiz = async (req: AuthenticatedRequest, res: Response) => {
       data: quiz
     });
   } catch (error: any) {
-    console.error('Error approving quiz:', error);
+    logger.error('Error approving quiz:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to approve quiz',
@@ -755,7 +756,7 @@ export const rejectQuiz = async (req: AuthenticatedRequest, res: Response) => {
         }
       });
     } catch (notificationError) {
-      console.error('Failed to send quiz rejection notification:', notificationError);
+      logger.error('Failed to send quiz rejection notification:', notificationError);
     }
 
     return res.status(200).json({
@@ -764,7 +765,7 @@ export const rejectQuiz = async (req: AuthenticatedRequest, res: Response) => {
       data: quiz
     });
   } catch (error: any) {
-    console.error('Error rejecting quiz:', error);
+    logger.error('Error rejecting quiz:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to reject quiz',
@@ -795,7 +796,7 @@ export const getPendingQuizzes = async (req: AuthenticatedRequest, res: Response
       data: quizzes
     });
   } catch (error: any) {
-    console.error('Error fetching pending quizzes:', error);
+    logger.error('Error fetching pending quizzes:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch pending quizzes',
@@ -826,7 +827,7 @@ export const getRejectedQuizzes = async (req: AuthenticatedRequest, res: Respons
       data: quizzes
     });
   } catch (error: any) {
-    console.error('Error fetching rejected quizzes:', error);
+    logger.error('Error fetching rejected quizzes:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch rejected quizzes',
@@ -858,7 +859,7 @@ export const getQuizzesForAdminReview = async (req: AuthenticatedRequest, res: R
       data: quizzes
     });
   } catch (error: any) {
-    console.error('Error fetching quizzes for admin review:', error);
+    logger.error('Error fetching quizzes for admin review:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch quizzes for admin review',
@@ -889,7 +890,7 @@ export const getApprovedQuizzes = async (req: AuthenticatedRequest, res: Respons
       data: quizzes
     });
   } catch (error: any) {
-    console.error('Error fetching approved quizzes:', error);
+    logger.error('Error fetching approved quizzes:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch approved quizzes',
@@ -928,7 +929,7 @@ export const getQuizById = async (req: AuthenticatedRequest, res: Response) => {
       data: quiz
     });
   } catch (error: any) {
-    console.error('Error fetching quiz:', error);
+    logger.error('Error fetching quiz:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch quiz',
@@ -998,7 +999,7 @@ export const getAllQuizAttemptsForAdmin = async (req: AuthenticatedRequest, res:
     });
 
   } catch (error: any) {
-    console.error('Error fetching admin quiz attempts:', error);
+    logger.error('Error fetching admin quiz attempts:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch quiz attempts',
@@ -1037,7 +1038,7 @@ export const getAllQuizAttemptsForSupervisor = async (req: AuthenticatedRequest,
     });
 
   } catch (error: any) {
-    console.error('Error fetching supervisor quiz attempts:', error);
+    logger.error('Error fetching supervisor quiz attempts:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch quiz attempts',
@@ -1063,7 +1064,7 @@ export const getMyQuizAttempts = async (req: AuthenticatedRequest, res: Response
     });
 
   } catch (error: any) {
-    console.error('Error fetching student quiz attempts:', error);
+    logger.error('Error fetching student quiz attempts:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch quiz attempts',
@@ -1149,7 +1150,7 @@ export const submitQuizAttempt = async (req: AuthenticatedRequest, res: Response
     try {
       await updateCourseProgress(studentId, quiz.courseId.toString());
     } catch (progressError) {
-      console.error('Error updating course progress after quiz submission:', progressError);
+      logger.error('Error updating course progress after quiz submission:', progressError);
       // Don't fail the quiz submission if progress update fails
     }
 
@@ -1168,7 +1169,7 @@ export const submitQuizAttempt = async (req: AuthenticatedRequest, res: Response
     });
 
   } catch (error: any) {
-    console.error('Error submitting quiz attempt:', error);
+    logger.error('Error submitting quiz attempt:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to submit quiz attempt',
@@ -1193,7 +1194,7 @@ export const getQuizzesPendingDeletion = async (req: AuthenticatedRequest, res: 
       data: quizzes
     });
   } catch (error: any) {
-    console.error('Error fetching quizzes pending deletion:', error);
+    logger.error('Error fetching quizzes pending deletion:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch quizzes pending deletion',
@@ -1232,7 +1233,7 @@ export const approveDeletion = async (req: AuthenticatedRequest, res: Response) 
       data: quiz
     });
   } catch (error: any) {
-    console.error('Error approving quiz deletion:', error);
+    logger.error('Error approving quiz deletion:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to approve quiz deletion',
@@ -1277,7 +1278,7 @@ export const rejectDeletion = async (req: AuthenticatedRequest, res: Response) =
       data: quiz
     });
   } catch (error: any) {
-    console.error('Error rejecting quiz deletion:', error);
+    logger.error('Error rejecting quiz deletion:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to reject quiz deletion',

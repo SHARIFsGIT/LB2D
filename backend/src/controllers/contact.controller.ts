@@ -52,7 +52,7 @@ export const sendContactForm = asyncHandler(async (req: Request, res: Response, 
       message: 'Your message has been sent successfully! We will get back to you soon.'
     });
   } catch (error: any) {
-    console.error('Failed to send contact form email:', error);
+    logger.error('Failed to send contact form email:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to send message. Please try again later or contact us directly.',

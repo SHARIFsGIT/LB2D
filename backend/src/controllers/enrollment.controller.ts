@@ -6,6 +6,7 @@ import User from '../models/User.model';
 import emailService from '../services/email.service';
 import notificationService from '../services/notification.service';
 import { notifyAdmins, notifySupervisors, notifyStudents, notifyUser, notifyRoleHierarchy } from '../services/websocket.service';
+import logger from '../utils/logger';
 
 interface AuthenticatedRequest extends Request {
   userId?: string;
@@ -249,7 +250,7 @@ export const confirmEnrollment = async (req: AuthenticatedRequest, res: Response
           }
         }
       } catch (error) {
-        console.error('Failed to send enrollment notifications:', error);
+        logger.error('Failed to send enrollment notifications:', error);
         // Don't fail the enrollment if notifications fail
       }
     }

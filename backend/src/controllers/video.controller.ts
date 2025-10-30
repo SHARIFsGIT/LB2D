@@ -15,6 +15,7 @@ import { notifySupervisors, notifyStudents } from '../services/websocket.service
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import logger from '../utils/logger';
 
 // Utility function to update course progress
 const updateCourseProgress = async (userId: string, courseId: string) => {
@@ -104,7 +105,7 @@ const updateCourseProgress = async (userId: string, courseId: string) => {
     };
 
   } catch (error) {
-    console.error('Error in updateCourseProgress:', error);
+    logger.error('Error in updateCourseProgress:', error);
     throw error;
   }
 };
@@ -328,7 +329,7 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
           );
         }
       } catch (emailError) {
-        console.error('Failed to send approval email:', emailError);
+        logger.error('Failed to send approval email:', emailError);
       }
 
       // Notify admins about pending video approval (PERSISTED)
@@ -359,7 +360,7 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
           });
         }
       } catch (notificationError) {
-        console.error('Failed to notify admins about pending video:', notificationError);
+        logger.error('Failed to notify admins about pending video:', notificationError);
       }
     }
 
@@ -412,7 +413,7 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
           });
         }
       } catch (notificationError) {
-        console.error('Failed to notify about admin video upload:', notificationError);
+        logger.error('Failed to notify about admin video upload:', notificationError);
       }
     }
 
@@ -426,7 +427,7 @@ export const uploadVideo = async (req: AuthenticatedRequest, res: Response) => {
       data: populatedVideo
     });
   } catch (error: any) {
-    console.error('💥 Video upload error occurred:', {
+    logger.error('💥 Video upload error occurred:', {
       message: error.message,
       stack: error.stack,
       requestBody: req.body,
@@ -501,7 +502,7 @@ export const approveVideo = async (req: AuthenticatedRequest, res: Response) => 
         );
       }
     } catch (emailError) {
-      console.error('Failed to send approval notification:', emailError);
+      logger.error('Failed to send approval notification:', emailError);
     }
 
     // Notify supervisor and students about video approval (PERSISTED)
@@ -551,7 +552,7 @@ export const approveVideo = async (req: AuthenticatedRequest, res: Response) => 
         }
       }
     } catch (notificationError) {
-      console.error('Failed to send video approval notifications:', notificationError);
+      logger.error('Failed to send video approval notifications:', notificationError);
     }
 
     return res.status(200).json({
@@ -607,7 +608,7 @@ export const rejectVideo = async (req: AuthenticatedRequest, res: Response) => {
         );
       }
     } catch (emailError) {
-      console.error('Failed to send rejection notification:', emailError);
+      logger.error('Failed to send rejection notification:', emailError);
     }
 
     // Notify supervisor about video rejection (PERSISTED)
@@ -632,7 +633,7 @@ export const rejectVideo = async (req: AuthenticatedRequest, res: Response) => {
         });
       }
     } catch (notificationError) {
-      console.error('Failed to send video rejection notification:', notificationError);
+      logger.error('Failed to send video rejection notification:', notificationError);
     }
 
     return res.status(200).json({
@@ -891,7 +892,7 @@ export const resubmitVideo = async (req: AuthenticatedRequest, res: Response) =>
         });
       }
     } catch (notificationError) {
-      console.error('Failed to notify admins about resubmitted video:', notificationError);
+      logger.error('Failed to notify admins about resubmitted video:', notificationError);
     }
 
     return res.status(200).json({
@@ -900,7 +901,7 @@ export const resubmitVideo = async (req: AuthenticatedRequest, res: Response) =>
       data: { status: video.status }
     });
   } catch (error: any) {
-    console.error('Error resubmitting video:', error);
+    logger.error('Error resubmitting video:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to resubmit video',
@@ -1013,7 +1014,7 @@ export const updateVideoProgress = async (req: AuthenticatedRequest, res: Respon
       try {
         await updateCourseProgress(userId, courseId);
       } catch (progressError) {
-        console.error('Error updating course progress after video completion:', progressError);
+        logger.error('Error updating course progress after video completion:', progressError);
         // Don't fail the video progress update if course progress update fails
       }
     }
@@ -1231,7 +1232,7 @@ export const approveDeletion = async (req: AuthenticatedRequest, res: Response) 
       data: video
     });
   } catch (error: any) {
-    console.error('Error approving video deletion:', error);
+    logger.error('Error approving video deletion:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to approve video deletion',
@@ -1276,7 +1277,7 @@ export const rejectDeletion = async (req: AuthenticatedRequest, res: Response) =
       data: video
     });
   } catch (error: any) {
-    console.error('Error rejecting video deletion:', error);
+    logger.error('Error rejecting video deletion:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to reject video deletion',

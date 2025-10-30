@@ -1212,7 +1212,7 @@ export const getRecentStudentsAnalytics = asyncHandler(async (req: Authenticated
       }
     });
   } catch (error: any) {
-    console.error('Analytics error:', error);
+    logger.error('Analytics error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch student analytics',

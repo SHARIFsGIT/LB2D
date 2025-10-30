@@ -12,6 +12,7 @@ import {
 } from '../controllers/test.controller';
 import { notifyUser } from '../services/websocket.service';
 import { protect, adminOnly } from '../middleware/auth.middleware';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -48,7 +49,7 @@ router.post('/test-notification', async (req: AuthenticatedRequest, res) => {
       message: 'Test notification sent successfully'
     });
   } catch (error) {
-    console.error('Error sending test notification:', error);
+    logger.error('Error sending test notification:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to send test notification',

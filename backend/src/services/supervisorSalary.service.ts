@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import SupervisorSalary from '../models/SupervisorSalary.model';
 import User from '../models/User.model';
 import Course from '../models/Course.model';
+import logger from '../utils/logger';
 
 /**
  * Create supervisor salary record when supervisor is assigned to a course
@@ -43,7 +44,7 @@ export const createSupervisorSalaryRecord = async (supervisorId: string, courseI
 
     return salaryRecord;
   } catch (error) {
-    console.error('Error creating supervisor salary record:', error);
+    logger.error('Error creating supervisor salary record:', error);
     throw error;
   }
 };
@@ -66,7 +67,7 @@ export const updateSupervisorCourseAssignments = async (supervisorId: string, co
 
     return salaryRecord;
   } catch (error) {
-    console.error('Error updating supervisor course assignments:', error);
+    logger.error('Error updating supervisor course assignments:', error);
     throw error;
   }
 };
@@ -111,7 +112,7 @@ export const initializeExistingSupervisors = async () => {
 
     return results;
   } catch (error) {
-    console.error('Error initializing existing supervisors:', error);
+    logger.error('Error initializing existing supervisors:', error);
     throw error;
   }
 };

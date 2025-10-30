@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
+import logger from '../utils/logger';
 
 dotenv.config();
 
@@ -9,9 +10,9 @@ class StripeService {
 
   constructor() {
     if (!process.env.STRIPE_SECRET_KEY) {
-      console.warn('⚠️  STRIPE_SECRET_KEY is not configured. Payment functionality will be limited.');
-      console.warn('   Please add STRIPE_SECRET_KEY to your .env file to enable payments.');
-      console.warn('   Get your key from: https://dashboard.stripe.com/test/apikeys');
+      logger.warn('⚠️  STRIPE_SECRET_KEY is not configured. Payment functionality will be limited.');
+      logger.warn('   Please add STRIPE_SECRET_KEY to your .env file to enable payments.');
+      logger.warn('   Get your key from: https://dashboard.stripe.com/test/apikeys');
       this.isConfigured = false;
       return;
     }
@@ -21,9 +22,9 @@ class StripeService {
         apiVersion: '2025-07-30.basil',
       });
       this.isConfigured = true;
-      console.log('✅ Stripe service initialized successfully');
+      logger.info('✅ Stripe service initialized successfully');
     } catch (error) {
-      console.error('❌ Failed to initialize Stripe:', error);
+      logger.error('❌ Failed to initialize Stripe:', error);
       this.isConfigured = false;
     }
   }
@@ -41,7 +42,7 @@ class StripeService {
   }) {
     // Check if Stripe is configured
     if (!this.isConfigured || !this.stripe) {
-      console.error('❌ Stripe is not configured. Please set STRIPE_SECRET_KEY in your .env file.');
+      logger.error('❌ Stripe is not configured. Please set STRIPE_SECRET_KEY in your .env file.');
       return {
         success: false,
         error: 'Payment system is not configured. Please contact the administrator to set up payment processing.'
@@ -125,7 +126,7 @@ class StripeService {
         }
       };
     } catch (error: any) {
-      console.error('Stripe Payment Intent creation failed:', error);
+      logger.error('Stripe Payment Intent creation failed:', error);
       return {
         success: false,
         error: error.message || 'Payment intent creation failed'
@@ -162,7 +163,7 @@ class StripeService {
         }
       };
     } catch (error: any) {
-      console.error('Stripe Payment Intent confirmation failed:', error);
+      logger.error('Stripe Payment Intent confirmation failed:', error);
       return {
         success: false,
         error: error.message || 'Payment confirmation failed'
@@ -195,7 +196,7 @@ class StripeService {
         }
       };
     } catch (error: any) {
-      console.error('Stripe Payment Intent retrieval failed:', error);
+      logger.error('Stripe Payment Intent retrieval failed:', error);
       return {
         success: false,
         error: error.message || 'Payment retrieval failed'
@@ -226,7 +227,7 @@ class StripeService {
         }
       };
     } catch (error: any) {
-      console.error('Stripe Setup Intent creation failed:', error);
+      logger.error('Stripe Setup Intent creation failed:', error);
       return {
         success: false,
         error: error.message || 'Setup intent creation failed'
@@ -277,7 +278,7 @@ class StripeService {
         data: customer
       };
     } catch (error: any) {
-      console.error('Stripe Customer creation/retrieval failed:', error);
+      logger.error('Stripe Customer creation/retrieval failed:', error);
       return {
         success: false,
         error: error.message || 'Customer creation failed'
@@ -315,7 +316,7 @@ class StripeService {
         }
       };
     } catch (error: any) {
-      console.error('Stripe Refund creation failed:', error);
+      logger.error('Stripe Refund creation failed:', error);
       return {
         success: false,
         error: error.message || 'Refund creation failed'
@@ -326,7 +327,7 @@ class StripeService {
   // Verify webhook signature
   verifyWebhookSignature(payload: string | Buffer, signature: string): Stripe.Event | null {
     if (!this.isConfigured || !this.stripe) {
-      console.error('❌ Cannot verify webhook - Stripe is not configured');
+      logger.error('❌ Cannot verify webhook - Stripe is not configured');
       return null;
     }
 
@@ -344,7 +345,7 @@ class StripeService {
 
       return event;
     } catch (error: any) {
-      console.error('Webhook signature verification failed:', error);
+      logger.error('Webhook signature verification failed:', error);
       return null;
     }
   }

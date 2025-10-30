@@ -6,6 +6,7 @@ import Video from '../models/Video.model';
 import User from '../models/User.model';
 import Course from '../models/Course.model';
 import notificationService from '../services/notification.service';
+import logger from '../utils/logger';
 
 // Get comments for a video
 export const getVideoComments = async (req: AuthenticatedRequest, res: Response) => {
@@ -70,7 +71,7 @@ export const getVideoComments = async (req: AuthenticatedRequest, res: Response)
       data: organizedComments
     });
   } catch (error: any) {
-    console.error('Error in getVideoComments:', error);
+    logger.error('Error in getVideoComments:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch video comments',
@@ -227,7 +228,7 @@ export const addVideoComment = async (req: AuthenticatedRequest, res: Response) 
           }
         }
       } catch (notificationError) {
-        console.error('Error sending notification to supervisors:', notificationError);
+        logger.error('Error sending notification to supervisors:', notificationError);
         // Don't fail the comment creation if notification fails
       }
     }
@@ -269,7 +270,7 @@ export const addVideoComment = async (req: AuthenticatedRequest, res: Response) 
           }
         }
       } catch (notificationError) {
-        console.error('Error sending reply notification to student:', notificationError);
+        logger.error('Error sending reply notification to student:', notificationError);
         // Don't fail the comment creation if notification fails
       }
     }
@@ -328,7 +329,7 @@ export const addVideoComment = async (req: AuthenticatedRequest, res: Response) 
           }
         }
       } catch (notificationError) {
-        console.error('Error sending supervisor comment notification:', notificationError);
+        logger.error('Error sending supervisor comment notification:', notificationError);
         // Don't fail the comment creation if notification fails
       }
     }

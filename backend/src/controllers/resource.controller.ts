@@ -9,12 +9,14 @@ import notificationService from '../services/notification.service';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import logger from '../utils/logger';
 
 // Import other models needed for progress calculation
 import Video from '../models/Video.model';
 import VideoProgress from '../models/VideoProgress.model';
 import Quiz from '../models/Quiz.model';
 import QuizAttempt from '../models/QuizAttempt.model';
+import logger from '../utils/logger';
 
 // Utility function to update course progress
 const updateCourseProgress = async (userId: string, courseId: string) => {
@@ -104,7 +106,7 @@ const updateCourseProgress = async (userId: string, courseId: string) => {
     };
 
   } catch (error) {
-    console.error('Error in updateCourseProgress:', error);
+    logger.error('Error in updateCourseProgress:', error);
     throw error;
   }
 };
@@ -253,7 +255,7 @@ export const uploadResource = async (req: AuthenticatedRequest, res: Response) =
         });
       }
     } catch (notificationError) {
-      console.error('Failed to notify admins about pending resource:', notificationError);
+      logger.error('Failed to notify admins about pending resource:', notificationError);
     }
 
     return res.status(201).json({
@@ -262,7 +264,7 @@ export const uploadResource = async (req: AuthenticatedRequest, res: Response) =
       data: resource
     });
   } catch (error: any) {
-    console.error('Error uploading resource:', error);
+    logger.error('Error uploading resource:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to upload resource',
@@ -339,7 +341,7 @@ export const submitResourceForApproval = async (req: AuthenticatedRequest, res: 
         });
       }
     } catch (notificationError) {
-      console.error('Failed to send admin resource approval notification:', notificationError);
+      logger.error('Failed to send admin resource approval notification:', notificationError);
     }
 
     return res.status(200).json({
@@ -348,7 +350,7 @@ export const submitResourceForApproval = async (req: AuthenticatedRequest, res: 
       data: { status: resource.status }
     });
   } catch (error: any) {
-    console.error('Error submitting resource for approval:', error);
+    logger.error('Error submitting resource for approval:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to submit resource for approval',
@@ -431,7 +433,7 @@ export const approveResource = async (req: AuthenticatedRequest, res: Response) 
         }
       }
     } catch (notificationError) {
-      console.error('Failed to send resource approval notifications:', notificationError);
+      logger.error('Failed to send resource approval notifications:', notificationError);
     }
 
     return res.status(200).json({
@@ -494,7 +496,7 @@ export const rejectResource = async (req: AuthenticatedRequest, res: Response) =
         });
       }
     } catch (notificationError) {
-      console.error('Failed to send resource rejection notification:', notificationError);
+      logger.error('Failed to send resource rejection notification:', notificationError);
     }
 
     return res.status(200).json({
@@ -577,7 +579,7 @@ export const getCourseResources = async (req: AuthenticatedRequest, res: Respons
       data: resources
     });
   } catch (error: any) {
-    console.error('Error fetching course resources:', error);
+    logger.error('Error fetching course resources:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch resources',
@@ -615,7 +617,7 @@ export const updateResource = async (req: AuthenticatedRequest, res: Response) =
       data: resource
     });
   } catch (error: any) {
-    console.error('Error updating resource:', error);
+    logger.error('Error updating resource:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to update resource',
@@ -695,7 +697,7 @@ export const deleteResource = async (req: AuthenticatedRequest, res: Response) =
       message: 'Resource deleted successfully'
     });
   } catch (error: any) {
-    console.error('Error deleting resource:', error);
+    logger.error('Error deleting resource:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to delete resource',
@@ -768,7 +770,7 @@ export const viewResource = async (req: AuthenticatedRequest, res: Response): Pr
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
   } catch (error: any) {
-    console.error('Error viewing resource:', error);
+    logger.error('Error viewing resource:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to view resource',
@@ -822,7 +824,7 @@ export const downloadResource = async (req: AuthenticatedRequest, res: Response)
 
     res.download(filePath, resource.fileName);
   } catch (error: any) {
-    console.error('Error downloading resource:', error);
+    logger.error('Error downloading resource:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to download resource',
@@ -875,7 +877,7 @@ export const markResourceCompleted = async (req: AuthenticatedRequest, res: Resp
       try {
         await updateCourseProgress(userId, resource.courseId.toString());
       } catch (progressError) {
-        console.error('Error updating course progress after resource completion:', progressError);
+        logger.error('Error updating course progress after resource completion:', progressError);
         // Don't fail the resource completion if progress update fails
       }
     }
@@ -886,7 +888,7 @@ export const markResourceCompleted = async (req: AuthenticatedRequest, res: Resp
       data: progressData
     });
   } catch (error: any) {
-    console.error('Error marking resource as completed:', error);
+    logger.error('Error marking resource as completed:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to mark resource as completed',
@@ -913,7 +915,7 @@ export const getResourceProgress = async (req: AuthenticatedRequest, res: Respon
       }
     });
   } catch (error: any) {
-    console.error('Error fetching resource progress:', error);
+    logger.error('Error fetching resource progress:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch resource progress',
@@ -949,7 +951,7 @@ export const getSupervisorResources = async (req: AuthenticatedRequest, res: Res
       data: resources
     });
   } catch (error: any) {
-    console.error('Error fetching supervisor resources:', error);
+    logger.error('Error fetching supervisor resources:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch supervisor resources',
@@ -987,7 +989,7 @@ export const getResourceStatistics = async (req: AuthenticatedRequest, res: Resp
       }
     });
   } catch (error: any) {
-    console.error('Error fetching resource statistics:', error);
+    logger.error('Error fetching resource statistics:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch resource statistics',
@@ -1051,7 +1053,7 @@ export const approveDeletion = async (req: AuthenticatedRequest, res: Response) 
       data: resource
     });
   } catch (error: any) {
-    console.error('Error approving resource deletion:', error);
+    logger.error('Error approving resource deletion:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to approve resource deletion',
@@ -1096,7 +1098,7 @@ export const rejectDeletion = async (req: AuthenticatedRequest, res: Response) =
       data: resource
     });
   } catch (error: any) {
-    console.error('Error rejecting resource deletion:', error);
+    logger.error('Error rejecting resource deletion:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to reject resource deletion',

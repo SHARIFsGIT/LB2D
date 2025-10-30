@@ -196,7 +196,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response): Prom
         userEmailData.newRole
       );
     } catch (emailError) {
-      console.error(`Failed to send role approval email to ${userEmailData.email}:`, emailError);
+      logger.error(`Failed to send role approval email to ${userEmailData.email}:`, emailError);
     }
 
     // Send notification for role approval (PERSISTED)
@@ -267,7 +267,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response): Prom
         });
       }
     } catch (notificationError) {
-      console.error('Failed to send role approval notifications:', notificationError);
+      logger.error('Failed to send role approval notifications:', notificationError);
     }
   }
 
@@ -282,7 +282,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response): Prom
         userEmailData.rejectionReason
       );
     } catch (emailError) {
-      console.error(`Failed to send role rejection email to ${userEmailData.email}:`, emailError);
+      logger.error(`Failed to send role rejection email to ${userEmailData.email}:`, emailError);
     }
 
     // Send notification for role rejection (PERSISTED)
@@ -319,7 +319,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response): Prom
         }
       });
     } catch (notificationError) {
-      console.error('Failed to send role rejection notifications:', notificationError);
+      logger.error('Failed to send role rejection notifications:', notificationError);
     }
   }
 
@@ -334,7 +334,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response): Prom
         userEmailData.newRole
       );
     } catch (emailError) {
-      console.error(`Failed to send role change email to ${userEmailData.email}:`, emailError);
+      logger.error(`Failed to send role change email to ${userEmailData.email}:`, emailError);
     }
 
     // Send notification for direct role change (PERSISTED)
@@ -370,7 +370,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response): Prom
         }
       });
     } catch (notificationError) {
-      console.error('Failed to send role change notifications:', notificationError);
+      logger.error('Failed to send role change notifications:', notificationError);
     }
   }
   
@@ -507,7 +507,7 @@ export const approveVideo = asyncHandler(async (req: Request, res: Response): Pr
       }
     });
   } catch (notificationError) {
-    console.error('Failed to send video approval notification:', notificationError);
+    logger.error('Failed to send video approval notification:', notificationError);
   }
 
   // Notify enrolled students about the new video (PERSISTED)
@@ -536,7 +536,7 @@ export const approveVideo = asyncHandler(async (req: Request, res: Response): Pr
       });
     }
   } catch (notificationError) {
-    console.error('Failed to notify students about approved video:', notificationError);
+    logger.error('Failed to notify students about approved video:', notificationError);
   }
 
   return res.status(200).json({
@@ -587,7 +587,7 @@ export const rejectVideo = asyncHandler(async (req: Request, res: Response): Pro
       }
     });
   } catch (notificationError) {
-    console.error('Failed to send video rejection notification:', notificationError);
+    logger.error('Failed to send video rejection notification:', notificationError);
   }
 
   return res.status(200).json({
@@ -646,7 +646,7 @@ export const approveResource = asyncHandler(async (req: Request, res: Response):
       }
     });
   } catch (notificationError) {
-    console.error('Failed to send resource approval notification:', notificationError);
+    logger.error('Failed to send resource approval notification:', notificationError);
   }
 
   // Notify enrolled students about the new resource (PERSISTED)
@@ -676,7 +676,7 @@ export const approveResource = asyncHandler(async (req: Request, res: Response):
       });
     }
   } catch (notificationError) {
-    console.error('Failed to notify students about approved resource:', notificationError);
+    logger.error('Failed to notify students about approved resource:', notificationError);
   }
 
   return res.status(200).json({
@@ -727,7 +727,7 @@ export const rejectResource = asyncHandler(async (req: Request, res: Response): 
       }
     });
   } catch (notificationError) {
-    console.error('Failed to send resource rejection notification:', notificationError);
+    logger.error('Failed to send resource rejection notification:', notificationError);
   }
 
   return res.status(200).json({

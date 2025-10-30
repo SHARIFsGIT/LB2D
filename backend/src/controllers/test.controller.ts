@@ -244,7 +244,7 @@ export const submitTest = asyncHandler(async (req: AuthenticatedRequest, res: Re
       }
     }
   } catch (notificationError) {
-    console.error('Failed to send assessment result notification:', notificationError);
+    logger.error('Failed to send assessment result notification:', notificationError);
   }
 
   return res.status(200).json({
@@ -328,7 +328,7 @@ export const getUserRankings = asyncHandler(async (req: AuthenticatedRequest, re
       }
     });
   } catch (error) {
-    console.error('Error fetching user rankings:', error);
+    logger.error('Error fetching user rankings:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch rankings'
@@ -495,7 +495,7 @@ export const getTestReports = asyncHandler(async (req: AuthenticatedRequest, res
       }
     });
   } catch (error) {
-    console.error('Error in getTestReports:', error);
+    logger.error('Error in getTestReports:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch test reports',

@@ -5,6 +5,7 @@ import { IEnrollment } from '../models/Enrollment.model';
 import { ICourse } from '../models/Course.model';
 import { IUser } from '../models/User.model';
 import { IPayment } from '../models/Payment.model';
+import logger from '../utils/logger';
 
 export class CertificateService {
   private certificatesDir: string;
@@ -288,7 +289,7 @@ export class CertificateService {
       }
       return false;
     } catch (error) {
-      console.error('Error deleting certificate:', error);
+      logger.error('Error deleting certificate:', error);
       return false;
     }
   }
@@ -299,7 +300,7 @@ export class CertificateService {
       const files = fs.readdirSync(this.certificatesDir);
       return files.filter(file => file.includes(userId));
     } catch (error) {
-      console.error('Error listing certificates:', error);
+      logger.error('Error listing certificates:', error);
       return [];
     }
   }

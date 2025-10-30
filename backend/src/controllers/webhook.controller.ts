@@ -5,6 +5,7 @@ import Enrollment from '../models/Enrollment.model';
 import Course from '../models/Course.model';
 import User from '../models/User.model';
 import emailService from '../services/email.service';
+import logger from '../utils/logger';
 
 // Handle Stripe webhooks
 export const handleStripeWebhook = async (req: Request, res: Response) => {
@@ -16,7 +17,7 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
     const event = stripeService.verifyWebhookSignature(body, signature);
     
     if (!event) {
-      console.error('Webhook signature verification failed');
+      logger.error('Webhook signature verification failed');
       return res.status(400).json({
         success: false,
         message: 'Webhook signature verification failed'
@@ -48,7 +49,7 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
       message: 'Webhook received and processed'
     });
   } catch (error: any) {
-    console.error('Webhook processing error:', error);
+    logger.error('Webhook processing error:', error);
     return res.status(500).json({
       success: false,
       message: 'Webhook processing failed',
@@ -64,7 +65,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
     // Find payment record
     const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
     if (!payment) {
-      console.error('Payment record not found for payment intent:', paymentIntentId);
+      logger.error('Payment record not found for payment intent:', paymentIntentId);
       return;
     }
 
@@ -137,15 +138,15 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
             }
           );
         } catch (studentEmailError) {
-          console.error('❌ CRITICAL: Failed to send student enrollment email:', studentEmailError);
-          console.error('Email config check required. Student will not receive enrollment confirmation.');
+          logger.error('❌ CRITICAL: Failed to send student enrollment email:', studentEmailError);
+          logger.error('Email config check required. Student will not receive enrollment confirmation.');
         }
 
         // Send admin notification email
         try {
           const adminUsers = await User.find({ role: 'Admin' });
           if (adminUsers.length === 0) {
-            console.warn('⚠️ WARNING: No admin users found to notify about enrollment');
+            logger.warn('⚠️ WARNING: No admin users found to notify about enrollment');
           }
           
           for (const admin of adminUsers) {
@@ -168,19 +169,19 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
             );
           }
         } catch (adminEmailError) {
-          console.error('❌ CRITICAL: Failed to send admin notification email:', adminEmailError);
-          console.error('Admins will not be notified about this enrollment.');
+          logger.error('❌ CRITICAL: Failed to send admin notification email:', adminEmailError);
+          logger.error('Admins will not be notified about this enrollment.');
         }
       } else {
-        console.error('❌ CRITICAL: Missing student or course data for email notifications');
-        console.error(`Student found: ${!!student}, Course found: ${!!course}`);
+        logger.error('❌ CRITICAL: Missing student or course data for email notifications');
+        logger.error(`Student found: ${!!student}, Course found: ${!!course}`);
       }
     } catch (emailError) {
-      console.error('❌ CRITICAL: Failed to send notification emails:', emailError);
-      console.error('Check email service configuration and database connectivity');
+      logger.error('❌ CRITICAL: Failed to send notification emails:', emailError);
+      logger.error('Check email service configuration and database connectivity');
     }
   } catch (error: any) {
-    console.error('Error processing successful payment:', error);
+    logger.error('Error processing successful payment:', error);
   }
 }
 
@@ -191,7 +192,7 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
     // Find payment record
     const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
     if (!payment) {
-      console.error('Payment record not found for payment intent:', paymentIntentId);
+      logger.error('Payment record not found for payment intent:', paymentIntentId);
       return;
     }
 
@@ -206,7 +207,7 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
       { status: 'cancelled' }
     );
   } catch (error: any) {
-    console.error('Error processing failed payment:', error);
+    logger.error('Error processing failed payment:', error);
   }
 }
 
@@ -217,7 +218,7 @@ async function handlePaymentIntentCanceled(paymentIntent: any) {
     // Find payment record
     const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
     if (!payment) {
-      console.error('Payment record not found for payment intent:', paymentIntentId);
+      logger.error('Payment record not found for payment intent:', paymentIntentId);
       return;
     }
 
@@ -231,7 +232,7 @@ async function handlePaymentIntentCanceled(paymentIntent: any) {
       { status: 'cancelled' }
     );
   } catch (error: any) {
-    console.error('Error processing canceled payment:', error);
+    logger.error('Error processing canceled payment:', error);
   }
 }
 
@@ -242,7 +243,7 @@ async function handlePaymentIntentRequiresAction(paymentIntent: any) {
     // Find payment record
     const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
     if (!payment) {
-      console.error('Payment record not found for payment intent:', paymentIntentId);
+      logger.error('Payment record not found for payment intent:', paymentIntentId);
       return;
     }
 
@@ -250,6 +251,6 @@ async function handlePaymentIntentRequiresAction(paymentIntent: any) {
     payment.status = 'requires_action';
     await payment.save();
   } catch (error: any) {
-    console.error('Error processing payment requiring action:', error);
+    logger.error('Error processing payment requiring action:', error);
   }
 }

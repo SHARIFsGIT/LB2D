@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import logger from '../utils/logger';
 
 // Load environment variables
 dotenv.config();
@@ -90,7 +91,7 @@ class ConfigService {
     const missingImportant = importantVars.filter(varName => !this.config[varName as keyof AppConfig]);
     
     if (missingImportant.length > 0 && this.config.NODE_ENV === 'production') {
-      console.warn(`Warning: Missing important environment variables for production: ${missingImportant.join(', ')}`);
+      logger.warn(`Warning: Missing important environment variables for production: ${missingImportant.join(', ')}`);
     }
   }
 
