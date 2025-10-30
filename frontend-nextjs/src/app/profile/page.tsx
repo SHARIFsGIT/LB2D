@@ -23,7 +23,7 @@ const ProfilePage = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
   const [changePasswordLoading, setChangePasswordLoading] = useState(false);
   const [lastPasswordResetTime, setLastPasswordResetTime] = useState<number>(() => {
@@ -38,18 +38,13 @@ const ProfilePage = () => {
   const [deviceSessions, setDeviceSessions] = useState<any[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
 
-  // Check auth on mount - wait for Redux state to hydrate
+  // Check auth on mount - PersistGate handles state hydration
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsInitializing(false);
-      // If still no user after hydration, redirect to login
-      if (!user && !token) {
-        router.push('/login');
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, []);
+    setIsMounted(true);
+    if (!user && !token) {
+      router.push('/login');
+    }
+  }, [user, token, router]);
 
   // Confirm modal state
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -347,25 +342,13 @@ const ProfilePage = () => {
     }
   };
 
-  // Show loading while initializing auth state
-  if (isInitializing) {
+  // Show loading while mounting
+  if (!isMounted || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If not initializing and still no user, they'll be redirected by the useEffect
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Redirecting to login...</p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );

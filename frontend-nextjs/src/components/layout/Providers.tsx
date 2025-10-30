@@ -7,11 +7,11 @@
 
 import { ReactNode } from 'react';
 import { Provider } from 'react-redux';
-// import { PersistGate } from 'redux-persist/integration/react';
+import { PersistGate } from 'redux-persist/integration/react';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'react-hot-toast';
-import { store } from '@/store';
-// import { persistor } from '@/store';
+import { store, persistor } from '@/store';
+
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
@@ -28,8 +28,7 @@ export function Providers({ children }: { children: ReactNode }) {
       }}
     >
       <Provider store={store}>
-        {/* Temporarily disable PersistGate for debugging */}
-        {/* <PersistGate loading={null} persistor={persistor}> */}
+        <PersistGate loading={null} persistor={persistor}>
           <NotificationProvider>
             <ThemeProvider attribute="class" defaultTheme="light" enableSystem suppressHydrationWarning>
               {children}
@@ -62,7 +61,7 @@ export function Providers({ children }: { children: ReactNode }) {
               />
             </ThemeProvider>
           </NotificationProvider>
-        {/* </PersistGate> */}
+        </PersistGate>
       </Provider>
     </ErrorBoundary>
   );

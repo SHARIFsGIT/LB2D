@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter, usePathname } from "next/navigation";
 // import { useNotifications } from "@/hooks/useNotifications";
@@ -18,6 +18,7 @@ const Navbar: React.FC = () => {
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Temporarily disabled notifications - TODO: Re-enable with proper WebSocket setup
   const unreadCount = 0;
@@ -27,6 +28,11 @@ const Navbar: React.FC = () => {
   const clearAll = () => {};
 
   const [logoutMutation] = useLogoutMutation();
+
+  // Prevent hydration mismatch - only show auth UI after client mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -191,7 +197,7 @@ const Navbar: React.FC = () => {
 
           {/* User Menu / Auth Buttons */}
           <div className="flex items-center space-x-4">
-            {isAuthenticated ? (
+            {!isMounted ? null : isAuthenticated ? (
               <div className="relative">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
