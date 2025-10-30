@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../types/common.types';
-import { asyncHandler } from '../middleware/error.middleware';
+import { asyncHandler } from '../middleware/errorHandler.middleware';
 import mongoose from 'mongoose';
 import Test from '../models/Test.model';
 import User from '../models/User.model';

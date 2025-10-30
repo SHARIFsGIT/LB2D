@@ -195,7 +195,7 @@ export const initializePayment = async (req: AuthenticatedRequest, res: Response
       }
     });
   } catch (error: any) {
-    console.error('Payment initialization error:', error);
+    logger.error('Payment initialization error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to initialize payment',
@@ -260,7 +260,7 @@ export const verifyPayment = async (req: AuthenticatedRequest, res: Response) =>
           }
         );
       } catch (emailError) {
-        console.error('Failed to send enrollment email:', emailError);
+        logger.error('Failed to send enrollment email:', emailError);
       }
     }
 
@@ -518,7 +518,7 @@ export const completePayment = async (req: AuthenticatedRequest, res: Response) 
       }
     });
   } catch (error: any) {
-    console.error('Payment completion error:', error);
+    logger.error('Payment completion error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to complete payment',
@@ -626,7 +626,7 @@ export const clearAllPayments = async (req: AuthenticatedRequest, res: Response)
       }
     });
   } catch (error: any) {
-    console.error('Error clearing payments:', error);
+    logger.error('Error clearing payments:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to clear payment records',

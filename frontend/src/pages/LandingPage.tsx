@@ -201,15 +201,6 @@ const LandingPage: React.FC = () => {
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 md:py-32 lg:py-40">
           <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight">
-              Learn German with Bengali Teachers
-            </h1>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed">
-              Master German from A1 to C1 with expert Bengali teachers.
-              <br />
-              Join 250+ Bangladeshi students who achieved their German dreams!
-            </p>
-
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8 sm:mb-12">
               <div className="relative group">
                 {/* Star 1 - Black - Top Left */}

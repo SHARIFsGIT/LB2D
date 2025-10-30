@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../types/common.types';
 import { calculateScore, getQuestionsForStep, shuffleQuestions, questionPool } from '../data/questionPool';
-import { asyncHandler } from '../middleware/error.middleware';
+import { asyncHandler } from '../middleware/errorHandler.middleware';
 import Test from '../models/Test.model';
 import User from '../models/User.model';
 import Enrollment from '../models/Enrollment.model';

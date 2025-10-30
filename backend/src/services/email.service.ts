@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import sgMail from '@sendgrid/mail';
+import logger from '../utils/logger';
 
 dotenv.config();
 
@@ -376,7 +377,7 @@ class EmailService {
       const info = await this.transporter.sendMail(mailOptions);
       return info;
     } catch (error) {
-      console.error('Failed to send enrollment confirmation email:', error);
+      logger.error('Failed to send enrollment confirmation email:', error);
       throw error;
     }
   }

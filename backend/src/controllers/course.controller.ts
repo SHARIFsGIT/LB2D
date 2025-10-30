@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Course, { ICourse } from '../models/Course.model';
+import Course from '../models/Course.model';
 import Enrollment from '../models/Enrollment.model';
 import Payment from '../models/Payment.model';
 import User from '../models/User.model';
@@ -12,6 +12,7 @@ import ResourceProgress from '../models/ResourceProgress.model';
 import emailService from '../services/email.service';
 import notificationService from '../services/notification.service';
 import { notifyUser, notifyAdmins } from '../services/websocket.service';
+import logger from '../utils/logger';
 
 interface AuthenticatedRequest extends Request {
   userId?: string;
@@ -39,9 +40,7 @@ export const getAllCourses = async (req: Request, res: Response) => {
     const courses = await Course.find(filter)
       .sort({ startDate: 1 })
       .select('-__v');
-    if (courses.length > 0) {
-    }
-    
+
     // Calculate dynamic current students for each course
     const coursesWithDynamicStudents = await Promise.all(
       courses.map(async (course) => {
@@ -182,11 +181,11 @@ export const createCourse = async (req: AuthenticatedRequest, res: Response) => 
           });
         }
       } catch (error) {
-        console.error('Failed to send course assignment notifications:', error);
+        logger.error('Failed to send course assignment notifications:', error);
         // Don't fail the entire operation if notifications fail
       }
     }
-    
+
     // Notify all students about new course availability (PERSISTED)
     try {
       await notificationService.notifyRole('Student', {
@@ -208,7 +207,7 @@ export const createCourse = async (req: AuthenticatedRequest, res: Response) => 
         }
       });
     } catch (error) {
-      console.error('Failed to send student course notifications:', error);
+      logger.error('Failed to send student course notifications:', error);
     }
 
     // Send email notifications to all students about new course
@@ -235,14 +234,14 @@ export const createCourse = async (req: AuthenticatedRequest, res: Response) => 
           }
         ).catch(error => {
           // Log individual email failures but don't stop the entire process
-          console.error(`Failed to send course email to ${student.email}:`, error);
+          logger.error(`Failed to send course email to ${student.email}:`, error);
         })
       );
 
       await Promise.all(emailPromises);
-      console.log(`Course notification emails sent to ${students.length} students`);
+      logger.info(`Course notification emails sent to ${students.length} students`);
     } catch (error) {
-      console.error('Failed to send course notification emails to students:', error);
+      logger.error('Failed to send course notification emails to students:', error);
       // Don't fail the entire operation if emails fail
     }
     
@@ -252,7 +251,7 @@ export const createCourse = async (req: AuthenticatedRequest, res: Response) => 
       data: course
     });
   } catch (error: any) {
-    console.error('Course creation error:', error);
+    logger.error('Course creation error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to create course',
@@ -376,18 +375,18 @@ export const updateCourse = async (req: AuthenticatedRequest, res: Response) => 
           });
         }
       } catch (error) {
-        console.error('Failed to send course assignment notifications:', error);
+        logger.error('Failed to send course assignment notifications:', error);
         // Don't fail the entire operation if notifications fail
       }
     }
-    
+
     return res.status(200).json({
       success: true,
       message: 'Course updated successfully',
       data: course
     });
   } catch (error: any) {
-    console.error('Course update error:', error);
+    logger.error('Course update error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to update course',
@@ -694,7 +693,7 @@ export const getSupervisorCourses = async (req: AuthenticatedRequest, res: Respo
       data: coursesWithDynamicStudents
     });
   } catch (error: any) {
-    console.error('getSupervisorCourses error:', error);
+    logger.error('getSupervisorCourses error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch supervisor courses',

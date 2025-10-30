@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import User from '../models/User.model';
 import notificationService from '../services/notification.service';
+import logger from '../utils/logger';
 
 // Update user profile
 export const updateProfile = async (req: Request, res: Response): Promise<any> => {
@@ -62,7 +63,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<any> =
         }
       });
     } catch (notificationError) {
-      console.error('Failed to send profile update notification:', notificationError);
+      logger.error('Failed to send profile update notification:', notificationError);
     }
 
     res.status(200).json({
@@ -73,7 +74,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<any> =
       }
     });
   } catch (error: any) {
-    console.error('Profile update error:', error);
+    logger.error('Profile update error:', error);
     
     // Check if it's a validation error
     if (error.name === 'ValidationError') {
@@ -123,7 +124,7 @@ export const getProfile = async (req: Request, res: Response): Promise<any> => {
       }
     });
   } catch (error: any) {
-    console.error('Get profile error:', error);
+    logger.error('Get profile error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get profile',
@@ -155,7 +156,7 @@ export const clearRejectionNotification = async (req: Request, res: Response): P
       message: 'Rejection notification cleared successfully'
     });
   } catch (error: any) {
-    console.error('Clear rejection notification error:', error);
+    logger.error('Clear rejection notification error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to clear rejection notification',

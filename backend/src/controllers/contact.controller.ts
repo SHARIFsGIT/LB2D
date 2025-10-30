@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { asyncHandler } from '../middleware/error.middleware';
+import { asyncHandler } from '../middleware/errorHandler.middleware';
 import emailService from '../services/email.service';
 
 // Handle contact form submission

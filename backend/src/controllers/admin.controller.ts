@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { asyncHandler } from '../middleware/error.middleware';
+import { asyncHandler } from '../middleware/errorHandler.middleware';
 import User from '../models/User.model';
 import Video from '../models/Video.model';
 import CourseResource from '../models/CourseResource.model';
