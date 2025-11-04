@@ -1,0 +1,35 @@
+# LB2D - Learn Bangla to Deutsch
+# Production Robots.txt
+
+User-agent: *
+Allow: /
+Allow: /courses
+Allow: /about
+Allow: /contact
+Allow: /login
+Allow: /register
+
+# Disallow private/admin areas
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /supervisor
+Disallow: /profile
+Disallow: /api
+Disallow: /my-courses
+Disallow: /enroll
+Disallow: /certificates
+
+# Disallow authentication pages
+Disallow: /email-verification
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Allow search engines to index course pages
+Allow: /courses/*
+
+# Sitemap location
+Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://yourdomain.com/server-sitemap.xml
+
+# Crawl delay (optional, adjust based on your server capacity)
+Crawl-delay: 1

@@ -1,0 +1,84 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: lb2d-v2-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lb2d_v2
+      POSTGRES_USER: lb2d_v2
+      POSTGRES_PASSWORD: lb2d_v2_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U lb2d -d lb2d']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lb2d-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: lb2d-v2-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass lb2d_v2_redis_password
+    ports:
+      - '6380:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lb2d-network
+
+  # PgAdmin (Database Management UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: lb2d-v2-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@lb2d.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - '5051:80'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - lb2d-network
+
+  # Redis Commander (Redis Management UI)
+  redis-commander:
+    image: ghcr.io/joeferner/redis-commander:latest
+    container_name: lb2d-v2-redis-commander
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:lb2d_v2_redis_password
+    ports:
+      - '8082:8081'
+    depends_on:
+      - redis
+    networks:
+      - lb2d-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  lb2d-network:
+    driver: bridge
