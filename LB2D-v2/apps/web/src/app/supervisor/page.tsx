@@ -51,9 +51,11 @@ interface Student {
   firstName: string;
   lastName: string;
   email: string;
+  phone?: string;
   profilePhoto?: string;
-  lastLogin?: string;
   role: string;
+  createdAt: string;
+  lastLogin?: string;
 }
 
 interface Video {

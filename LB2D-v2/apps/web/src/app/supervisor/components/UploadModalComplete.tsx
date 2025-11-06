@@ -24,7 +24,7 @@ interface Quiz {
   totalPoints?: number;
   timeLimit?: number;
   attemptsAllowed?: number;
-  deletionStatus?: 'none' | 'pending';
+  deletionStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
 }
 
@@ -38,7 +38,7 @@ interface Resource {
   downloadCount?: number;
   sequenceNumber: number;
   category: string;
-  deletionStatus?: 'none' | 'pending';
+  deletionStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
 }
 
@@ -50,7 +50,7 @@ interface Video {
   sequenceNumber: number;
   duration?: number;
   viewCount?: number;
-  deletionStatus?: 'none' | 'pending';
+  deletionStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
 }
 

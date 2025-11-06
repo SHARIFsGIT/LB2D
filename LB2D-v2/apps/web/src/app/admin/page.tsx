@@ -22,6 +22,9 @@ interface User {
   profilePhoto?: string;
   isEmailVerified: boolean;
   isActive: boolean;
+  isBanned?: boolean;
+  banReason?: string;
+  banDate?: string;
   createdAt: string;
   lastLoginAt?: string;
   deviceSessions?: any[];
@@ -1999,7 +2002,7 @@ export default function AdminDashboard() {
 
       // Prevent users from deleting themselves
       if (userToDelete?.email === currentUser?.email) {
-        showError('You cannot delete your own account while logged in.', 'Action Denied');
+        showInfo('The main admin account cannot be deleted. This is a protected system account.', 'Protected Account');
         setDeleteConfirm(null);
         return;
       }
@@ -2137,7 +2140,7 @@ export default function AdminDashboard() {
         setShowConfirmModal(false);
 
         try {
-          const response = await fetch(`${(process.env.NEXT_PUBLIC_API_URL || appConfig.api.baseUrl)}/analytics/clear-user-management`, {
+          const response = await fetch(`${(process.env.NEXT_PUBLIC_API_URL || appConfig.api.baseUrl)}/api/v1/users/clear-all`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -2254,6 +2257,105 @@ export default function AdminDashboard() {
         } catch (error) {
           console.error('Error clearing resource management data:', error);
           showError('Error clearing resource management data', 'Error');
+        }
+      }
+    });
+    setShowConfirmModal(true);
+  };
+
+  const clearAdminRoleData = async () => {
+    setConfirmConfig({
+      title: 'Clear Admin Role Approval Data',
+      message: 'WARNING: This will permanently delete ALL pending admin role requests.\n\nThis action cannot be undone. Are you absolutely sure you want to proceed?',
+      type: 'danger',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
+
+        try {
+          const response = await fetch(`${(process.env.NEXT_PUBLIC_API_URL || appConfig.api.baseUrl)}/api/v1/users/clear-role-requests/ADMIN`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Admin role approval data cleared successfully!', 'Success');
+            fetchUsers();
+            fetchStats();
+          } else {
+            showError('Failed to clear admin role approval data', 'Error');
+          }
+        } catch (error) {
+          console.error('Error clearing admin role approval data:', error);
+          showError('Error clearing admin role approval data', 'Error');
+        }
+      }
+    });
+    setShowConfirmModal(true);
+  };
+
+  const clearSupervisorRoleData = async () => {
+    setConfirmConfig({
+      title: 'Clear Supervisor Role Approval Data',
+      message: 'WARNING: This will permanently delete ALL pending supervisor role requests.\n\nThis action cannot be undone. Are you absolutely sure you want to proceed?',
+      type: 'danger',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
+
+        try {
+          const response = await fetch(`${(process.env.NEXT_PUBLIC_API_URL || appConfig.api.baseUrl)}/api/v1/users/clear-role-requests/SUPERVISOR`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Supervisor role approval data cleared successfully!', 'Success');
+            fetchUsers();
+            fetchStats();
+          } else {
+            showError('Failed to clear supervisor role approval data', 'Error');
+          }
+        } catch (error) {
+          console.error('Error clearing supervisor role approval data:', error);
+          showError('Error clearing supervisor role approval data', 'Error');
+        }
+      }
+    });
+    setShowConfirmModal(true);
+  };
+
+  const clearStudentRoleData = async () => {
+    setConfirmConfig({
+      title: 'Clear Student Role Approval Data',
+      message: 'WARNING: This will permanently delete ALL pending student role requests.\n\nThis action cannot be undone. Are you absolutely sure you want to proceed?',
+      type: 'danger',
+      onConfirm: async () => {
+        setShowConfirmModal(false);
+
+        try {
+          const response = await fetch(`${(process.env.NEXT_PUBLIC_API_URL || appConfig.api.baseUrl)}/api/v1/users/clear-role-requests/STUDENT`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            showSuccess('Student role approval data cleared successfully!', 'Success');
+            fetchUsers();
+            fetchStats();
+          } else {
+            showError('Failed to clear student role approval data', 'Error');
+          }
+        } catch (error) {
+          console.error('Error clearing student role approval data:', error);
+          showError('Error clearing student role approval data', 'Error');
         }
       }
     });
@@ -2403,7 +2505,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="p-6">
-          
+
           {loading ? (
             <div className="text-center py-10">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -2453,10 +2555,25 @@ export default function AdminDashboard() {
                             <div className="ml-3">
                               <div className="font-medium text-gray-900">
                                 {user.firstName} {user.lastName}
+                                {user.isBanned && (
+                                  <span className="px-2 py-0.5 text-xs font-bold rounded bg-red-600 text-white ml-2">
+                                    BANNED
+                                  </span>
+                                )}
                               </div>
                               <div className="text-xs text-gray-500">
                                 ID: {user.id.slice(-8)}
                               </div>
+                              {user.isBanned && user.banReason && (
+                                <div className="mt-1 text-xs text-red-600">
+                                  <span className="font-semibold">Reason:</span> {user.banReason}
+                                </div>
+                              )}
+                              {user.isBanned && user.banDate && (
+                                <div className="text-xs text-red-500">
+                                  Banned: {new Date(user.banDate).toLocaleDateString()}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -2504,6 +2621,14 @@ export default function AdminDashboard() {
                                   {formatRole((user.role === 'PENDING' || user.rejectionReason) && user.requestedRole ? user.requestedRole : user.role)}
                                 </span>
                               )}
+                              
+                              
+                              {/* Verified/Unverified Badge */}
+                              <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                                (user.isEmailVerified || user.role === 'ADMIN') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {(user.isEmailVerified || user.role === 'ADMIN') ? '✓ Verified' : '✗ Unverified'}
+                              </span>
                               
                               {/* Active/Inactive Badge - Always in middle */}
                               <span className={`px-2 py-1 text-xs font-semibold rounded ${
@@ -3185,26 +3310,43 @@ export default function AdminDashboard() {
 
         {/* Role Approvals Section */}
         {activeTab === 'approvals' && (
-        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
-            <h2 className="text-3xl font-bold text-white flex items-center">
-              Role Approval Requests
-            </h2>
-          </div>
-          <div className="p-6">
-            {loading ? (
+        <div className="space-y-8">
+          {loading ? (
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden p-6">
               <div className="text-center py-10">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                 <p className="mt-2">Loading approval requests...</p>
               </div>
-            ) : users.filter(u => u.requestedRole && u.requestedRole !== u.role && !u.rejectionReason).length === 0 ? (
-              <div className="text-center py-10">
-                <h3 className="text-xl font-bold text-gray-800 mb-2">No Pending Requests</h3>
-                <p className="text-gray-600">All role requests have been processed!</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {users.filter(u => u.requestedRole && u.requestedRole !== u.role && !u.rejectionReason).map((user) => (
+            </div>
+          ) : (
+            <>
+              {/* Admin Role Requests */}
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-3xl font-bold text-white flex items-center">
+                      Admin Role
+                    </h2>
+                    <button
+                      onClick={clearAdminRoleData}
+                      className="bg-transparent hover:bg-white hover:bg-opacity-20 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center space-x-1.5 border border-white border-opacity-30 hover:border-opacity-50"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                      <span>Clear Data</span>
+                    </button>
+                  </div>
+                </div>
+                <div className="p-6">
+                  {users.filter(u => u.requestedRole === 'ADMIN' && u.requestedRole !== u.role && !u.rejectionReason).length === 0 ? (
+                    <div className="text-center py-10">
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">No Pending Admin Requests</h3>
+                      <p className="text-gray-600">All admin role requests have been processed!</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {users.filter(u => u.requestedRole === 'ADMIN' && u.requestedRole !== u.role && !u.rejectionReason).map((user) => (
                   <div key={user.id} className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                     {/* Request Header */}
                     <div className="bg-gradient-to-r from-blue-600 to-sky-400 p-4 text-white">
@@ -3278,11 +3420,225 @@ export default function AdminDashboard() {
                       )}
                     </div>
                   </div>
-                ))}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
 
+              {/* Supervisor Role Requests */}
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-3xl font-bold text-white flex items-center">
+                      Supervisor Role
+                    </h2>
+                    <button
+                      onClick={clearSupervisorRoleData}
+                      className="bg-transparent hover:bg-white hover:bg-opacity-20 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center space-x-1.5 border border-white border-opacity-30 hover:border-opacity-50"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                      <span>Clear Data</span>
+                    </button>
+                  </div>
+                </div>
+                <div className="p-6">
+                  {users.filter(u => u.requestedRole === 'SUPERVISOR' && u.requestedRole !== u.role && !u.rejectionReason).length === 0 ? (
+                    <div className="text-center py-10">
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">No Pending Supervisor Requests</h3>
+                      <p className="text-gray-600">All supervisor role requests have been processed!</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {users.filter(u => u.requestedRole === 'SUPERVISOR' && u.requestedRole !== u.role && !u.rejectionReason).map((user) => (
+                        <div key={user.id} className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                          {/* Request Header */}
+                          <div className="bg-gradient-to-r from-blue-600 to-sky-400 p-4 text-white">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-2xl">👤</span>
+                                <span className="text-sm font-medium bg-white bg-opacity-20 px-2 py-1 rounded">
+                                  {user.requestedRole} Request
+                                </span>
+                              </div>
+                              <span className="text-xs bg-yellow-600 px-2 py-1 rounded">
+                                PENDING
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* User Info */}
+                          <div className="p-4">
+                            <h3 className="font-bold text-gray-900 mb-2">{user.firstName} {user.lastName}</h3>
+                            <p className="text-sm text-gray-600 mb-3">{user.email}</p>
+
+                            <div className="space-y-2 text-xs text-gray-500">
+                              <div className="flex justify-between">
+                                <span>Current Role:</span>
+                                <span className="font-medium text-blue-600">{formatRole(user.role)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Requested Role:</span>
+                                <span className="font-medium text-purple-600">{user.requestedRole ? formatRole(user.requestedRole) : 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Phone:</span>
+                                <span className="font-medium">{user.phone || 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Registered:</span>
+                                <span className="font-medium">{new Date(user.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Email Verified:</span>
+                                <span className={`font-medium ${user.isEmailVerified ? 'text-green-600' : 'text-red-600'}`}>
+                                  {user.isEmailVerified ? 'Yes' : 'No'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Approval Actions */}
+                          <div className="border-t border-gray-200 p-4 bg-gray-50">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleApproveRole(user.id, user.requestedRole!)}
+                                className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                                disabled={!user.isEmailVerified}
+                              >
+                                <span className="flex items-center justify-center">
+                                  Approve
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => handleRejectRole(user.id)}
+                                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                              >
+                                <span className="flex items-center justify-center">
+                                  Reject
+                                </span>
+                              </button>
+                            </div>
+                            {!user.isEmailVerified && (
+                              <p className="text-xs text-red-600 mt-2 text-center">Email must be verified before approval</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Student Role Requests */}
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-tr from-cyan-900 via-sky-800 to-gray-400 p-6">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-3xl font-bold text-white flex items-center">
+                      Student Role
+                    </h2>
+                    <button
+                      onClick={clearStudentRoleData}
+                      className="bg-transparent hover:bg-white hover:bg-opacity-20 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center space-x-1.5 border border-white border-opacity-30 hover:border-opacity-50"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                      <span>Clear Data</span>
+                    </button>
+                  </div>
+                </div>
+                <div className="p-6">
+                  {users.filter(u => u.requestedRole === 'STUDENT' && u.requestedRole !== u.role && !u.rejectionReason).length === 0 ? (
+                    <div className="text-center py-10">
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">No Pending Student Requests</h3>
+                      <p className="text-gray-600">All student role requests have been processed!</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {users.filter(u => u.requestedRole === 'STUDENT' && u.requestedRole !== u.role && !u.rejectionReason).map((user) => (
+                        <div key={user.id} className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                          {/* Request Header */}
+                          <div className="bg-gradient-to-r from-blue-600 to-sky-400 p-4 text-white">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-2xl">👤</span>
+                                <span className="text-sm font-medium bg-white bg-opacity-20 px-2 py-1 rounded">
+                                  {user.requestedRole} Request
+                                </span>
+                              </div>
+                              <span className="text-xs bg-yellow-600 px-2 py-1 rounded">
+                                PENDING
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* User Info */}
+                          <div className="p-4">
+                            <h3 className="font-bold text-gray-900 mb-2">{user.firstName} {user.lastName}</h3>
+                            <p className="text-sm text-gray-600 mb-3">{user.email}</p>
+
+                            <div className="space-y-2 text-xs text-gray-500">
+                              <div className="flex justify-between">
+                                <span>Current Role:</span>
+                                <span className="font-medium text-blue-600">{formatRole(user.role)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Requested Role:</span>
+                                <span className="font-medium text-purple-600">{user.requestedRole ? formatRole(user.requestedRole) : 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Phone:</span>
+                                <span className="font-medium">{user.phone || 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Registered:</span>
+                                <span className="font-medium">{new Date(user.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Email Verified:</span>
+                                <span className={`font-medium ${user.isEmailVerified ? 'text-green-600' : 'text-red-600'}`}>
+                                  {user.isEmailVerified ? 'Yes' : 'No'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Approval Actions */}
+                          <div className="border-t border-gray-200 p-4 bg-gray-50">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleApproveRole(user.id, user.requestedRole!)}
+                                className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                                disabled={!user.isEmailVerified}
+                              >
+                                <span className="flex items-center justify-center">
+                                  Approve
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => handleRejectRole(user.id)}
+                                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium"
+                              >
+                                <span className="flex items-center justify-center">
+                                  Reject
+                                </span>
+                              </button>
+                            </div>
+                            {!user.isEmailVerified && (
+                              <p className="text-xs text-red-600 mt-2 text-center">Email must be verified before approval</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
         )}
       </div>
@@ -3309,17 +3665,22 @@ export default function AdminDashboard() {
                     {viewingDevicesUser.firstName} {viewingDevicesUser.lastName} ({viewingDevicesUser.email})
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setViewingDevicesUser(null);
-                    setUserDeviceSessions([]);
-                  }}
-                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                <div className="flex flex-col items-end gap-2">
+                  <button
+                    onClick={() => {
+                      setViewingDevicesUser(null);
+                      setUserDeviceSessions([]);
+                    }}
+                    className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <p className="text-sm text-blue-100">
+                    Total Sessions: <span className="font-bold text-lg">{userDeviceSessions.length}</span>
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -3332,9 +3693,6 @@ export default function AdminDashboard() {
                 </div>
               ) : userDeviceSessions.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-xl">
-                  <svg className="w-20 h-20 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
                   <p className="text-gray-600 font-semibold text-lg">No Active Devices</p>
                   <p className="text-gray-500 text-sm mt-2">This user has no active device sessions</p>
                 </div>
@@ -3343,53 +3701,32 @@ export default function AdminDashboard() {
                   {/* Summary Stats */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
-                      <div className="flex items-center gap-3">
-                        <div className="p-3 bg-blue-600 rounded-lg">
-                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Active Devices</p>
-                          <p className="text-2xl font-bold text-blue-600">{userDeviceSessions.length} / 2</p>
-                        </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Active Devices</p>
+                        <p className="text-2xl font-bold text-blue-600">{userDeviceSessions.length} / 2</p>
                       </div>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                      <div className="flex items-center gap-3">
-                        <div className="p-3 bg-green-600 rounded-lg">
-                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Last Active</p>
-                          <p className="text-sm font-bold text-green-600">
-                            {viewingDevicesUser.lastLoginAt
-                              ? new Date(viewingDevicesUser.lastLoginAt).toLocaleString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })
-                              : 'Never'}
-                          </p>
-                        </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Last Active</p>
+                        <p className="text-sm font-bold text-green-600">
+                          {viewingDevicesUser.lastLoginAt
+                            ? new Date(viewingDevicesUser.lastLoginAt).toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : 'Never'}
+                        </p>
                       </div>
                     </div>
                     <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
-                      <div className="flex items-center gap-3">
-                        <div className="p-3 bg-purple-600 rounded-lg">
-                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Account Status</p>
-                          <p className="text-sm font-bold text-purple-600">
-                            {viewingDevicesUser.isActive ? 'Active' : 'Inactive'}
-                          </p>
-                        </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Account Status</p>
+                        <p className="text-sm font-bold text-purple-600">
+                          {viewingDevicesUser.isActive ? 'Active' : 'Inactive'}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -3410,18 +3747,11 @@ export default function AdminDashboard() {
                           className="border-2 border-gray-200 rounded-xl p-5 bg-gradient-to-br from-white to-gray-50 hover:border-blue-300 transition-all"
                         >
                           <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-blue-100 rounded-lg">
-                                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                              <div>
-                                <h4 className="font-bold text-gray-900 text-lg">
-                                  {session.deviceName || `Device ${index + 1}`}
-                                </h4>
-                                <p className="text-xs text-gray-500">Session {index + 1} of {userDeviceSessions.length}</p>
-                              </div>
+                            <div>
+                              <h4 className="font-bold text-gray-900 text-lg">
+                                {session.deviceName || `Device ${index + 1}`}
+                              </h4>
+                              <p className="text-xs text-gray-500">Session {index + 1} of {userDeviceSessions.length}</p>
                             </div>
                             {index === 0 && (
                               <span className="bg-green-600 text-white text-xs px-3 py-1 rounded-full font-semibold">
@@ -3573,24 +3903,6 @@ export default function AdminDashboard() {
                   </div>
                 </>
               )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">
-                  Total Sessions: <span className="font-semibold text-gray-900">{userDeviceSessions.length}</span>
-                </p>
-                <button
-                  onClick={() => {
-                    setViewingDevicesUser(null);
-                    setUserDeviceSessions([]);
-                  }}
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg"
-                >
-                  Close
-                </button>
-              </div>
             </div>
           </div>
         </div>

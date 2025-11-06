@@ -88,4 +88,31 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   profilePhoto?: string;
+
+  @ApiProperty({
+    example: false,
+    description: 'User ban status',
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  isBanned?: boolean;
+
+  @ApiProperty({
+    example: 'Violated community guidelines',
+    description: 'Reason for ban',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  banReason?: string;
+
+  @ApiProperty({
+    example: '2024-01-15T10:30:00.000Z',
+    description: 'Date when user was banned',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  banDate?: string;
 }

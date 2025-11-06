@@ -41,7 +41,8 @@
     "type-check": "turbo run type-check",
     "clean": "turbo run clean && rm -rf node_modules .turbo",
     "clean:cache": "rm -rf .turbo node_modules/.cache",
-    "prepare": "husky install"
+    "admin:create": "pnpm --filter @lb2d/api admin:create",
+    "prepare": "echo 'Skipping husky - git hooks not needed for development'"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.4.3",

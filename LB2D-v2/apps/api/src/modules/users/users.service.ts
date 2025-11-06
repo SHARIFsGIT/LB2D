@@ -41,6 +41,9 @@ export class UsersService {
         rejectionDate: true,
         isEmailVerified: true,
         isActive: true,
+        isBanned: true,
+        banReason: true,
+        banDate: true,
         createdAt: true,
         lastLoginAt: true,
       },
@@ -171,6 +174,9 @@ export class UsersService {
           rejectionDate: true,
           isEmailVerified: true,
           isActive: true,
+          isBanned: true,
+          banReason: true,
+          banDate: true,
           createdAt: true,
           lastLoginAt: true,
           deviceSessions: {
@@ -226,6 +232,9 @@ export class UsersService {
         rejectionDate: true,
         isEmailVerified: true,
         isActive: true,
+        isBanned: true,
+        banReason: true,
+        banDate: true,
         createdAt: true,
         updatedAt: true,
         lastLoginAt: true,
@@ -308,6 +317,9 @@ export class UsersService {
         role: true,
         isEmailVerified: true,
         isActive: true,
+        isBanned: true,
+        banReason: true,
+        banDate: true,
       },
     });
 
@@ -336,21 +348,33 @@ export class UsersService {
       );
     }
 
-    // Soft delete by deactivating
-    await this.prisma.user.update({
+    // Hard delete
+    await this.prisma.user.delete({
       where: { id: userId },
-      data: {
-        isActive: false,
-      },
     });
-
-    // Or hard delete (uncomment if needed)
-    // await this.prisma.user.delete({
-    //   where: { id: userId },
-    // });
 
     return {
       message: 'User deleted successfully',
+    };
+  }
+
+  /**
+   * Clear all users except main admin (Admin only)
+   */
+  async clearAllUsers() {
+    const mainAdminEmail = this.MAIN_ADMIN_EMAIL;
+
+    const result = await this.prisma.user.deleteMany({
+      where: {
+        email: {
+          not: mainAdminEmail,
+        },
+      },
+    });
+
+    return {
+      message: `All users deleted successfully. ${result.count} users removed.`,
+      deletedCount: result.count,
     };
   }
 

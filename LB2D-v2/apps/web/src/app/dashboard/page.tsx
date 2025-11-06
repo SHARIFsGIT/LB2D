@@ -410,6 +410,92 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Community Features Section */}
+        <div className="bg-white/30 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 overflow-hidden mb-8">
+          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-4">
+            <h3 className="text-xl font-bold text-white flex items-center">
+              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+              Community & Learning Hub
+            </h3>
+          </div>
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Browse Discussions */}
+            <button
+              onClick={() => router.push('/discussions')}
+              className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-4 rounded-xl font-bold shadow-lg hover:shadow-2xl transition-all hover:scale-105 min-h-[100px] flex flex-col items-center justify-center"
+            >
+              <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+              <span className="text-base font-bold">Discussions</span>
+              <p className="text-xs text-blue-100 mt-1">Ask questions & share</p>
+            </button>
+
+            {/* View Bookmarks */}
+            <button
+              onClick={() => router.push('/bookmarks')}
+              className="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-4 rounded-xl font-bold shadow-lg hover:shadow-2xl transition-all hover:scale-105 min-h-[100px] flex flex-col items-center justify-center"
+            >
+              <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                />
+              </svg>
+              <span className="text-base font-bold">Bookmarks</span>
+              <p className="text-xs text-amber-100 mt-1">Saved content</p>
+            </button>
+
+            {/* Explore Learning Paths */}
+            <button
+              onClick={() => router.push('/learning-paths')}
+              className="bg-gradient-to-br from-rose-500 to-pink-600 text-white p-4 rounded-xl font-bold shadow-lg hover:shadow-2xl transition-all hover:scale-105 min-h-[100px] flex flex-col items-center justify-center"
+            >
+              <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                />
+              </svg>
+              <span className="text-base font-bold">Learning Paths</span>
+              <p className="text-xs text-rose-100 mt-1">Guided courses</p>
+            </button>
+
+            {/* Social Feed */}
+            <button
+              onClick={() => router.push('/social/feed')}
+              className="bg-gradient-to-br from-violet-500 to-purple-600 text-white p-4 rounded-xl font-bold shadow-lg hover:shadow-2xl transition-all hover:scale-105 min-h-[100px] flex flex-col items-center justify-center"
+            >
+              <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+                />
+              </svg>
+              <span className="text-base font-bold">Social Feed</span>
+              <p className="text-xs text-violet-100 mt-1">Connect with peers</p>
+            </button>
+          </div>
+        </div>
+
         {/* Additional Stats Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Enrolled Courses */}

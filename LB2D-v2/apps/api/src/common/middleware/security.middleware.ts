@@ -89,11 +89,22 @@ export class SecurityMiddleware implements NestMiddleware {
 
       if (origin && host) {
         const originUrl = new URL(origin);
+
+        // Extract host from CLIENT_URL if it's a full URL
+        let clientHost = 'localhost:3000';
+        if (process.env.CLIENT_URL) {
+          try {
+            clientHost = new URL(process.env.CLIENT_URL).host;
+          } catch {
+            clientHost = process.env.CLIENT_URL; // Use as-is if not a valid URL
+          }
+        }
+
         const allowedHosts = [
           host,
           'localhost:3000',
           'localhost:3001',
-          process.env.CLIENT_URL,
+          clientHost,
         ].filter(Boolean);
 
         if (!allowedHosts.some(allowed => originUrl.host.includes(allowed!))) {

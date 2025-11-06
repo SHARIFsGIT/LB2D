@@ -16,7 +16,7 @@ export const appConfig = {
 
   // API Configuration
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
     timeout: 30000, // 30 seconds
     retryAttempts: 3,
     retryDelay: 1000, // 1 second
@@ -24,7 +24,7 @@ export const appConfig = {
 
   // WebSocket Configuration
   ws: {
-    url: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000',
+    url: process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001',
     reconnectInterval: 5000, // 5 seconds
     maxReconnectAttempts: 5,
   },

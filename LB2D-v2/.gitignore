@@ -124,3 +124,6 @@ Desktop.ini
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+# Development tools (contains scripts with potential credentials)
+tools/

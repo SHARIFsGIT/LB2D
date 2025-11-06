@@ -374,16 +374,9 @@ const ProfilePage = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Profile Information Card */}
             <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Profile Information</h2>
-                  <p className="text-sm text-gray-500">Update your personal details</p>
-                </div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Profile Information</h2>
+                <p className="text-sm text-gray-500">Update your personal details</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -491,22 +484,7 @@ const ProfilePage = () => {
                     disabled={loading}
                     className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 focus:ring-4 focus:ring-purple-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
                   >
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Updating...
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-2">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        Update Profile
-                      </span>
-                    )}
+                    {loading ? 'Updating...' : 'Update Profile'}
                   </button>
                   <button
                     type="button"
@@ -522,18 +500,11 @@ const ProfilePage = () => {
             {/* Active Devices Card */}
             <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Active Devices</h2>
-                    <p className="text-sm text-gray-500">
-                      {activeDeviceCount} of {totalDeviceSlots} devices active
-                    </p>
-                  </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Active Devices</h2>
+                  <p className="text-sm text-gray-500">
+                    {activeDeviceCount} of {totalDeviceSlots} devices active
+                  </p>
                 </div>
               </div>
 
@@ -544,10 +515,7 @@ const ProfilePage = () => {
                 </div>
               ) : deviceSessions.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-xl">
-                  <svg className="w-16 h-16 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  <p className="text-gray-600 font-medium">No active devices found</p>
+                  <p className="text-gray-600 font-medium text-lg">No active devices found</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -573,16 +541,12 @@ const ProfilePage = () => {
                             )}
                           </div>
                           <div className="space-y-2 text-sm">
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                              </svg>
+                            <div className="text-gray-600">
+                              <span className="font-semibold">Device ID: </span>
                               <span className="font-mono text-xs">{shortenDeviceId(session.deviceId)}</span>
                             </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
+                            <div className="text-gray-600">
+                              <span className="font-semibold">Last Active: </span>
                               <span>
                                 {new Date(session.lastActivityAt || session.loginTime).toLocaleString('en-US', {
                                   month: 'short',
@@ -593,10 +557,8 @@ const ProfilePage = () => {
                                 })}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                              </svg>
+                            <div className="text-gray-600">
+                              <span className="font-semibold">IP Address: </span>
                               <span>{session.ipAddress || 'Unknown IP'}</span>
                             </div>
                           </div>
@@ -624,16 +586,9 @@ const ProfilePage = () => {
           <div className="space-y-6">
             {/* Change Password Card */}
             <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Security</h3>
-                  <p className="text-xs text-gray-500">Update your password</p>
-                </div>
+              <div className="mb-4">
+                <h3 className="font-bold text-gray-900 text-xl">Security</h3>
+                <p className="text-xs text-gray-500">Update your password</p>
               </div>
               <button
                 type="button"
@@ -641,22 +596,7 @@ const ProfilePage = () => {
                 disabled={changePasswordLoading}
                 className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white py-3 rounded-xl font-semibold hover:from-amber-600 hover:to-orange-700 focus:ring-4 focus:ring-amber-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
               >
-                {changePasswordLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Sending...
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                    </svg>
-                    Change Password
-                  </span>
-                )}
+                {changePasswordLoading ? 'Sending...' : 'Change Password'}
               </button>
               <p className="text-xs text-gray-500 mt-3 text-center">
                 We'll send a reset link to your email
@@ -665,16 +605,9 @@ const ProfilePage = () => {
 
             {/* Account Info Card */}
             <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Account Details</h3>
-                  <p className="text-xs text-gray-500">Your account information</p>
-                </div>
+              <div className="mb-4">
+                <h3 className="font-bold text-gray-900 text-xl">Account Details</h3>
+                <p className="text-xs text-gray-500">Your account information</p>
               </div>
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">

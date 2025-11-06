@@ -55,7 +55,7 @@ function ResetPasswordContent() {
 
   const verifyPhoneDigits = async (digits: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-phone-digits`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/verify-phone-digits`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -83,7 +83,7 @@ function ResetPasswordContent() {
 
   const fetchMaskedPhone = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/get-masked-phone?token=${token}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/get-masked-phone?token=${token}`);
       const data = await response.json();
       if (data.success) {
         if (data.maskedPhone) {
@@ -225,14 +225,15 @@ function ResetPasswordContent() {
     try {
       // Prepare request body - only include phoneDigits if user has a phone number
       const requestBody: any = {
-        password: formData.password
+        token: token,
+        newPassword: formData.password
       };
 
       if (maskedPhone) {
         requestBody.phoneDigits = phoneDigits.join('');
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/reset-password?token=${token}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

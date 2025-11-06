@@ -37,7 +37,13 @@ export const useNotification = () => {
   const showInfo = (message: string, _title?: string, options?: NotificationOptions) => {
     toast(message, {
       duration: options?.duration || 3000,
-      position: 'top-right'
+      position: 'top-right',
+      icon: 'ℹ️',
+      style: {
+        background: '#DBEAFE',
+        color: '#1E40AF',
+        border: '1px solid #60A5FA',
+      },
     });
   };
 

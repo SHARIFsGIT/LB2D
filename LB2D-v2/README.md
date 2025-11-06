@@ -1,81 +1,105 @@
 # LB2D - Learn Bangla to Deutsch
 
-**Enterprise E-Learning Platform**
+**Enterprise E-Learning Platform for Teaching German to Bengali Speakers**
 
-A production-ready, scalable e-learning platform built with modern technologies and cloud-native architecture. Designed for deployment on AWS infrastructure with enterprise-grade security, performance, and SEO optimization.
-
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-15.0-black)](https://nextjs.org/)
-[![NestJS](https://img.shields.io/badge/NestJS-10+-red)](https://nestjs.com/)
-[![License](https://img.shields.io/badge/License-Proprietary-yellow)](LICENSE)
+A production-ready, scalable e-learning platform built with NestJS, Next.js, and modern cloud infrastructure.
 
 ---
 
-## Table of Contents
+## ⚠️ SECURITY NOTICE - READ BEFORE DEPLOYING
 
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Features](#features)
-- [Getting Started](#getting-started)
-- [Deployment](#deployment)
-- [API Documentation](#api-documentation)
-- [Security](#security)
-- [Performance](#performance)
-- [License](#license)
+**IMPORTANT: This project contains demo/development credentials. Before deploying to production or pushing to public GitHub:**
 
----
+1. **Never commit .env files** - They are gitignored and should never be pushed
+2. **Change all demo passwords** - Default credentials (Admin123!, etc.) are for development only
+3. **Rotate all API keys** - Replace with your production keys:
+   - Resend/SendGrid API keys
+   - AWS credentials
+   - Stripe keys
+   - JWT secrets
+4. **Remove example credentials** - Check `.env.example` files for placeholder values
+5. **Use strong passwords** - Generate random, secure passwords for production
 
-## Overview
-
-LB2D is an enterprise-grade e-learning platform specifically designed for teaching German language to Bengali speakers. The platform supports multiple user roles (students, supervisors, administrators) with comprehensive course management, video streaming, interactive quizzes, and integrated payment processing.
-
-### Key Characteristics
-
-- **Microservices-ready**: Modular architecture with clear separation of concerns
-- **Cloud-native**: Designed for AWS deployment (ECS, RDS, S3, CloudFront)
-- **Scalable**: Horizontal scaling support with Redis caching and CDN integration
-- **SEO-optimized**: Server-side rendering, dynamic sitemaps, structured data
-- **Enterprise security**: OWASP Top 10 compliant, JWT authentication, device tracking
+**Demo Credentials (DEVELOPMENT ONLY):**
+- Admin: `admin@lb2d.com` / `Admin123!`
+- Supervisor: `supervisor@lb2d.com` / `Super123!`
+- Student: `student@lb2d.com` / `Student123!`
 
 ---
 
-## Architecture
+## Quick Start
 
-### System Architecture
+### Prerequisites
+- Node.js >= 20.0.0
+- pnpm >= 8.0.0
+- Docker Desktop
+- PostgreSQL 16 & Redis 7 (via Docker)
+
+### Installation
+
+```bash
+# Install dependencies
+pnpm install
+
+# Setup environment files
+cd apps/api && cp .env.example .env
+cd ../web && cp .env.local.example .env.local
+
+# Start infrastructure
+docker-compose up -d
+
+# Setup database
+cd apps/api
+pnpm prisma:generate
+pnpm prisma:migrate dev
+
+# Start development servers
+pnpm dev  # Run from root (starts both API and web)
+```
+
+### Access Points
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:3001
+- API Documentation: http://localhost:3001/api/docs
+
+### Default Admin Credentials
+```
+Email: admin@lb2d.com
+Password: Admin123!
+```
+
+---
+
+## Project Structure
 
 ```
-┌─────────────────┐      ┌──────────────────┐      ┌─────────────────┐
-│   Next.js App   │────▶ │   NestJS API     │────▶ │   PostgreSQL    │
-│   (Frontend)    │      │   (Backend)      │      │   (Database)    │
-└─────────────────┘      └──────────────────┘      └─────────────────┘
-         │                        │
-         ▼                        ▼
-┌─────────────────┐      ┌──────────────────┐
-│   CloudFront    │      │   Redis Cache    │
-│   (CDN)         │      │   (Sessions)     │
-└─────────────────┘      └──────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│   AWS S3        │
-│   (Storage)     │
-└─────────────────┘
-```
-
-### Monorepo Structure
-
-```
-lb2d-v2/
+LB2D-v2/
 ├── apps/
-│   ├── api/          # NestJS backend API
-│   └── web/          # Next.js frontend application
+│   ├── api/              # NestJS Backend (Port 3001)
+│   │   ├── src/
+│   │   │   ├── modules/  # Feature modules (auth, users, courses, etc.)
+│   │   │   ├── common/   # Shared services (email, storage, cache)
+│   │   │   └── main.ts   # Application entry point
+│   │   ├── prisma/       # Database schema and migrations
+│   │   └── package.json
+│   │
+│   └── web/              # Next.js Frontend (Port 3000)
+│       ├── src/
+│       │   ├── app/      # Next.js App Router pages
+│       │   ├── components/ # React components
+│       │   ├── store/    # Zustand state management
+│       │   ├── lib/      # Utilities (API client)
+│       │   └── hooks/    # Custom React hooks
+│       └── package.json
+│
 ├── packages/
-│   └── tsconfig/     # Shared TypeScript configurations
+│   └── tsconfig/         # Shared TypeScript configs
+│
 ├── infrastructure/
-│   ├── docker/       # Docker configurations
-│   └── terraform/    # Infrastructure as Code
-└── scripts/          # Automation scripts
+│   ├── docker/           # Docker configurations
+│   └── terraform/        # AWS infrastructure as code
+│
+└── tools/                # Development utilities (gitignored)
 ```
 
 ---
@@ -83,389 +107,446 @@ lb2d-v2/
 ## Tech Stack
 
 ### Backend
-
-- **Framework**: NestJS 10.x (Node.js, TypeScript)
+- **Framework**: NestJS 10.x (Node.js + TypeScript)
 - **Database**: PostgreSQL 16 with Prisma ORM
 - **Cache**: Redis 7
 - **Storage**: AWS S3 + CloudFront CDN
-- **Authentication**: JWT with Passport.js
-- **Payments**: Stripe API + Mobile Banking Integration
-- **Email**: Resend API with SendGrid fallback
-- **Real-time**: Socket.IO WebSocket
+- **Authentication**: JWT with Passport.js (max 3 devices)
+- **Payments**: Stripe + Bangladesh Mobile Banking (bKash, Nagad, Rocket)
+- **Email**: Resend API (primary), SendGrid (backup), Gmail SMTP (fallback)
+- **WebSocket**: Socket.IO for real-time notifications
 
 ### Frontend
-
 - **Framework**: Next.js 15 (React 18, App Router)
 - **Language**: TypeScript 5.3
-- **Styling**: TailwindCSS 3.4 with custom design system
-- **State Management**: Zustand + TanStack Query (React Query)
+- **Styling**: TailwindCSS 3.4
+- **State**: Zustand + TanStack Query (React Query)
 - **Forms**: React Hook Form + Zod validation
-- **UI Components**: Radix UI primitives
-- **HTTP Client**: Axios with interceptors
+- **UI**: Radix UI primitives
+- **HTTP**: Axios with auto token refresh
 
 ### Infrastructure
-
-- **Orchestration**: Turborepo (monorepo management)
-- **Package Manager**: pnpm 8.x
-- **Containerization**: Docker + Docker Compose
-- **CI/CD**: GitHub Actions
+- **Monorepo**: Turborepo + pnpm workspaces
+- **Containers**: Docker + Docker Compose
 - **Cloud**: AWS (ECS Fargate, RDS, S3, CloudFront, Route 53)
+- **CI/CD**: GitHub Actions
 
 ---
 
-## Features
+## Core Features
+
+### Authentication & User Management
+- JWT authentication with refresh tokens (15min access, 7 day refresh)
+- Device session tracking (max 3 concurrent devices)
+- Email verification and password reset with phone verification
+- Role-based access control (ADMIN, SUPERVISOR, STUDENT, PENDING)
+- Role change approval workflow
 
 ### Course Management
-- Create, update, and delete courses with rich metadata
-- Multi-level course structure (Beginner, Intermediate, Advanced, Expert)
-- Course pricing with discount support
-- SEO-optimized course pages with schema markup
-- **NEW:** Course reviews and ratings (5-star system)
-- **NEW:** Learning paths and course sequences
-- **NEW:** Tag-based organization and discovery
+- Multi-level courses (BEGINNER, INTERMEDIATE, ADVANCED, EXPERT)
+- SEO-optimized with slugs, meta tags, structured data
+- Pricing with discount support
+- Course reviews and ratings (5-star system)
+- Learning paths (curated course sequences)
+- Tag-based organization
 
 ### Video Platform
-- AWS S3 video upload and streaming
-- Progress tracking per video
-- Comment system with moderation
-- Supervisor approval workflow
-- **NEW:** Video bookmarks and timestamped notes
-- **NEW:** Course-specific discussions
+- AWS S3 upload and streaming via CloudFront
+- Video approval workflow (PENDING, APPROVED, REJECTED)
+- Progress tracking (percentage, current time)
+- Nested comments system
+- Bookmarks and timestamped notes
 
 ### Assessment System
-- Interactive quizzes with multiple question types
-- Automatic scoring and feedback
-- Progress tracking and attempt history
+- 5 question types: MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER, ESSAY, FILL_IN_BLANK
+- Automatic scoring with passing score configuration
+- Attempt history with max attempts limit
+- Duration limits
 - Certificate generation upon completion
-- **NEW:** Achievement system with badges and points
-
-### Social Learning
-- **NEW:** Discussion forums with Q&A support
-- **NEW:** Follow system (follow students and instructors)
-- **NEW:** Activity feed (social timeline)
-- **NEW:** User profiles with public activity
-- **NEW:** Review helpfulness voting
-
-### Gamification & Engagement
-- **NEW:** Achievement and badge system (8+ achievements)
-- **NEW:** Points, XP, and level progression
-- **NEW:** Daily streaks and habit tracking
-- **NEW:** Leaderboards (all-time, monthly, weekly)
-- **NEW:** Progress visualization and milestones
-
-### Content Discovery
-- **NEW:** Tag-based filtering and search
-- **NEW:** Bookmarks and collections
-- **NEW:** Learning paths (curated course sequences)
-- **NEW:** Course recommendations
-- Advanced search with filters
 
 ### Payment Integration
-- Stripe payment processing
-- Mobile banking support (bKash, Nagad, Rocket)
+- Stripe for international payments
+- Bangladesh mobile banking (bKash, Nagad, Rocket)
 - Payment history and invoicing
-- Automated enrollment upon payment
+- Automatic enrollment on payment success
 
-### User Management
-- Role-based access control (Student, Supervisor, Admin)
-- Profile management with avatar support
-- Device session tracking (max 3 concurrent devices)
-- Email verification and password reset
+### Social Learning & Gamification
+- Discussion forums with Q&A support and best answer marking
+- Follow system (students and instructors)
+- Activity feed (social timeline)
+- Achievement system (8+ achievements with rarity levels)
+- Points, XP, and level progression
+- Daily streaks and habit tracking
+- Leaderboards (all-time, monthly, weekly)
 
 ### Analytics & Reporting
-- Student progress dashboards
-- Supervisor revenue analytics
-- Admin platform statistics
-- **NEW:** Review analytics and moderation
-- **NEW:** Engagement metrics and leaderboards
-- Export capabilities
+- Role-specific dashboards (Admin, Supervisor, Student)
+- Enrollment statistics
+- Revenue tracking
+- Progress metrics
+- User activity analytics
+- Review analytics and moderation
 
 ---
 
-## Getting Started
+## API Overview
 
-### Prerequisites
+### 17 Core Modules
 
-- **Node.js**: >= 20.0.0
-- **pnpm**: >= 8.0.0
-- **Docker Desktop**: Latest version
-- **PostgreSQL**: 16.x (via Docker)
-- **Redis**: 7.x (via Docker)
+1. **Authentication** (`/api/auth/*`)
+   - Register, Login, Logout, Token Refresh
+   - Email Verification, Password Reset
+   - Device Session Management
 
-### Local Development Setup
+2. **Users** (`/api/users/*`)
+   - Profile CRUD, Role Management
+   - User Statistics, Ban/Unban
 
-#### 1. Clone and Install Dependencies
+3. **Courses** (`/api/courses/*`)
+   - Course CRUD, Enrollment, Progress
 
-```bash
-# Clone repository
-git clone <repository-url>
-cd LB2D-v2
+4. **Videos** (`/api/videos/*`)
+   - Upload, Streaming, Approval, Comments
 
-# Install dependencies using pnpm workspaces
-pnpm install
+5. **Resources** (`/api/resources/*`)
+   - File Upload, Approval, Progress
+
+6. **Quizzes** (`/api/quizzes/*`)
+   - Quiz CRUD, Submissions, Attempts
+
+7. **Payments** (`/api/payments/*`)
+   - Payment Intent, Confirmation, History
+
+8. **Certificates** (`/api/certificates/*`)
+   - Generation, Verification, Delivery
+
+9. **Notifications** (`/api/notifications/*`)
+   - Real-time Notifications, Read Status
+
+10. **Analytics** (`/api/analytics/*`)
+    - Admin/Supervisor/Student Dashboards
+
+11. **Reviews** (`/api/reviews/*`)
+    - Course Reviews, Ratings, Moderation
+
+12. **Discussions** (`/api/discussions/*`)
+    - Forums, Topics, Posts, Voting
+
+13. **Learning Paths** (`/api/learning-paths/*`)
+    - Path Management, Enrollment, Progress
+
+14. **Gamification** (`/api/gamification/*`)
+    - Achievements, Leaderboards, Stats
+
+15. **Bookmarks** (`/api/bookmarks/*`)
+    - Bookmarks, Collections, Tags
+
+16. **Social** (`/api/social/*`)
+    - Follow, Activity Feed, Shared Notes
+
+17. **Contact** (`/api/contact/*`)
+    - Contact Form, Messages, Responses
+
+Full API documentation available at: http://localhost:3001/api/docs
+
+---
+
+## Environment Configuration
+
+### Backend (.env)
+```env
+# Database
+DATABASE_URL=postgresql://user:pass@localhost:5432/lb2d_v2
+REDIS_URL=redis://localhost:6379
+
+# JWT
+JWT_SECRET=your-secret-min-32-chars
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_SECRET=your-refresh-secret
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Email (Resend - Recommended)
+RESEND_API_KEY=re_xxxxx
+EMAIL_FROM=noreply@lb2d.com
+
+# Email (Gmail SMTP - Fallback)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+
+# AWS S3
+AWS_ACCESS_KEY_ID=your-key
+AWS_SECRET_ACCESS_KEY=your-secret
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=lb2d-assets
+AWS_CLOUDFRONT_URL=https://cdn.lb2d.com
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+
+# App
+PORT=3001
+NODE_ENV=development
+CLIENT_URL=http://localhost:3000
 ```
 
-#### 2. Environment Configuration
+### Frontend (.env.local)
+```env
+# API
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_WS_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-**Backend (.env):**
-```bash
-cd apps/api
-cp .env.example .env
-# Edit .env with your configuration
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+
+# Optional
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_SENTRY_DSN=https://...
 ```
 
-**Frontend (.env.local):**
+---
+
+## Email Setup
+
+### Option 1: Resend API (Recommended)
+1. Sign up at https://resend.com
+2. Get API key (starts with `re_`)
+3. Add to `.env`: `RESEND_API_KEY=re_xxxxx`
+4. Test: `cd apps/api && pnpm test:email`
+
+### Option 2: Gmail SMTP (Fallback)
+1. Enable 2FA on Google account
+2. Generate App Password at https://myaccount.google.com/apppasswords
+3. Add to `.env`:
+   ```
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASS=16-char-app-password
+   ```
+4. Test: `cd apps/api && pnpm test:email`
+
+---
+
+## Database Management
+
+### Migrations
 ```bash
-cd apps/web
-cp .env.local.example .env.local
-# Configure API URL and other environment variables
+# Create migration
+pnpm prisma:migrate dev --name migration_name
+
+# Deploy migrations (production)
+pnpm prisma:migrate deploy
+
+# Reset database
+pnpm prisma:migrate reset
 ```
 
-#### 3. Start Infrastructure Services
-
+### Prisma Studio
 ```bash
-# Start PostgreSQL and Redis using Docker Compose
-docker-compose up -d
-
-# Verify services are running
-docker-compose ps
+pnpm prisma:studio  # Opens at http://localhost:5555
 ```
 
-#### 4. Database Setup
-
+### Seed Data
 ```bash
-cd apps/api
-
-# Generate Prisma Client
-pnpm prisma:generate
-
-# Run migrations
-pnpm prisma:migrate dev
-
-# Seed database with sample data
 pnpm prisma:seed
 ```
 
-#### 5. Start Development Servers
-
-**Terminal 1 - Backend:**
+### Admin Management
 ```bash
-cd apps/api
-pnpm dev
-```
+# Create initial admin (interactive)
+cd tools/prisma-utils
+npx ts-node create-initial-admin.ts
 
-**Terminal 2 - Frontend:**
-```bash
-cd apps/web
-pnpm dev
-```
-
-### Access Points
-
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| Frontend | http://localhost:3000 | See test accounts below |
-| Backend API | http://localhost:3001 | - |
-| API Documentation | http://localhost:3001/api/docs | - |
-| PgAdmin | http://localhost:5050 | admin@lb2d.com / admin |
-| Redis Commander | http://localhost:8081 | - |
-
-### Test Accounts
-
-```bash
-# Administrator
-Email: admin@lb2d.com
-Password: Admin123!
-
-# Supervisor
-Email: supervisor@lb2d.com
-Password: Super123!
-
-# Student
-Email: student@lb2d.com
-Password: Student123!
+# Verify admin email
+npx ts-node verify-admin-email.ts
 ```
 
 ---
 
 ## Deployment
 
-### Production Deployment Guide
+### AWS Production Setup
 
-For complete deployment instructions, see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
-
-### AWS Infrastructure
-
-The platform is designed for deployment on AWS using the following services:
-
-- **Compute**: ECS Fargate (containerized API)
-- **Database**: RDS PostgreSQL (Multi-AZ for high availability)
-- **Cache**: ElastiCache Redis (for sessions and caching)
-- **Storage**: S3 (video and resource files)
-- **CDN**: CloudFront (global content delivery)
-- **DNS**: Route 53 (domain management)
-- **Email**: SES (transactional emails)
-
-### Frontend Deployment
-
-**Recommended**: Deploy to Vercel for optimal Next.js performance
-
+#### Infrastructure (Terraform)
 ```bash
-# Install Vercel CLI
-npm i -g vercel
+cd infrastructure/terraform
+terraform init
+terraform plan
+terraform apply
+```
 
-# Deploy to production
+Creates:
+- VPC with subnets
+- RDS PostgreSQL (Multi-AZ)
+- ElastiCache Redis
+- S3 buckets
+- CloudFront CDN
+- ECS Fargate cluster
+- Application Load Balancer
+- Security groups & IAM roles
+
+#### Backend Deployment (ECS)
+```bash
+# Build Docker image
+docker build -t lb2d-api -f infrastructure/docker/Dockerfile.api .
+
+# Push to ECR
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account>.dkr.ecr.us-east-1.amazonaws.com
+docker tag lb2d-api:latest <account>.dkr.ecr.us-east-1.amazonaws.com/lb2d-api:latest
+docker push <account>.dkr.ecr.us-east-1.amazonaws.com/lb2d-api:latest
+
+# Update ECS service
+aws ecs update-service --cluster lb2d-cluster --service lb2d-api-service --force-new-deployment
+```
+
+#### Frontend Deployment (Vercel)
+```bash
+npm i -g vercel
 cd apps/web
 vercel --prod
 ```
 
-**Alternative**: Deploy to AWS Amplify or any Node.js hosting platform
-
-### Backend Deployment
-
-Build and deploy Docker container to AWS ECS:
-
-```bash
-# Build Docker image
-cd apps/api
-docker build -t lb2d-api:latest -f ../../infrastructure/docker/Dockerfile.api .
-
-# Tag and push to ECR
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <ecr-url>
-docker tag lb2d-api:latest <ecr-url>/lb2d-api:latest
-docker push <ecr-url>/lb2d-api:latest
+### DNS Configuration (Route 53)
 ```
-
----
-
-## API Documentation
-
-The API is fully documented using OpenAPI (Swagger) specification.
-
-- **Local**: http://localhost:3001/api/docs
-- **Production**: https://api.yourdomain.com/api/docs
-
-### API Modules
-
-1. **Authentication** (`/api/auth/*`)
-   - Login, Register, Email Verification
-   - Password Reset, Refresh Tokens
-   - Device Session Management
-
-2. **Users** (`/api/users/*`)
-   - Profile Management
-   - Role Changes
-   - Device Management
-
-3. **Courses** (`/api/courses/*`)
-   - Course CRUD Operations
-   - Enrollment Management
-   - Progress Tracking
-
-4. **Videos** (`/api/videos/*`)
-   - Video Upload & Streaming
-   - Progress Tracking
-   - Comments & Reactions
-
-5. **Quizzes** (`/api/quizzes/*`)
-   - Quiz Creation & Management
-   - Submission & Scoring
-   - Attempt History
-
-6. **Payments** (`/api/payments/*`)
-   - Stripe Integration
-   - Mobile Banking
-   - Payment History
-
-7. **Analytics** (`/api/analytics/*`)
-   - Dashboard Statistics
-   - Progress Reports
-   - Revenue Analytics
+lb2d.com          → CloudFront (Frontend)
+api.lb2d.com      → ALB (Backend)
+www.lb2d.com      → Redirect to lb2d.com
+```
 
 ---
 
 ## Security
 
-### Authentication & Authorization
+### Authentication
+- JWT with short-lived access tokens (15min)
+- Refresh tokens (7 days)
+- Device fingerprinting (max 3 devices)
+- Email verification required
 
-- **JWT Tokens**: Short-lived access tokens (15 minutes)
-- **Refresh Tokens**: Long-lived refresh tokens (7 days)
-- **Device Tracking**: Maximum 3 concurrent sessions per user
-- **Role-Based Access**: Fine-grained permissions (Student, Supervisor, Admin)
+### Data Protection
+- Bcrypt password hashing (12 rounds)
+- SQL injection prevention (Prisma ORM)
+- XSS protection (input sanitization)
+- CSRF protection (origin validation)
+- Rate limiting (3/sec, 20/10sec, 100/min)
+- Helmet security headers
 
-### Data Security
-
-- **Encryption**: Bcrypt password hashing (12 rounds)
-- **SQL Injection**: Parameterized queries via Prisma ORM
-- **XSS Protection**: Input sanitization and output encoding
-- **CSRF Protection**: Token-based protection for state-changing operations
-- **Rate Limiting**: Multi-tier rate limiting (global, IP, user)
-
-### Compliance
-
-- OWASP Top 10 security best practices
-- GDPR-ready data handling
-- SOC 2 Type II compatible architecture
+### OWASP Top 10 Compliant
+- Implemented security middleware
+- Content Security Policy
+- Strict Transport Security
+- X-Content-Type-Options
+- X-Frame-Options
 
 ---
 
-## Performance
+## Performance Optimization
 
-### Optimization Strategies
-
-- **Caching**: Redis for session storage and API responses
-- **CDN**: CloudFront for static assets and media files
-- **Database Indexing**: Optimized indexes on frequently queried fields
-- **Connection Pooling**: Prisma connection pooling for database efficiency
-- **Code Splitting**: Next.js automatic code splitting
-- **Image Optimization**: Next.js Image component with automatic optimization
-
-### Scalability
-
-- **Horizontal Scaling**: Stateless API design supports multiple instances
-- **Load Balancing**: Application Load Balancer distributes traffic
-- **Database Replication**: Read replicas for read-heavy operations
-- **Async Processing**: Background jobs for heavy operations (email, certificates)
+- **Caching**: Redis for sessions and API responses
+- **CDN**: CloudFront for static assets and media
+- **Database**: Indexed queries, connection pooling
+- **Frontend**: Code splitting, image optimization, lazy loading
+- **Scaling**: Horizontal scaling, load balancing, database replication
 
 ---
 
 ## Testing
 
-For comprehensive testing instructions, see [TESTING_GUIDE_LOCAL.md](./TESTING_GUIDE_LOCAL.md).
-
-### Test Coverage
-
 ```bash
-# Run backend tests
+# Backend tests
 cd apps/api
 pnpm test
+pnpm test:watch
+pnpm test:cov
 
-# Run frontend tests
+# Frontend tests
 cd apps/web
 pnpm test
+pnpm test:watch
 
-# Run end-to-end tests
+# E2E tests
 pnpm test:e2e
+
+# Build verification
+pnpm build
 ```
 
 ---
 
-## Contributing
+## Available Scripts
 
-This is a proprietary project. For internal contributions:
+### Root Level
+```bash
+pnpm install        # Install all dependencies
+pnpm dev            # Start both API and web in dev mode
+pnpm build          # Build all apps
+pnpm test           # Run all tests
+pnpm lint           # Lint all apps
+pnpm format         # Format code with Prettier
+```
 
-1. Create a feature branch from `main`
-2. Follow the established code style and conventions
-3. Write tests for new features
-4. Submit a pull request with clear description
-5. Ensure CI/CD pipeline passes
+### API (apps/api)
+```bash
+pnpm dev            # Start API dev server
+pnpm build          # Build for production
+pnpm start          # Start production server
+pnpm prisma:generate  # Generate Prisma client
+pnpm prisma:migrate   # Run migrations
+pnpm prisma:studio    # Open Prisma Studio
+pnpm test:email       # Test email configuration
+```
 
-### Code Style
+### Web (apps/web)
+```bash
+pnpm dev            # Start Next.js dev server
+pnpm build          # Build for production
+pnpm start          # Start production server
+pnpm lint           # Run ESLint
+```
 
-- **TypeScript**: Strict mode enabled
-- **Linting**: ESLint with Airbnb configuration
-- **Formatting**: Prettier with predefined rules
-- **Commits**: Conventional Commits specification
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**Database Connection Failed**
+- Verify PostgreSQL is running: `docker-compose ps`
+- Check DATABASE_URL in .env
+- Restart Docker: `docker-compose restart`
+
+**Email Not Sending**
+- Run email test: `cd apps/api && pnpm test:email`
+- Check RESEND_API_KEY or Gmail app password
+- Verify EMAIL_FROM matches your domain
+
+**API 401 Errors**
+- Clear browser storage/cookies
+- Check JWT_SECRET is set
+- Verify token hasn't expired
+
+**Build Errors**
+- Clear caches: `rm -rf node_modules .next dist`
+- Reinstall: `pnpm install`
+- Regenerate Prisma: `cd apps/api && pnpm prisma:generate`
+
+**Port Already in Use**
+- Kill process: `npx kill-port 3000` or `npx kill-port 3001`
+- Change port in .env or package.json
+
+---
+
+## Project Statistics
+
+- **Backend**: 17 modules, 74+ API endpoints
+- **Frontend**: 25+ pages, 50+ components
+- **Features**: 220+ implemented features
+- **Database**: 34 Prisma models
+- **Code Quality**: TypeScript strict mode, ESLint, Prettier
 
 ---
 
@@ -473,18 +554,16 @@ This is a proprietary project. For internal contributions:
 
 Copyright © 2025 LB2D. All rights reserved.
 
-This software is proprietary and confidential. Unauthorized copying, distribution, or use of this software is strictly prohibited.
+This software is proprietary and confidential. Unauthorized copying, distribution, or use is strictly prohibited.
 
 ---
 
 ## Support
 
-- **Documentation**: See `TESTING_GUIDE_LOCAL.md` and `DEPLOYMENT_GUIDE.md`
-- **API Reference**: http://localhost:3001/api/docs
+- **API Documentation**: http://localhost:3001/api/docs
 - **Issues**: Report via internal issue tracking system
+- **Email Test**: `cd apps/api && pnpm test:email`
 
 ---
 
-**LB2D v2.0 - Enterprise E-Learning Platform**
-
-Built with modern technologies for scale, performance, and security.
+**LB2D v2.0 - Built for Scale, Performance, and Security**

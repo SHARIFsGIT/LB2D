@@ -371,6 +371,15 @@ const CourseManagementPage = () => {
     C2: '💎',
   };
 
+  const levelDescriptions = {
+    A1: 'Beginner',
+    A2: 'Elementary',
+    B1: 'Intermediate',
+    B2: 'Upper Intermediate',
+    C1: 'Advanced',
+    C2: 'Proficiency',
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
       {/* Hero Header */}
@@ -397,13 +406,13 @@ const CourseManagementPage = () => {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={handleCreateCourse}
-                className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 sm:px-6 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-1200 ease-out text-sm sm:text-base min-h-[44px]"
+                className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 sm:px-6 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-200 text-sm sm:text-base min-h-[44px]"
               >
                 Create New Course
               </button>
               <button
                 onClick={() => setIncludeDeleted(!includeDeleted)}
-                className={`px-4 sm:px-6 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg transition-all duration-1200 ease-out text-sm sm:text-base min-h-[44px] ${
+                className={`px-4 sm:px-6 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg transition-all duration-200 text-sm sm:text-base min-h-[44px] ${
                   includeDeleted
                     ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:shadow-xl hover:from-blue-600 hover:to-indigo-700'
                     : 'bg-gradient-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:from-orange-600 hover:to-red-700'
@@ -447,16 +456,20 @@ const CourseManagementPage = () => {
                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white bg-opacity-10 rounded-full -ml-12 -mb-12"></div>
                   <div className="relative z-10">
                     <div className="flex justify-between items-start mb-4">
-                      <div className="bg-white bg-opacity-20 backdrop-blur-sm px-3 py-2 rounded-full border border-white border-opacity-30">
-                        <span className="text-lg">{levelIcons[course.level]}</span>
-                        <span className="font-bold ml-2">{course.level}</span>
+                      <div className="bg-white bg-opacity-20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white border-opacity-30">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">{levelIcons[course.level]}</span>
+                          <div>
+                            <div className="font-bold text-lg">{course.level}</div>
+                            <div className="text-xs opacity-90">{levelDescriptions[course.level]}</div>
+                          </div>
+                        </div>
                       </div>
                       <div className="text-right">
                         <div className="text-xl font-bold">
                           {formatCurrency(course.price, 'EUR')}
                         </div>
-                        <div className="text-sm font-semibold opacity-90 flex items-center justify-end">
-                          <span className="mr-1">⇄</span>
+                        <div className="text-sm font-semibold opacity-90">
                           {formatCurrency(convertEuroToTaka(course.price), 'BDT')}
                         </div>
                         <div className="text-xs opacity-80">per course</div>
@@ -529,13 +542,13 @@ const CourseManagementPage = () => {
                       <ul className="space-y-2">
                         {course.features.slice(0, 3).map((feature, index) => (
                           <li key={index} className="flex items-start text-sm text-gray-700">
-                            <span className="text-green-500 mr-2 mt-0.5 flex-shrink-0">✓</span>
+                            <span className="text-green-600 mr-2 mt-0.5 flex-shrink-0 font-semibold">•</span>
                             <span>{feature}</span>
                           </li>
                         ))}
                         {course.features.length > 3 && (
                           <li className="text-sm text-blue-600 font-medium ml-4">
-                            + {course.features.length - 3} more features...
+                            {course.features.length - 3} more features
                           </li>
                         )}
                       </ul>
@@ -548,30 +561,30 @@ const CourseManagementPage = () => {
                       <>
                         <button
                           onClick={() => handleRestoreCourse(course._id)}
-                          className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg sm:rounded-xl font-bold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 text-sm sm:text-base min-h-[44px]"
+                          className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg sm:rounded-xl font-bold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 text-sm sm:text-base min-h-[44px]"
                         >
-                          Restore
+                          Restore Course
                         </button>
                         <button
                           onClick={() => handlePermanentDeleteCourse(course._id)}
-                          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-lg sm:rounded-xl font-bold hover:from-red-600 hover:to-red-700 transition-all duration-300 text-sm sm:text-base min-h-[44px]"
+                          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-lg sm:rounded-xl font-bold hover:from-red-600 hover:to-red-700 transition-all duration-200 text-sm sm:text-base min-h-[44px]"
                         >
-                          Delete
+                          Delete Permanently
                         </button>
                       </>
                     ) : (
                       <>
                         <button
                           onClick={() => handleEditCourse(course)}
-                          className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 sm:px-4 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-1200 ease-out text-sm sm:text-base min-h-[44px]"
+                          className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 sm:px-4 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-200 text-sm sm:text-base min-h-[44px]"
                         >
-                          Edit
+                          Edit Course
                         </button>
                         <button
                           onClick={() => handleDeleteCourse(course._id)}
-                          className="flex-1 bg-gradient-to-r from-red-500 to-rose-600 text-white px-3 sm:px-4 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-red-600 hover:to-rose-700 transition-all duration-1200 ease-out text-sm sm:text-base min-h-[44px]"
+                          className="flex-1 bg-gradient-to-r from-red-500 to-rose-600 text-white px-3 sm:px-4 py-3 rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-red-600 hover:to-rose-700 transition-all duration-200 text-sm sm:text-base min-h-[44px]"
                         >
-                          Delete
+                          Delete Course
                         </button>
                       </>
                     )}
@@ -786,7 +799,7 @@ const CourseManagementPage = () => {
                       const newFeatures = formData.features.filter((_, i) => i !== index);
                       setFormData({ ...formData, features: newFeatures });
                     }}
-                    className="px-3 py-2 bg-red-500 text-white rounded-xl text-sm"
+                    className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-semibold text-sm hover:from-red-600 hover:to-red-700 transition-all duration-200"
                   >
                     Remove
                   </button>
@@ -811,7 +824,7 @@ const CourseManagementPage = () => {
                       });
                     }
                   }}
-                  className="px-3 py-2 bg-green-500 text-white rounded-xl text-sm"
+                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold text-sm hover:from-green-600 hover:to-green-700 transition-all duration-200"
                 >
                   Add
                 </button>
@@ -844,7 +857,7 @@ const CourseManagementPage = () => {
                       const newRequirements = formData.requirements.filter((_, i) => i !== index);
                       setFormData({ ...formData, requirements: newRequirements });
                     }}
-                    className="px-3 py-2 bg-red-500 text-white rounded-xl text-sm"
+                    className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-semibold text-sm hover:from-red-600 hover:to-red-700 transition-all duration-200"
                   >
                     Remove
                   </button>
@@ -871,7 +884,7 @@ const CourseManagementPage = () => {
                       });
                     }
                   }}
-                  className="px-3 py-2 bg-green-500 text-white rounded-xl text-sm"
+                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold text-sm hover:from-green-600 hover:to-green-700 transition-all duration-200"
                 >
                   Add
                 </button>
@@ -883,14 +896,14 @@ const CourseManagementPage = () => {
             <button
               type="button"
               onClick={() => setShowModal(false)}
-              className="px-4 sm:px-6 py-3 bg-gray-200 text-gray-800 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base min-h-[44px] order-2 sm:order-1"
+              className="px-4 sm:px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg sm:rounded-xl font-bold hover:from-gray-600 hover:to-gray-700 transition-all duration-200 text-sm sm:text-base min-h-[44px] order-2 sm:order-1"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 sm:px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-1200 ease-out disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base min-h-[44px] order-1 sm:order-2"
+              className="px-4 sm:px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base min-h-[44px] order-1 sm:order-2"
             >
               {loading ? 'Saving...' : editingCourse ? 'Update Course' : 'Create Course'}
             </button>

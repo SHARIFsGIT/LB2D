@@ -122,7 +122,7 @@ export default function ContactPage() {
     showInfo('Sending your message...', 'Please wait');
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contact/send`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/contact/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

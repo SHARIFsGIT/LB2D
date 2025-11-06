@@ -216,7 +216,7 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Delete user (Admin only)',
-    description: 'Soft delete user by deactivating account',
+    description: 'Delete user account',
   })
   @ApiResponse({
     status: 200,
@@ -228,5 +228,20 @@ export class UsersController {
   })
   async deleteUser(@Param('userId') userId: string) {
     return this.usersService.deleteUser(userId);
+  }
+
+  @Delete('clear-all')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Clear all users except main admin (Admin only)',
+    description: 'Delete all users except the main admin account. This is a destructive operation.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'All users deleted successfully',
+  })
+  async clearAllUsers() {
+    return this.usersService.clearAllUsers();
   }
 }

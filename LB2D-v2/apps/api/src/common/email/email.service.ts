@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 
 interface EmailOptions {
@@ -25,7 +26,7 @@ export class EmailService {
     this.fromEmail = this.configService.get<string>('EMAIL_FROM') || 'noreply@lb2d.com';
     this.clientUrl = this.configService.get<string>('CLIENT_URL') || 'http://localhost:3000';
 
-    console.log('📧 EMAIL SERVICE CONFIGURATION:');
+    console.log('EMAIL SERVICE CONFIGURATION:');
     console.log('   RESEND_API_KEY:', apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT SET');
     console.log('   EMAIL_FROM:', this.fromEmail);
     console.log('   CLIENT_URL:', this.clientUrl);
@@ -33,7 +34,7 @@ export class EmailService {
     if (apiKey) {
       this.resend = new Resend(apiKey);
       this.logger.log('✅ Email service initialized with Resend API');
-      this.logger.log(`📧 Emails will be sent from: ${this.fromEmail}`);
+      this.logger.log(`Emails will be sent from: ${this.fromEmail}`);
     } else {
       this.logger.warn('⚠️ RESEND_API_KEY not configured - emails will not be sent');
     }
@@ -67,19 +68,44 @@ export class EmailService {
         }
 
         // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000));
       }
+    }
+  }
+
+  /**
+   * Send email via Gmail SMTP (for contact form notifications)
+   */
+  private async sendViaGmail(options: EmailOptions): Promise<void> {
+    const transporter = nodemailer.createTransport({
+      host: this.configService.get<string>('EMAIL_HOST'),
+      port: parseInt(this.configService.get<string>('EMAIL_PORT') || '587'),
+      secure: false,
+      auth: {
+        user: this.configService.get<string>('EMAIL_USER'),
+        pass: this.configService.get<string>('EMAIL_PASS'),
+      },
+    });
+
+    try {
+      await transporter.sendMail({
+        from: this.configService.get<string>('EMAIL_USER'),
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+      });
+
+      this.logger.log(`✅ Email sent via Gmail to ${options.to}: ${options.subject}`);
+    } catch (error) {
+      this.logger.error(`❌ Failed to send email via Gmail to ${options.to}`, error);
+      throw error;
     }
   }
 
   /**
    * Send email verification
    */
-  async sendVerificationEmail(
-    email: string,
-    token: string,
-    firstName: string,
-  ): Promise<void> {
+  async sendVerificationEmail(email: string, token: string, firstName: string): Promise<void> {
     if (!this.resend) {
       this.logger.warn('Email service not configured');
       return;
@@ -105,24 +131,49 @@ export class EmailService {
   /**
    * Send password reset email
    */
-  async sendPasswordResetEmail(
-    email: string,
-    token: string,
-    firstName: string,
-  ): Promise<void> {
-    console.log('📧 sendPasswordResetEmail called with:');
+  async sendPasswordResetEmail(email: string, token: string, firstName: string): Promise<void> {
+    console.log('sendPasswordResetEmail called with:');
     console.log('   To:', email);
     console.log('   Token:', token);
     console.log('   First Name:', firstName);
 
-    if (!this.resend) {
-      this.logger.warn('❌ Email service not configured - Resend instance is null');
-      console.log('❌ Cannot send email - Resend is not initialized');
-      return;
-    }
-
     const resetUrl = `${this.configService.get('CLIENT_URL')}/reset-password?token=${token}`;
     console.log('🔗 Reset URL:', resetUrl);
+
+    // Try Resend first, then fallback to Gmail SMTP
+    if (!this.resend) {
+      this.logger.warn('⚠️ Resend not configured - attempting Gmail SMTP fallback');
+      console.log('⚠️ Resend is not initialized, trying Gmail SMTP...');
+
+      const gmailUser = this.configService.get<string>('EMAIL_USER');
+      const gmailPass = this.configService.get<string>('EMAIL_PASS');
+
+      if (!gmailUser || !gmailPass) {
+        this.logger.error('❌ Email service not configured - neither Resend nor Gmail SMTP is available');
+        console.log('❌ Cannot send email - No email service is configured');
+        console.log('   Please configure either:');
+        console.log('   1. RESEND_API_KEY in .env file, OR');
+        console.log('   2. EMAIL_USER and EMAIL_PASS for Gmail SMTP');
+        throw new Error('Email service not configured');
+      }
+
+      try {
+        await this.sendViaGmail({
+          to: email,
+          subject: 'Reset Your Password - LB2D',
+          html: this.getPasswordResetTemplate(firstName, resetUrl),
+        });
+
+        console.log('✅ Password reset email sent via Gmail SMTP to', email);
+        this.logger.log(`✅ Password reset email sent via Gmail SMTP to ${email}`);
+        return;
+      } catch (error) {
+        console.error('❌ Gmail SMTP error:', error);
+        this.logger.error(`❌ Failed to send password reset email via Gmail to ${email}`, error);
+        throw error;
+      }
+    }
+
     console.log('📤 Sending email from:', this.fromEmail);
 
     try {
@@ -160,7 +211,7 @@ export class EmailService {
     email: string,
     firstName: string,
     courseName: string,
-    courseId: string,
+    courseId: string
   ): Promise<void> {
     await this.sendWithRetry({
       to: email,
@@ -177,7 +228,7 @@ export class EmailService {
     firstName: string,
     courseName: string,
     certificateId: string,
-    certificateUrl: string,
+    certificateUrl: string
   ): Promise<void> {
     await this.sendWithRetry({
       to: email,
@@ -194,7 +245,7 @@ export class EmailService {
     firstName: string,
     courseName: string,
     amount: number,
-    currency: string,
+    currency: string
   ): Promise<void> {
     await this.sendWithRetry({
       to: email,
@@ -210,7 +261,7 @@ export class EmailService {
     email: string,
     firstName: string,
     videoTitle: string,
-    courseTitle: string,
+    courseTitle: string
   ): Promise<void> {
     await this.sendWithRetry({
       to: email,
@@ -227,7 +278,7 @@ export class EmailService {
     firstName: string,
     videoTitle: string,
     courseTitle: string,
-    rejectionReason: string,
+    rejectionReason: string
   ): Promise<void> {
     await this.sendWithRetry({
       to: email,
@@ -243,7 +294,7 @@ export class EmailService {
     email: string,
     firstName: string,
     resourceTitle: string,
-    courseTitle: string,
+    courseTitle: string
   ): Promise<void> {
     await this.sendWithRetry({
       to: email,
@@ -260,12 +311,17 @@ export class EmailService {
     firstName: string,
     resourceTitle: string,
     courseTitle: string,
-    rejectionReason: string,
+    rejectionReason: string
   ): Promise<void> {
     await this.sendWithRetry({
       to: email,
       subject: `❌ Resource Rejected - ${resourceTitle}`,
-      html: this.getResourceRejectionTemplate(firstName, resourceTitle, courseTitle, rejectionReason),
+      html: this.getResourceRejectionTemplate(
+        firstName,
+        resourceTitle,
+        courseTitle,
+        rejectionReason
+      ),
     });
   }
 
@@ -275,7 +331,7 @@ export class EmailService {
   async sendRoleChangeApprovalNotification(
     email: string,
     firstName: string,
-    newRole: string,
+    newRole: string
   ): Promise<void> {
     await this.sendWithRetry({
       to: email,
@@ -291,7 +347,7 @@ export class EmailService {
     email: string,
     firstName: string,
     requestedRole: string,
-    rejectionReason: string,
+    rejectionReason: string
   ): Promise<void> {
     await this.sendWithRetry({
       to: email,
@@ -307,7 +363,7 @@ export class EmailService {
     email: string,
     firstName: string,
     title: string,
-    message: string,
+    message: string
   ): Promise<void> {
     await this.sendWithRetry({
       to: email,
@@ -319,10 +375,7 @@ export class EmailService {
   /**
    * Email verification template
    */
-  private getVerificationEmailTemplate(
-    firstName: string,
-    verificationUrl: string,
-  ): string {
+  private getVerificationEmailTemplate(firstName: string, verificationUrl: string): string {
     return `
       <!DOCTYPE html>
       <html>
@@ -365,10 +418,7 @@ export class EmailService {
   /**
    * Password reset email template
    */
-  private getPasswordResetTemplate(
-    firstName: string,
-    resetUrl: string,
-  ): string {
+  private getPasswordResetTemplate(firstName: string, resetUrl: string): string {
     return `
       <!DOCTYPE html>
       <html>
@@ -459,7 +509,11 @@ export class EmailService {
   /**
    * Enrollment confirmation template
    */
-  private getEnrollmentConfirmationTemplate(firstName: string, courseName: string, courseId: string): string {
+  private getEnrollmentConfirmationTemplate(
+    firstName: string,
+    courseName: string,
+    courseId: string
+  ): string {
     return `
       <!DOCTYPE html>
       <html>
@@ -514,7 +568,7 @@ export class EmailService {
     firstName: string,
     courseName: string,
     certificateId: string,
-    certificateUrl: string,
+    certificateUrl: string
   ): string {
     return `
       <!DOCTYPE html>
@@ -566,7 +620,7 @@ export class EmailService {
     firstName: string,
     courseName: string,
     amount: number,
-    currency: string,
+    currency: string
   ): string {
     return `
       <!DOCTYPE html>
@@ -614,7 +668,11 @@ export class EmailService {
   /**
    * Video approval template
    */
-  private getVideoApprovalTemplate(firstName: string, videoTitle: string, courseTitle: string): string {
+  private getVideoApprovalTemplate(
+    firstName: string,
+    videoTitle: string,
+    courseTitle: string
+  ): string {
     return `
       <!DOCTYPE html>
       <html>
@@ -662,7 +720,7 @@ export class EmailService {
     firstName: string,
     videoTitle: string,
     courseTitle: string,
-    rejectionReason: string,
+    rejectionReason: string
   ): string {
     return `
       <!DOCTYPE html>
@@ -711,7 +769,11 @@ export class EmailService {
   /**
    * Resource approval template
    */
-  private getResourceApprovalTemplate(firstName: string, resourceTitle: string, courseTitle: string): string {
+  private getResourceApprovalTemplate(
+    firstName: string,
+    resourceTitle: string,
+    courseTitle: string
+  ): string {
     return `
       <!DOCTYPE html>
       <html>
@@ -759,7 +821,7 @@ export class EmailService {
     firstName: string,
     resourceTitle: string,
     courseTitle: string,
-    rejectionReason: string,
+    rejectionReason: string
   ): string {
     return `
       <!DOCTYPE html>
@@ -855,7 +917,7 @@ export class EmailService {
   private getRoleChangeRejectionTemplate(
     firstName: string,
     requestedRole: string,
-    rejectionReason: string,
+    rejectionReason: string
   ): string {
     return `
       <!DOCTYPE html>
@@ -951,7 +1013,7 @@ export class EmailService {
   }): Promise<void> {
     const adminEmail = this.configService.get<string>('ADMIN_EMAIL') || 'admin@lb2d.com';
 
-    await this.sendWithRetry({
+    await this.sendViaGmail({
       to: adminEmail,
       subject: `New Contact Form Submission: ${data.subject}`,
       html: this.getContactNotificationTemplate(data),
@@ -961,10 +1023,7 @@ export class EmailService {
   /**
    * Send contact form confirmation to sender
    */
-  async sendContactConfirmation(data: {
-    to: string;
-    name: string;
-  }): Promise<void> {
+  async sendContactConfirmation(data: { to: string; name: string }): Promise<void> {
     await this.sendWithRetry({
       to: data.to,
       subject: 'We received your message - LB2D',
@@ -981,54 +1040,129 @@ export class EmailService {
     subject: string;
     message: string;
   }): string {
+    const timestamp = new Date().toLocaleString('en-US', {
+      dateStyle: 'full',
+      timeStyle: 'long',
+      timeZone: 'Asia/Dhaka'
+    });
+    const senderInitial = data.name.charAt(0).toUpperCase();
+    const currentYear = new Date().getFullYear();
+
     return `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>New Contact Inquiry - LB2D</title>
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f3f4f6; }
-            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-            .header { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; padding: 40px 20px; text-align: center; }
-            .content { padding: 40px 30px; }
-            .info-box { background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6; }
-            .message-box { background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b; }
-            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
-            .label { font-weight: 600; color: #4b5563; margin-bottom: 5px; }
-            .value { color: #1f2937; }
+            body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f3f4f6; }
+            .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
+            .header { background: linear-gradient(135deg, #dc2626 0%, #fbbf24 50%, #16a34a 100%); padding: 48px 32px; text-align: center; }
+            .logo { font-size: 42px; font-weight: 900; color: #ffffff; letter-spacing: 2px; margin-bottom: 8px; }
+            .tagline { font-size: 16px; color: rgba(255, 255, 255, 0.95); font-weight: 600; }
+            .alert { background: #dc2626; color: #ffffff; padding: 16px 32px; text-align: center; font-weight: 700; font-size: 15px; letter-spacing: 0.5px; }
+            .content { padding: 40px 32px; }
+            .section-title { font-size: 12px; font-weight: 800; color: #6b7280; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+            .card { background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 10px; padding: 24px; margin-bottom: 24px; }
+            .sender-info { text-align: center; margin-bottom: 16px; }
+            .avatar { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #dc2626, #fbbf24); display: inline-flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; color: #ffffff; margin-bottom: 16px; }
+            .name { font-size: 22px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+            .email { font-size: 15px; color: #6b7280; }
+            .subject-box { background: #fef3c7; border-left: 4px solid #fbbf24; padding: 20px; border-radius: 8px; margin-bottom: 24px; }
+            .subject-label { font-size: 12px; font-weight: 700; color: #92400e; text-transform: uppercase; margin-bottom: 8px; }
+            .subject-text { font-size: 18px; font-weight: 600; color: #78350f; }
+            .message-box { background: #ffffff; border: 2px solid #e5e7eb; padding: 24px; border-radius: 8px; margin-bottom: 24px; }
+            .message-text { font-size: 15px; line-height: 1.8; color: #374151; white-space: pre-wrap; }
+            .button-container { text-align: center; margin: 32px 0; }
+            .btn { display: inline-block; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; transition: all 0.2s; }
+            .btn-primary { background: #dc2626; color: #ffffff !important; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3); }
+            .btn-secondary { background: #ffffff; color: #dc2626 !important; border: 2px solid #dc2626; margin-left: 12px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+            .info-item { background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb; }
+            .info-label { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
+            .info-value { font-size: 14px; font-weight: 600; color: #1f2937; }
+            .footer { background: #111827; color: #9ca3af; padding: 32px; text-align: center; }
+            .footer-logo { font-size: 24px; font-weight: 900; color: #fbbf24; margin-bottom: 12px; }
+            .footer-text { font-size: 14px; margin-bottom: 16px; }
+            .footer-links { margin: 16px 0; padding: 16px 0; border-top: 1px solid #374151; border-bottom: 1px solid #374151; }
+            .footer-link { color: #fbbf24; text-decoration: none; margin: 0 12px; font-weight: 600; }
+            .footer-copy { font-size: 12px; color: #6b7280; margin-top: 16px; }
+            @media only screen and (max-width: 600px) {
+              .info-grid { grid-template-columns: 1fr; }
+              .btn { display: block; margin: 8px 0 !important; width: 100%; }
+            }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h1>📨 New Contact Form Submission</h1>
+              <div class="logo">LB2D</div>
+              <div class="tagline">Learn Bangla to Deutsch</div>
             </div>
+
+            <div class="alert">NEW CONTACT INQUIRY - RESPONSE REQUIRED</div>
+
             <div class="content">
-              <p>You have received a new message from the contact form:</p>
-
-              <div class="info-box">
-                <div class="label">From:</div>
-                <div class="value"><strong>${data.name}</strong></div>
-                <div class="value">${data.email}</div>
+              <div class="section-title">Sender Information</div>
+              <div class="card">
+                <div class="sender-info">
+                  <div class="avatar">${senderInitial}</div>
+                  <div class="name">${data.name}</div>
+                  <div class="email">${data.email}</div>
+                </div>
               </div>
 
-              <div class="info-box">
-                <div class="label">Subject:</div>
-                <div class="value"><strong>${data.subject}</strong></div>
+              <div class="section-title">Subject</div>
+              <div class="subject-box">
+                <div class="subject-label">Topic</div>
+                <div class="subject-text">${data.subject}</div>
               </div>
 
+              <div class="section-title">Message</div>
               <div class="message-box">
-                <div class="label">Message:</div>
-                <div class="value" style="white-space: pre-wrap;">${data.message}</div>
+                <div class="message-text">${data.message}</div>
               </div>
 
-              <p style="color: #6b7280; font-size: 14px;">
-                <strong>Reply to:</strong> <a href="mailto:${data.email}" style="color: #3b82f6;">${data.email}</a>
-              </p>
+              <div class="button-container">
+                <a href="mailto:${data.email}?subject=Re: ${data.subject.replace(/'/g, '%27')}" class="btn btn-primary">Reply to Message</a>
+                <a href="mailto:${data.email}" class="btn btn-secondary">Quick Reply</a>
+              </div>
+
+              <div class="section-title">Message Details</div>
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-label">Timestamp</div>
+                  <div class="info-value">${timestamp}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Source</div>
+                  <div class="info-value">Contact Form</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Priority</div>
+                  <div class="info-value" style="color: #dc2626;">High</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Response Target</div>
+                  <div class="info-value">24 Hours</div>
+                </div>
+              </div>
             </div>
+
             <div class="footer">
-              <p>&copy; 2025 LB2D. All rights reserved.</p>
+              <div class="footer-logo">LB2D</div>
+              <div class="footer-text">Empowering Bengali speakers to master German</div>
+              <div class="footer-links">
+                <a href="${this.clientUrl}" class="footer-link">Home</a>
+                <a href="${this.clientUrl}/courses" class="footer-link">Courses</a>
+                <a href="${this.clientUrl}/about" class="footer-link">About</a>
+                <a href="${this.clientUrl}/contact" class="footer-link">Contact</a>
+              </div>
+              <div class="footer-copy">
+                © ${currentYear} Learn Bangla to Deutsch. All Rights Reserved.<br>
+                Dhaka, Bangladesh | Munich, Germany
+              </div>
             </div>
           </div>
         </body>
@@ -1036,52 +1170,112 @@ export class EmailService {
     `;
   }
 
+
   /**
    * Contact confirmation template (to sender)
    */
   private getContactConfirmationTemplate(name: string): string {
+    const currentYear = new Date().getFullYear();
+
     return `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Message Received - LB2D</title>
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f3f4f6; }
-            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-            .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 40px 20px; text-align: center; }
-            .content { padding: 40px 30px; }
-            .success-box { background: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; border: 2px solid #10b981; }
-            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
-            .button { display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 10px 0; }
+            body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f3f4f6; }
+            .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
+            .header { background: linear-gradient(135deg, #16a34a 0%, #fbbf24 50%, #dc2626 100%); padding: 48px 32px; text-align: center; }
+            .logo { font-size: 42px; font-weight: 900; color: #ffffff; letter-spacing: 2px; margin-bottom: 8px; }
+            .tagline { font-size: 16px; color: rgba(255, 255, 255, 0.95); font-weight: 600; }
+            .success-banner { background: #16a34a; color: #ffffff; padding: 16px 32px; text-align: center; font-weight: 700; font-size: 15px; }
+            .content { padding: 40px 32px; }
+            .greeting { font-size: 28px; font-weight: 700; color: #111827; margin-bottom: 16px; }
+            .message { font-size: 16px; line-height: 1.8; color: #374151; margin-bottom: 24px; }
+            .card { background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 10px; padding: 24px; margin-bottom: 24px; }
+            .card-title { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 12px; }
+            .card-text { font-size: 15px; line-height: 1.7; color: #4b5563; }
+            .highlight-box { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #fbbf24; padding: 20px; border-radius: 8px; margin-bottom: 24px; }
+            .highlight-text { font-size: 15px; color: #78350f; font-weight: 600; line-height: 1.6; }
+            .steps { list-style: none; padding: 0; }
+            .step { padding: 12px 0; border-bottom: 1px solid #e5e7eb; }
+            .step:last-child { border-bottom: none; }
+            .step-text { font-size: 15px; color: #374151; }
+            .button-container { text-align: center; margin: 32px 0; }
+            .btn { display: inline-block; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; }
+            .btn-primary { background: #16a34a; color: #ffffff !important; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3); }
+            .footer { background: #111827; color: #9ca3af; padding: 32px; text-align: center; }
+            .footer-logo { font-size: 24px; font-weight: 900; color: #fbbf24; margin-bottom: 12px; }
+            .footer-text { font-size: 14px; margin-bottom: 16px; }
+            .footer-links { margin: 16px 0; padding: 16px 0; border-top: 1px solid #374151; border-bottom: 1px solid #374151; }
+            .footer-link { color: #fbbf24; text-decoration: none; margin: 0 12px; font-weight: 600; }
+            .footer-copy { font-size: 12px; color: #6b7280; margin-top: 16px; }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h1>✅ Message Received!</h1>
+              <div class="logo">LB2D</div>
+              <div class="tagline">Learn Bangla to Deutsch</div>
             </div>
+
+            <div class="success-banner">MESSAGE RECEIVED SUCCESSFULLY</div>
+
             <div class="content">
-              <h2>Hello ${name},</h2>
-              <div class="success-box">
-                <p style="font-size: 18px; font-weight: 600; margin: 0;">
-                  We've received your message!
-                </p>
+              <div class="greeting">Hello ${name},</div>
+
+              <div class="message">
+                Thank you for contacting Learn Bangla to Deutsch (LB2D). We have successfully received your message and our team will review it shortly.
               </div>
-              <p>Thank you for reaching out to LB2D. Our team has received your message and will get back to you as soon as possible.</p>
-              <p>Typically, we respond within 24-48 hours during business days.</p>
-              <p>In the meantime, feel free to explore our courses and resources:</p>
-              <p style="text-align: center;">
-                <a href="${this.clientUrl}/courses" class="button">Browse Courses</a>
-              </p>
-              <p>If you have any urgent questions, you can also reach us at:</p>
-              <p style="text-align: center;">
-                <strong>Email:</strong> support@lb2d.com<br>
-                <strong>Phone:</strong> +880 1XXX-XXXXXX
-              </p>
+
+              <div class="highlight-box">
+                <div class="highlight-text">
+                  We typically respond to all inquiries within 24-48 hours during business days.
+                  Our team will get back to you with a personalized response.
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-title">What Happens Next?</div>
+                <div class="card-text">
+                  <ul class="steps">
+                    <li class="step"><span class="step-text">Our team reviews your inquiry carefully</span></li>
+                    <li class="step"><span class="step-text">We prepare a personalized response</span></li>
+                    <li class="step"><span class="step-text">You receive our detailed reply via email</span></li>
+                    <li class="step"><span class="step-text">We schedule a consultation if needed</span></li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-title">Contact Information</div>
+                <div class="card-text">
+                  <p style="margin-bottom: 8px;"><strong>Email:</strong> learnbangla2deutsch@gmail.com</p>
+                  <p style="margin-bottom: 8px;"><strong>Response Time:</strong> Within 24-48 hours</p>
+                  <p><strong>Office Hours:</strong> Saturday - Thursday, 9:00 AM - 6:00 PM (Dhaka Time)</p>
+                </div>
+              </div>
+
+              <div class="button-container">
+                <a href="${this.clientUrl}/courses" class="btn btn-primary">Explore Our Courses</a>
+              </div>
             </div>
+
             <div class="footer">
-              <p>&copy; 2025 LB2D. All rights reserved.</p>
+              <div class="footer-logo">LB2D</div>
+              <div class="footer-text">Empowering Bengali speakers to master German</div>
+              <div class="footer-links">
+                <a href="${this.clientUrl}" class="footer-link">Home</a>
+                <a href="${this.clientUrl}/courses" class="footer-link">Courses</a>
+                <a href="${this.clientUrl}/about" class="footer-link">About</a>
+                <a href="${this.clientUrl}/contact" class="footer-link">Contact</a>
+              </div>
+              <div class="footer-copy">
+                © ${currentYear} Learn Bangla to Deutsch. All Rights Reserved.<br>
+                Dhaka, Bangladesh | Munich, Germany
+              </div>
             </div>
           </div>
         </body>

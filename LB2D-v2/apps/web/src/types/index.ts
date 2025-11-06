@@ -18,6 +18,9 @@ export interface User {
   phone?: string;
   profilePhoto?: string;
   isEmailVerified: boolean;
+  isBanned?: boolean;
+  banReason?: string;
+  banDate?: string;
 }
 
 // Re-export for compatibility

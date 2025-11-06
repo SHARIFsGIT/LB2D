@@ -41,6 +41,7 @@ const AnalyticsDashboard: React.FC = () => {
     []
   );
   const [lastUpdate, setLastUpdate] = useState<string>("");
+  const [isLoadingSupervisorAnalytics, setIsLoadingSupervisorAnalytics] = useState(false);
 
   // Currency conversion hook
   const { convertEuroToTaka } = useCurrency();
@@ -345,6 +346,7 @@ const AnalyticsDashboard: React.FC = () => {
   }, []);
 
   const fetchSupervisorAnalytics = useCallback(async () => {
+    setIsLoadingSupervisorAnalytics(true);
     try {
       const token = typeof window !== 'undefined' ? sessionStorage.getItem("accessToken") : null;
 
@@ -378,6 +380,8 @@ const AnalyticsDashboard: React.FC = () => {
         salary: null,
         videos: null,
       });
+    } finally {
+      setIsLoadingSupervisorAnalytics(false);
     }
   }, []);
 
@@ -2557,7 +2561,7 @@ Generated on: ${new Date().toLocaleString()}
               </div>
               <div className="p-6">
                 {/* Loading state */}
-                {!supervisorAnalytics?.videos ? (
+                {isLoadingSupervisorAnalytics ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -2566,6 +2570,30 @@ Generated on: ${new Date().toLocaleString()}
                       </p>
                       <p className="text-gray-400 text-sm mt-1">
                         Please wait while we gather the data
+                      </p>
+                    </div>
+                  </div>
+                ) : !supervisorAnalytics?.videos ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <svg
+                        className="w-16 h-16 text-gray-300 mx-auto mb-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        ></path>
+                      </svg>
+                      <p className="text-gray-500 font-medium">
+                        No video analytics data available
+                      </p>
+                      <p className="text-gray-400 text-sm mt-1">
+                        Video analytics will appear here once supervisors start uploading content
                       </p>
                     </div>
                   </div>

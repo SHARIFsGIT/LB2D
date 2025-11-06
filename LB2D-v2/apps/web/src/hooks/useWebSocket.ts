@@ -45,7 +45,7 @@ export const useWebSocket = (): {
       return;
     }
 
-    const wsUrl = appConfig.ws.url || 'ws://localhost:3001';
+    const wsUrl = appConfig.ws.url || 'http://localhost:3001';
     const newSocket = io(wsUrl, {
       auth: { token },
       transports: ['websocket'],

@@ -47,6 +47,11 @@ model User {
   isActive    Boolean   @default(true)
   lastLoginAt DateTime?
 
+  // Ban management
+  isBanned   Boolean   @default(false)
+  banReason  String?
+  banDate    DateTime?
+
   // Relations
   deviceSessions   DeviceSession[]
   enrollments      Enrollment[]
@@ -81,6 +86,7 @@ model User {
   @@index([role])
   @@index([isActive])
   @@index([isEmailVerified])
+  @@index([isBanned])
   @@map("users")
 }
 
